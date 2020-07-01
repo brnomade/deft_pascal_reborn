@@ -29,9 +29,11 @@ def example_program_1():
 
 def example_labels():
     source = "100: I" + glb_new_line_symbol + \
-                    "LABEL 100;"
+                    "LABEL 100; 1 := 1 + 1"
     return source
 
+def example_write():
+    source = "WRITE(1); WRITELN(2);"
 
 def main():
     deft_pascal_parser = DeftPascalParser()

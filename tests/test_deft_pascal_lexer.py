@@ -42,6 +42,18 @@ def assert_lex_equivalent(stream_1, stream_2):
 
 class TestDeftPascalLexer(TestCase):
 
+    def test_program_declaration(self):
+        test_code = "PROGRAM my_test_program \n BEGIN \n \n END."
+        result = _run_lexer(test_code)
+        print(result)
+        assert_lex_equivalent(result, [
+            _token('RESERVED_STRUCTURE_PROGRAM', 'PROGRAM'),
+            _token('IDENTIFIER', 'my_test_program'),
+            _token('RESERVED_STRUCTURE_BEGIN', 'BEGIN'),
+            _token('RESERVED_STRUCTURE_END', 'END'),
+            _token('DOT', '.'),
+        ])
+
     def test_assignment_set(self):
         test_code = "BriteColors := [Yellow, Red] \n NoColors := []"
         result = _run_lexer(test_code)
@@ -106,7 +118,7 @@ class TestDeftPascalLexer(TestCase):
             _token('COLON', ':'),
             _token('RESERVED_TYPE_BOOLEAN', 'Boolean'),
             _token('SEMICOLON', ';'),
-            _token('RESERVED_STATEMENT_END', 'END')
+            _token('RESERVED_STRUCTURE_END', 'END')
         ])
 
     def test_type_declaration_array_multi_dimension(self):
@@ -511,3 +523,80 @@ class TestDeftPascalLexer(TestCase):
             _token('COMMENT', "(* multiple \n lines \n comment *)")
         ])
 
+    def test_lower_case(self):
+        test_code = "program test;                        \n" \
+                    " const                               \n" \
+                    "   PI = 3.1415;                      \n" \
+                    "                                     \n" \
+                    " var                                 \n" \
+                    "   a, b: real;                       \n" \
+                    "                                     \n" \
+                    " procedure hello(s: string; n: real);\n" \
+                    " begin                               \n" \
+                    "   writeln(s);                       \n" \
+                    " end;                                \n" \
+                    "                                     \n" \
+                    " begin                               \n" \
+                    "   a := PI;                          \n" \
+                    "   b := a * 10;                      \n" \
+                    "   hello('Hello World!', b);         \n" \
+                    " end.                                \n"
+        result = _run_lexer(test_code)
+        print(result)
+        assert_lex_equivalent(result, [
+            _token('RESERVED_STRUCTURE_PROGRAM', 'program'),
+            _token('IDENTIFIER', 'test'),
+            _token('SEMICOLON', ';'),
+            _token('RESERVED_DECLARATION_CONST', 'const'),
+            _token('IDENTIFIER', 'PI'),
+            _token('OPERATOR_EQUAL_TO', '='),
+            _token('NUMBER_REAL', '3.1415'),
+            _token('SEMICOLON', ';'),
+            _token('RESERVED_DECLARATION_VAR', 'var'),
+            _token('IDENTIFIER', 'a'),
+            _token('COMMA', ','),
+            _token('IDENTIFIER', 'b'),
+            _token('COLON', ':'),
+            _token('RESERVED_TYPE_REAL', 'real'),
+            _token('SEMICOLON', ';'),
+            _token('RESERVED_DECLARATION_PROCEDURE', 'procedure'),
+            _token('IDENTIFIER', 'hello'),
+            _token('LEFT_PARENTHESES', '('),
+            _token('IDENTIFIER', 's'),
+            _token('COLON', ':'),
+            _token('RESERVED_TYPE_STRING', 'string'),
+            _token('SEMICOLON', ';'),
+            _token('IDENTIFIER', 'n'),
+            _token('COLON', ':'),
+            _token('RESERVED_TYPE_REAL', 'real'),
+            _token('RIGHT_PARENTHESES', ')'),
+            _token('SEMICOLON', ';'),
+            _token('RESERVED_STRUCTURE_BEGIN', 'begin'),
+            _token('RESERVED_STATEMENT_WRITELN', 'writeln'),
+            _token('LEFT_PARENTHESES', '('),
+            _token('IDENTIFIER', 's'),
+            _token('RIGHT_PARENTHESES', ')'),
+            _token('SEMICOLON', ';'),
+            _token('RESERVED_STRUCTURE_END', 'end'),
+            _token('SEMICOLON', ';'),
+            _token('RESERVED_STRUCTURE_BEGIN', 'begin'),
+            _token('IDENTIFIER', 'a'),
+            _token('OPERATOR_ASSIGNMENT', ':='),
+            _token('IDENTIFIER', 'PI'),
+            _token('SEMICOLON', ';'),
+            _token('IDENTIFIER', 'b'),
+            _token('OPERATOR_ASSIGNMENT', ':='),
+            _token('IDENTIFIER', 'a'),
+            _token('OPERATOR_MULTIPLY', '*'),
+            _token('NUMBER_DECIMAL', '10'),
+            _token('SEMICOLON', ';'),
+            _token('IDENTIFIER', 'hello'),
+            _token('LEFT_PARENTHESES', '('),
+            _token('STRING', "'Hello World!'"),
+            _token('COMMA', ','),
+            _token('IDENTIFIER', 'b'),
+            _token('RIGHT_PARENTHESES', ')'),
+            _token('SEMICOLON', ';'),
+            _token('RESERVED_STRUCTURE_END', 'end'),
+            _token('DOT', '.')
+        ])
