@@ -106,8 +106,6 @@ class DeftPascalLexer:
     tokens = [
                  # Symbols and operators
 
-                 #'MINUS',
-
                  #'LANGLE',  # LEFT ANGLE BRACKET '<'
                  #'RANGLE',
                  #'DOT',
@@ -149,12 +147,12 @@ class DeftPascalLexer:
                  'OPERATOR_LESS_OR_EQUAL_TO',
                  'OPERATOR_LESS_THEN',
                  'OPERATOR_ASSIGNMENT',
-                 'OPERATOR_DIVIDE',
 
                  # aritmetic operators
                  'OPERATOR_MULTIPLY',
                  'OPERATOR_PLUS',
                  'OPERATOR_MINUS',
+                 'OPERATOR_DIVIDE',
 
                  # structures
                  'COMMENT',
@@ -212,6 +210,7 @@ class DeftPascalLexer:
     def t_IDENTIFIER(self, t):
         r'[_A-Za-z]+[A-Za-z0-9_]*'
         t.type = self._reserved.get_keyword(t.value.lower(), 'IDENTIFIER')
+        # print("t_identifier -> searching '{0}' found '{1}'".format(t.value.lower(), t.type))
         if t.value == 'True':
             t.type = 'CONSTANT_TRUE'
         elif t.value == 'False':

@@ -40,12 +40,12 @@ id               = {Id Head}{Id Tail}*
 [DONE] <Program> ::= <ProgramHeader> <Declarations> <CompoundStatement> '.'
 
 [DONE] <ProgramHeader> ::= PROGRAM id ';'
-                  | PROGRAM id '(' <IdList> ')' ';'
+                         | PROGRAM id '(' <IdList> ')' ';'
 
 <Declarations> ::= <ConstantDefinitions> <TypeDefinitions> <VariableDeclarations> <ProcedureDeclarations>
 
 [DONE] <ConstantDefinitions> ::= CONST <ConstantDefinitionList>
-                        |
+                                 |
 
 [DONE] <ConstantDefinitionList> ::= <ConstantDef>
                            | <ConstantDef> <ConstantDefinitionList>
@@ -134,6 +134,10 @@ id               = {Id Head}{Id Tail}*
                | <SimpleExpression> '<=' <SimpleExpression>
                | <SimpleExpression> '>' <SimpleExpression>
                | <SimpleExpression> '>=' <SimpleExpression>
+
+<expression> ::= <simple expression>
+               | <simple expression> <relational operator> <simple expression>
+
 
 [DONE] <SimpleExpression> ::= <Term>
                     | <SimpleExpression> '+' <Term>

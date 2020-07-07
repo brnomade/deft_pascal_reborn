@@ -324,22 +324,30 @@ class TestDeftPascalLexer(TestCase):
         ])
 
     def test_operators(self):
-        test_code = "A <> A >= A <= A := A = A ;"
+        test_code = "<> >= <= := = + - * / ABS MOD DIV LSL LSR SHL SHR AND NOT OR XOR"
         result = _run_lexer(test_code)
         print(result)
         assert_lex_equivalent(result, [
-            _token('IDENTIFIER', 'A'),
             _token('OPERATOR_NOT_EQUAL_TO', '<>'),
-            _token('IDENTIFIER', 'A'),
             _token('OPERATOR_GREATER_OR_EQUAL_TO', '>='),
-            _token('IDENTIFIER', 'A'),
             _token('OPERATOR_LESS_OR_EQUAL_TO', '<='),
-            _token('IDENTIFIER', 'A'),
             _token('OPERATOR_ASSIGNMENT', ':='),
-            _token('IDENTIFIER', 'A'),
             _token('OPERATOR_EQUAL_TO', '='),
-            _token('IDENTIFIER', 'A'),
-            _token('SEMICOLON', ';')
+            _token('OPERATOR_PLUS', '+'),
+            _token('OPERATOR_MINUS', '-'),
+            _token('OPERATOR_MULTIPLY', '*'),
+            _token('OPERATOR_DIVIDE', '/'),
+            _token('RESERVED_OPERATOR_ABS', 'ABS'),
+            _token('RESERVED_OPERATOR_MOD', 'MOD'),
+            _token('RESERVED_OPERATOR_DIV', 'DIV'),
+            _token('RESERVED_OPERATOR_LSL', 'LSL'),
+            _token('RESERVED_OPERATOR_LSR', 'LSR'),
+            _token('RESERVED_OPERATOR_SHL', 'SHL'),
+            _token('RESERVED_OPERATOR_SHR', 'SHR'),
+            _token('RESERVED_OPERATOR_AND', 'AND'),
+            _token('RESERVED_OPERATOR_NOT', 'NOT'),
+            _token('RESERVED_OPERATOR_OR', 'OR'),
+            _token('RESERVED_OPERATOR_XOR', 'XOR')
         ])
 
     def test_labels(self):
