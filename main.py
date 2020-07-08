@@ -1,4 +1,5 @@
 from deft_pascal_parser import DeftPascalParser
+from deft_pascal_parser_2 import DeftPascalParser_2
 
 glb_new_line_symbol = "\n"
 
@@ -55,8 +56,19 @@ def example_program_2():
     return test_code
 
 def example_program_3():
-    test_code = "PROGRAM my_test_program; \n" \
-                "BEGIN END.               \n"
+    test_code = "PROGRAM my_test_program;            \n" \
+                "CONST C1 = 2;                       \n" \
+                "C2 = 1;                             \n" \
+                "C3 = 1.0;                           \n" \
+                "C4 = &HFF;                          \n" \
+                "C5 = &B10;                          \n" \
+                "C6 = &O12;                          \n" \
+                "C7 = 'C';                           \n" \
+                "C8 = 'C8C8C8C8';                    \n" \
+                "C9 = True;                          \n" \
+                "C10 = False;                        \n" \
+                "BEGIN                               \n" \
+                "END   .                             \n"
     return test_code
 
 def example_write():
@@ -72,5 +84,13 @@ def main():
     result = deft_pascal_parser.compile(example_program_2())
     print("Compilation result : \n {0}".format(result))
 
-main()
+
+def main_2():
+    deft_pascal_parser = DeftPascalParser_2()
+    result = deft_pascal_parser.compile(example_program_3())
+    print(result)
+    print("Compilation result : \n {0}".format(result))
+
+
+main_2()
 

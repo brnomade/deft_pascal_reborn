@@ -3,11 +3,12 @@ from symbol_table import SymbolTable, Constant, Variable
 import ply.yacc as yacc
 
 
+
 class DeftPascalParser:
 
     tokens = DeftPascalLexer.tokens
 
-    start = 'pascal_program'
+    #start = 'pascal_program'
 
     precedence = (
         ('nonassoc', 'OPERATOR_LESS_THEN', 'OPERATOR_GREATER_THEN'),
