@@ -86,7 +86,7 @@ class DeftPascalParser:
         return specification
 
     def __init__(self):
-        parser = Lark(self._grammar(), parser='earley', debug=True)
+        parser = Lark(self._grammar(), parser='lalr', debug=True)
         self._parser = parser.parse
 
     def compile(self, a_program):
