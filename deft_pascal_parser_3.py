@@ -10,14 +10,14 @@ class DeftPascalParser:
     def _grammar():
         specification = """
         
-        ?start: file          
+        ?start: _file          
         
-        file : program        
-             | module         
+        _file : _program        
+              | module         
              
         module : IDENTIFIER    
         
-        program : program_heading SEMICOLON block DOT 
+        _program : program_heading _SEMICOLON constant_block statement_block DOT 
         
         program_heading : RESERVED_STRUCTURE_PROGRAM IDENTIFIER
                         | RESERVED_STRUCTURE_PROGRAM IDENTIFIER LEFT_PARENTHESES identifier_list RIGHT_PARENTHESES
@@ -25,18 +25,21 @@ class DeftPascalParser:
         identifier_list : identifier_list COMMA IDENTIFIER
                         | IDENTIFIER
             
-        block : constant_definition_part statement_part
-              |
+        statement_block : statement_part
+                        | 
+          
+        constant_block : RESERVED_DECLARATION_CONST _constant_list
+                       |
         
-        constant_definition_part : RESERVED_DECLARATION_CONST constant_list
-                                 |
+        //constant_definition_part : RESERVED_DECLARATION_CONST _constant_list
+        //                         |
         
-        constant_list : constant_list constant_definition
-                      | constant_definition
+        _constant_list : constant_definition 
+                       | constant_definition _constant_list
                   
-        constant_definition : IDENTIFIER OPERATOR_EQUAL_TO constant_expression SEMICOLON
+        constant_definition : IDENTIFIER _OPERATOR_EQUAL_TO _constant_expression _SEMICOLON
         
-        constant_expression : NUMBER_DECIMAL
+        _constant_expression : NUMBER_DECIMAL
                             | NUMBER_BINARY
                             | NUMBER_OCTAL
                             | NUMBER_HEXADECIMAL
@@ -65,7 +68,7 @@ class DeftPascalParser:
         CONSTANT_FALSE : "False"
         
         // logical operators
-        OPERATOR_EQUAL_TO : "="
+        _OPERATOR_EQUAL_TO : "="
              
         CHARACTER : /\'[\ A-Za-z0-9!\"#$%^&\'()*+,\-.\/:;<=>?@\[\]]\'/
         STRING : /\'[\ A-Za-z0-9!\"#$%^&()*+,\-.\/:;<=>?@\[\]]{2,}\'/
@@ -74,7 +77,7 @@ class DeftPascalParser:
         NUMBER_OCTAL: /\&[Oo][0-7]+/
         NUMBER_BINARY: /\&[Bb][0-1]+/
         
-        SEMICOLON : ";"
+        _SEMICOLON : ";"
         DOT : "."
         LEFT_PARENTHESES : "("
         RIGHT_PARENTHESES : ")"
@@ -91,40 +94,5 @@ class DeftPascalParser:
 
     def compile(self, a_program):
         return self._parser(a_program)
-
-
-def test():
-    test_code = "PROGRAM my_test_program;            \n" \
-                "CONST C1 = 2;                       \n" \
-                "C2 = 1;                             \n" \
-                "C3 = 1.0;                           \n" \
-                "C4 = &HFF;                          \n" \
-                "C5 = &B10;                          \n" \
-                "C6 = &O12;                          \n" \
-                "C7 = 'C';                           \n" \
-                "C8 = 'C8C8C8C8';                    \n" \
-                "C9 = True;                          \n" \
-                "C10 = False;                        \n" \
-                "C11 = 1;                            \n" \
-                "BEGIN                               \n" \
-                "END   .                             \n"
-    return test_code
-
-
-dp = DeftPascalParser()
-
-try:
-    tree = dp.compile(test())
-except UnexpectedToken as error:
-    print('ERROR 1 - {0}'.format(error))
-    exit(1)
-except UnexpectedCharacters as error:
-    print('ERROR 2 - {0}'.format(error))
-    exit(1)
-
-print(tree.pretty())
-
-for i in tree.children:
-    print(i.data)
 
 
