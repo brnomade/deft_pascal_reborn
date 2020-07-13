@@ -33,7 +33,7 @@ class DeftPascalCompiler:
         for i in ast.children:
             if isinstance(i, Tree):
                 if i.data.upper() == "PROGRAM_HEADING":
-                    self.action_0_A(i.children)
+                    self.action_0(i.children)
                 elif i.data.upper() == "CONSTANT_BLOCK":
                     self.action_1(i.children)
                 else:
@@ -47,26 +47,23 @@ class DeftPascalCompiler:
                 print('Error')
 
 
-    def action_0_A(self, input_list):
+    def action_0(self, input_list):
         """
         process the PROGRAM statement
         :param input_tree:
         :return: tree
         """
-        # print(input_list)
-        if len(input_list) == 2:
-            if input_list[0].value.upper() == 'PROGRAM':
-                self._stack_scope.append((input_list[1].value, 0))
-                context_label = self._stack_scope[-1][0]
-                context_level = self._stack_scope[-1][1]
-                self._symbol_table.append(Constant('True', context_label, context_level, True, 0))
-                self._symbol_table.append(Constant('False', context_label, context_level, False, 0))
-                print("p_program_heading declared - stack: {0} {1} {2}".format( self._stack_constants,
-                                                                                   self._symbol_table, self._stack_scope))
-            else:
-                print('Error in line x, y, z - Program Keyword is not defined?')
-        else:
-            print('action_{0} - incorrect list size received'.format('0_A'))
+        #print(input_list)
+        if input_list[0].value.upper() == 'PROGRAM':
+            self._stack_scope.append((input_list[1].value, 0))
+            context_label = self._stack_scope[-1][0]
+            context_level = self._stack_scope[-1][1]
+            self._symbol_table.append(Constant('True', context_label, context_level, True, 0))
+            self._symbol_table.append(Constant('False', context_label, context_level, False, 0))
+            print("p_program_heading declared - stack: {0} {1} {2}".format(self._stack_constants,
+                                                                           self._symbol_table, self._stack_scope))
+        if len(input_list) > 2:
+            print('got a bunch of program variables which will be ignored')
 
     def action_1(self, input_list):
         """
