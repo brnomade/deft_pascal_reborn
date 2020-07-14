@@ -36,6 +36,8 @@ class DeftPascalCompiler:
                     self.action_0(i.children)
                 elif i.data.upper() == "CONSTANT_DEFINITION_PART":
                     self.action_1(i.children)
+                elif i.data.upper() == "VARIABLE_DECLARATION_PART":
+                    self.action_2(i.children)
                 else:
                     print('{0} - action not yet implemented'.format(i.data))
             elif isinstance(i, Token):
@@ -49,7 +51,7 @@ class DeftPascalCompiler:
 
     def action_0(self, input_list):
         """
-        process the PROGRAM statement
+        process PROGRAM
         :param input_tree:
         :return: tree
         """
@@ -73,7 +75,7 @@ class DeftPascalCompiler:
 
     def action_1(self, input_list):
         """
-        process the CONSTANT_BLOCK statement
+        process CONSTANT_DEFINITION_PART
         :param input_tree:
         :return: tree
         """
@@ -84,10 +86,11 @@ class DeftPascalCompiler:
                 declaration = constant_definition.children
                 identifier = declaration[0].value
                 value = declaration[1].value
-                pascal_type = declaration[1].type
+                data_type = declaration[1].type
+                # TODO: the data_type needs to be adjusted to a real data_type
                 context_label = self._stack_scope[-1][0]
                 context_level = self._stack_scope[-1][1]
-                a_symbol = Constant(identifier, context_label, context_level, value, pascal_type)
+                a_symbol = Constant(identifier, context_label, context_level, value, data_type)
                 # scenarios:
                 # - identifier not declared
                 # - identifier already declared (as a constant or a variable)
@@ -103,4 +106,37 @@ class DeftPascalCompiler:
                                                                           self._stack_scope))
 
         else:
-            print('action_{0} - incorrect constant declaration'.format('1'))
+            print("[{0}] - incorrect constant declaration".format('1'))
+
+    def action_2(self, input_list):
+        """
+        process VARIABLE_DECLARATION_PART
+        :param input_tree:
+        :return: tree
+        """
+        #print(input_list)
+        if input_list[0].value.upper() == 'VAR':
+            input_list = input_list[1:]
+            for variable_declaration in input_list:
+                data_type = variable_declaration.children.pop().value
+                for token in variable_declaration.children:
+                    identifier = token.value
+                    context_label = self._stack_scope[-1][0]
+                    context_level = self._stack_scope[-1][1]
+                    a_symbol = Variable(identifier, context_label, context_level, data_type, None)
+                    # scenarios:
+                    # - identifier not declared
+                    # - identifier already declared (as a constant or a variable)
+                    if self._symbol_table.has_equal(a_symbol, equal_type=False):
+                        print('ERROR 2 - Identifier already declared in the current scope')
+                    else:
+                        self._symbol_table.append(a_symbol)
+                        self._stack_variables.append(a_symbol)
+                        print("[{0}] {1} : '{2}' - stack: {3} {4} {5}".format("2",
+                                                                              "variable declared",
+                                                                              identifier,
+                                                                              self._stack_constants,
+                                                                              self._symbol_table,
+                                                                              self._stack_scope))
+        else:
+            print("[{0}] - incorrect variable declaration".format('2'))
