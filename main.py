@@ -70,7 +70,7 @@ def example_program_3():
 
 
 def example_program_4():
-    test_code = "PROGRAM my_test_program;            \n" \
+    test_code = "PROGRAM my_test_program( A1, A2, A3);            \n" \
                 "CONST C1 = 2;                       \n" \
                 "C2 = 1;                             \n" \
                 "C3 = 1.0;                           \n" \

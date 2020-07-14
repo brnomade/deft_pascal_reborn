@@ -17,41 +17,48 @@ class DeftPascalParser:
              
         module : IDENTIFIER    
         
-        _program : program_heading _SEMICOLON constant_block statement_block DOT 
+        // REF pascal_program : program_header declarations compound_statement DOT
+        // REF program_header : RESERVED_STRUCTURE_PROGRAM IDENTIFIER SEMICOLON
+        // REF declarations : constant_definitions variable_declarations
         
-        program_heading : RESERVED_STRUCTURE_PROGRAM IDENTIFIER
-                        | RESERVED_STRUCTURE_PROGRAM IDENTIFIER LEFT_PARENTHESES identifier_list RIGHT_PARENTHESES
+        _program : program_heading _SEMICOLON _block DOT 
+        
+        program_heading : RESERVED_STRUCTURE_PROGRAM IDENTIFIER 
+                        | RESERVED_STRUCTURE_PROGRAM IDENTIFIER _LEFT_PARENTHESES _identifier_list _RIGHT_PARENTHESES
                                 
-        identifier_list : identifier_list COMMA IDENTIFIER
+        _identifier_list : _identifier_list _COMMA IDENTIFIER
                         | IDENTIFIER
-            
-        statement_block : statement_part
-                        | 
-          
-        constant_block : RESERVED_DECLARATION_CONST _constant_list
-                       |
-        
-        //constant_definition_part : RESERVED_DECLARATION_CONST _constant_list
-        //                         |
-        
+                      
+        _block : constant_definition_part statement_part  
+                      
+        // RULES FOR CONSTANT DECLARATIONS  
+                      
+        constant_definition_part : RESERVED_DECLARATION_CONST _constant_list
+                                   |
+              
         _constant_list : constant_definition 
                        | constant_definition _constant_list
                   
         constant_definition : IDENTIFIER _OPERATOR_EQUAL_TO _constant_expression _SEMICOLON
         
         _constant_expression : NUMBER_DECIMAL
-                            | NUMBER_BINARY
-                            | NUMBER_OCTAL
-                            | NUMBER_HEXADECIMAL
-                            | CHARACTER
-                            | STRING
-                            | CONSTANT_TRUE
-                            | CONSTANT_FALSE
+                             | NUMBER_BINARY
+                             | NUMBER_OCTAL
+                             | NUMBER_HEXADECIMAL
+                             | CHARACTER
+                             | STRING
+                             | CONSTANT_TRUE
+                             | CONSTANT_FALSE
            
         statement_part : compound_statement
         
-        compound_statement : RESERVED_STRUCTURE_BEGIN RESERVED_STRUCTURE_END
+        compound_statement : RESERVED_STRUCTURE_BEGIN statement_sequence RESERVED_STRUCTURE_END
                  
+        statement_sequence : statement_sequence _SEMICOLON statement
+                           | statement
+        statement : DOT
+                  |
+ 
         IDENTIFIER: /[_A-Za-z]+[A-Za-z0-9_]*/
         
         // structure
@@ -79,9 +86,9 @@ class DeftPascalParser:
         
         _SEMICOLON : ";"
         DOT : "."
-        LEFT_PARENTHESES : "("
-        RIGHT_PARENTHESES : ")"
-        COMMA : ","
+        _LEFT_PARENTHESES : "("
+        _RIGHT_PARENTHESES : ")"
+        _COMMA : ","
         
        
         %ignore /[\t \f\\n]+/  

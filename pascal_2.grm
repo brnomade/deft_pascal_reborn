@@ -1,3 +1,5 @@
+USED IN DEFT_PASCAL_PARSER_3.PY -> CLASS DEFTPASCALPARSER
+
 from: http://www.moorecad.com/standardpascal/pascal.y
 
 %{
@@ -323,6 +325,7 @@ statement_part : compound_statement ;
 [DONE]
 compound_statement : BEGIN statement_sequence END ;
 
+[DONE]
 statement_sequence : statement_sequence semicolon statement
  | statement
  ;

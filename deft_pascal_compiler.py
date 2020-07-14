@@ -34,7 +34,7 @@ class DeftPascalCompiler:
             if isinstance(i, Tree):
                 if i.data.upper() == "PROGRAM_HEADING":
                     self.action_0(i.children)
-                elif i.data.upper() == "CONSTANT_BLOCK":
+                elif i.data.upper() == "CONSTANT_DEFINITION_PART":
                     self.action_1(i.children)
                 else:
                     print('{0} - action not yet implemented'.format(i.data))
@@ -55,15 +55,21 @@ class DeftPascalCompiler:
         """
         #print(input_list)
         if input_list[0].value.upper() == 'PROGRAM':
-            self._stack_scope.append((input_list[1].value, 0))
+            identifier = input_list[1].value
+            self._stack_scope.append((identifier, 0))
             context_label = self._stack_scope[-1][0]
             context_level = self._stack_scope[-1][1]
             self._symbol_table.append(Constant('True', context_label, context_level, True, 0))
             self._symbol_table.append(Constant('False', context_label, context_level, False, 0))
-            print("p_program_heading declared - stack: {0} {1} {2}".format(self._stack_constants,
-                                                                           self._symbol_table, self._stack_scope))
+            print("[{0}] {1} : '{2}' - stack: {3} {4} {5}".format("1",
+                                                                  "program declared",
+                                                                  identifier,
+                                                                  self._stack_constants,
+                                                                  self._symbol_table,
+                                                                  self._stack_scope))
+
         if len(input_list) > 2:
-            print('got a bunch of program variables which will be ignored')
+            print('Program variables detected - all will be ignored')
 
     def action_1(self, input_list):
         """
@@ -89,7 +95,12 @@ class DeftPascalCompiler:
                     print('ERROR 6 - Identifier already declared in the current scope')
                 else:
                     self._symbol_table.append(a_symbol)
-                    print("p_constant_definition - constant declared '{0}' stack: {1} {2}".format(identifier, self._stack_constants, self._symbol_table))
+                    print("[{0}] {1} : '{2}' - stack: {3} {4} {5}".format("1",
+                                                                          "constant declared",
+                                                                          identifier,
+                                                                          self._stack_constants,
+                                                                          self._symbol_table,
+                                                                          self._stack_scope))
 
         else:
             print('action_{0} - incorrect constant declaration'.format('1'))
