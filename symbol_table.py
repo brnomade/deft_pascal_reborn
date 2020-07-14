@@ -130,8 +130,13 @@ class EnumeratedField(BaseSymbol):
 
 class Variable(BaseSymbol):
 
-    def do_nothing(self):
-        pass
+    @property
+    def type(self):
+        return self._attribute_a
+
+    @type.setter
+    def type(self, new_type):
+        self._attribute_a = new_type
 
 
 class Constant(BaseSymbol):

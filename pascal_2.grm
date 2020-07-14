@@ -240,15 +240,18 @@ new_pointer_type : UPARROW domain_type
 
 domain_type : identifier ;
 
+[DONE]
 variable_declaration_part : VAR variable_declaration_list semicolon
  |
  ;
 
+[DONE]
 variable_declaration_list :
    variable_declaration_list semicolon variable_declaration
  | variable_declaration
  ;
 
+[DONE]
 variable_declaration : identifier_list COLON type_denoter
  ;
 
