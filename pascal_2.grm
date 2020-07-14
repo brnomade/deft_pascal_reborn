@@ -48,10 +48,10 @@ identifier_list : identifier_list comma identifier
  | identifier
  ;
 
-block : label_declaration_part
- constant_definition_part
+block : label_declaration_part [DONE]
+ constant_definition_part [DONE]
  type_definition_part
- variable_declaration_part
+ variable_declaration_part [DONE]
  procedure_and_function_declaration_part
  statement_part
  ;
@@ -336,14 +336,17 @@ statement_sequence : statement_sequence semicolon statement
  | statement
  ;
 
+[DONE]
 statement : open_statement
  | closed_statement
  ;
 
+[DONE]
 open_statement : label COLON non_labeled_open_statement
  | non_labeled_open_statement
  ;
 
+[DONE]
 closed_statement : label COLON non_labeled_closed_statement
  | non_labeled_closed_statement
  ;
@@ -398,6 +401,7 @@ closed_if_statement : IF boolean_expression THEN closed_statement
    ELSE closed_statement
  ;
 
+[DONE]
 assignment_statement : variable_access ASSIGNMENT expression
  ;
 

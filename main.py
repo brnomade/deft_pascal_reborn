@@ -76,7 +76,9 @@ def example_program_4():
                 "    V5 : BYTE;                        \n" \
                 "    _V5 : BYTE;                       \n" \
                 "BEGIN                                 \n" \
-                "END   .                               \n"
+                " V1 := 2;                             \n" \
+                " V2 := 1;                             \n" \
+                "END            .                      \n"
     return test_code
 
 

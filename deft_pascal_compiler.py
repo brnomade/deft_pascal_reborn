@@ -22,7 +22,8 @@ class DeftPascalCompiler:
         self._actions = {"PROGRAM_HEADING": self._action_0,
                          "CONSTANT_DEFINITION_PART": self._action_1,
                          "VARIABLE_DECLARATION_PART": self._action_2,
-                         "LABEL_DECLARATION_PART": self._action_3
+                         "LABEL_DECLARATION_PART": self._action_3,
+                         "assignment_statement": self._action_4
                          }
 
 
@@ -76,7 +77,7 @@ class DeftPascalCompiler:
                                                                   self._stack_scope))
 
         if len(input_list) > 2:
-            print('Program variables detected - all will be ignored')
+            print("[{0}] {1} : variables detected - all will be ignored".format("0", "program declared"))
 
     def _action_1(self, input_list):
         """
@@ -153,7 +154,16 @@ class DeftPascalCompiler:
         :return:
         """
         #print(input_list)
-        if input_list[0].value.upper() == 'LABEL':
-            print('Labels detected - all will be ignored')
+        if input_list[0].value.upper() == "LABEL":
+            print("[{0}] {1} : all will be ignored".format("3", "labels declared"))
         else:
             print("[{0}] - incorrect label declaration".format('3'))
+
+    def _action_4(self, input_list):
+        """
+        process
+        :param
+        :return:
+        """
+        print(input_list)
+
