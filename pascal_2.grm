@@ -62,14 +62,17 @@ module : constant_definition_part
  procedure_and_function_declaration_part
  ;
 
+[DONE]
 label_declaration_part : LABEL label_list semicolon
  |
  ;
 
+[DONE]
 label_list : label_list comma label
  | label
  ;
 
+[DONE]
 label : DIGSEQ
  ;
 

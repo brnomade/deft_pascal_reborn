@@ -11,11 +11,19 @@ class DeftPascalCompiler:
     def __init__(self):
         self._dp = DeftPascalParser()
         self._symbol_table = SymbolTable()
+
         self._context = 0
+
         self._stack_constants = []
         self._stack_variables = []
         self._stack_operands = []
         self._stack_scope = []
+
+        self._actions = {"PROGRAM_HEADING": self._action_0,
+                         "CONSTANT_DEFINITION_PART": self._action_1,
+                         "VARIABLE_DECLARATION_PART": self._action_2,
+                         "LABEL_DECLARATION_PART": self._action_3
+                         }
 
 
     def check_syntax(self, input_program):
@@ -28,18 +36,16 @@ class DeftPascalCompiler:
             print('ERROR 2 - {0}'.format(error))
         return tree
 
-
     def compile(self, ast):
         for i in ast.children:
             if isinstance(i, Tree):
-                if i.data.upper() == "PROGRAM_HEADING":
-                    self.action_0(i.children)
-                elif i.data.upper() == "CONSTANT_DEFINITION_PART":
-                    self.action_1(i.children)
-                elif i.data.upper() == "VARIABLE_DECLARATION_PART":
-                    self.action_2(i.children)
+                try:
+                    action_name = i.data.upper()
+                    action_to_call = self._actions[action_name]
+                except KeyError:
+                    print("action '{0}' not yet implemented".format(i.data.upper()))
                 else:
-                    print('{0} - action not yet implemented'.format(i.data))
+                    action_to_call(i.children)
             elif isinstance(i, Token):
                 if i.type == 'DOT':
                     print("DOT - not sure what to do")
@@ -48,8 +54,7 @@ class DeftPascalCompiler:
             else:
                 print('Error')
 
-
-    def action_0(self, input_list):
+    def _action_0(self, input_list):
         """
         process PROGRAM
         :param input_tree:
@@ -63,7 +68,7 @@ class DeftPascalCompiler:
             context_level = self._stack_scope[-1][1]
             self._symbol_table.append(Constant('True', context_label, context_level, True, 0))
             self._symbol_table.append(Constant('False', context_label, context_level, False, 0))
-            print("[{0}] {1} : '{2}' - stack: {3} {4} {5}".format("1",
+            print("[{0}] {1} : '{2}' - stack: {3} {4} {5}".format("0",
                                                                   "program declared",
                                                                   identifier,
                                                                   self._stack_constants,
@@ -73,7 +78,7 @@ class DeftPascalCompiler:
         if len(input_list) > 2:
             print('Program variables detected - all will be ignored')
 
-    def action_1(self, input_list):
+    def _action_1(self, input_list):
         """
         process CONSTANT_DEFINITION_PART
         :param input_tree:
@@ -108,7 +113,7 @@ class DeftPascalCompiler:
         else:
             print("[{0}] - incorrect constant declaration".format('1'))
 
-    def action_2(self, input_list):
+    def _action_2(self, input_list):
         """
         process VARIABLE_DECLARATION_PART
         :param input_tree:
@@ -140,3 +145,15 @@ class DeftPascalCompiler:
                                                                               self._stack_scope))
         else:
             print("[{0}] - incorrect variable declaration".format('2'))
+
+    def _action_3(self, input_list):
+        """
+        process LABEL_DECLARATION_PART
+        :param
+        :return:
+        """
+        #print(input_list)
+        if input_list[0].value.upper() == 'LABEL':
+            print('Labels detected - all will be ignored')
+        else:
+            print("[{0}] - incorrect label declaration".format('3'))
