@@ -130,8 +130,8 @@ class DeftPascalParser:
 
         // constants
         
-        CONSTANT_TRUE : "True"
-        CONSTANT_FALSE : "False"
+        CONSTANT_TRUE : "true"i
+        CONSTANT_FALSE : "false"i
         
         //types
         
@@ -166,7 +166,7 @@ class DeftPascalParser:
              
         CHARACTER : /\'[\ A-Za-z0-9!\"#$%^&\'()*+,\-.\/:;<=>?@\[\]]\'/
         STRING : /\'[\ A-Za-z0-9!\"#$%^&()*+,\-.\/:;<=>?@\[\]]{2,}\'/
-        NUMBER_DECIMAL : /[+-]?\d+([.]\d+(E[+-]?\d+)?)?/
+        NUMBER_DECIMAL : /[+-]?\d+([.]\d+([Ee][+-]?\d+)?)?/
         NUMBER_HEXADECIMAL : /\&[Hh][0-9A-F]+|\$[0-9A-F]+/
         NUMBER_OCTAL : /\&[Oo][0-7]+/
         NUMBER_BINARY : /\&[Bb][0-1]+/
