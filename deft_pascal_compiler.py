@@ -9,7 +9,7 @@ logging.basicConfig(level=logging.DEBUG)
 class DeftPascalCompiler:
 
     def __init__(self):
-        self._dp = DeftPascalParser()
+        self._parser = DeftPascalParser()
         self._symbol_table = SymbolTable()
 
         self._context = 0
@@ -30,7 +30,7 @@ class DeftPascalCompiler:
     def check_syntax(self, input_program):
         tree = None
         try:
-            tree = self._dp.compile(input_program)
+            tree = self._parser.parse(input_program)
         except UnexpectedToken as error:
             print('ERROR 1 - {0}'.format(error))
         except UnexpectedCharacters as error:

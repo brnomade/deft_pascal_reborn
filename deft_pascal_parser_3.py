@@ -188,7 +188,7 @@ class DeftPascalParser:
         parser = Lark(self._grammar(), parser='lalr', debug=True)
         self._parser = parser.parse
 
-    def compile(self, a_program):
+    def parse(self, a_program):
         return self._parser(a_program)
 
 
