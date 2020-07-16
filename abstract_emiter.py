@@ -33,12 +33,9 @@ class CEmitter(AbstractEmitter):
 
     def emit_action_2(self, a_constant_symbol):
         #
-        ctype = a_constant_symbol.type
-        cvalue = a_constant_symbol.value
-        #
         if a_constant_symbol.type in ["CHARACTER", "STRING"]:
             ctype = "unsigned char"
-            cvalue = cvalue.strip("'").strip('"')
+            cvalue = a_constant_symbol.value.strip("'").strip('"')
         elif a_constant_symbol.type == "NUMBER_DECIMAL":
             if "." in a_constant_symbol.value:
                 ctype = "float"
@@ -46,18 +43,22 @@ class CEmitter(AbstractEmitter):
                 ctype = "int"
             else:
                 ctype = "unsigned int"
+            cvalue = a_constant_symbol.value
         elif a_constant_symbol.type in ["CONSTANT_TRUE", "CONSTANT_FALSE"]:
             ctype = "_Bool"
             cvalue = "true" if a_constant_symbol.type == "CONSTANT_TRUE" else "false"
         elif a_constant_symbol.type == "NUMBER_HEXADECIMAL":
             ctype = "unsigned short"
-            cvalue = "0x{0}".format(cvalue.upper().strip("&H"))
+            cvalue = "0x{0}".format(a_constant_symbol.value.upper().strip("&H"))
         elif a_constant_symbol.type == "NUMBER_OCTAL":
             ctype = "unsigned short"
-            cvalue = "0{0}".format(cvalue.upper().strip("&O"))
+            cvalue = "0{0}".format(a_constant_symbol.value.upper().strip("&O"))
         elif a_constant_symbol.type == "NUMBER_BINARY":
             ctype = "unsigned short"
-            cvalue = "0b{0}".format(cvalue.upper().strip("&B"))
+            cvalue = "0b{0}".format(a_constant_symbol.value.upper().strip("&B"))
+        else:
+            ctype = a_constant_symbol.type
+            cvalue = a_constant_symbol.value
         #
         if a_constant_symbol.type in ["STRING"]:
             line = "const {0} {1} [ ] = \"{2}\";"
@@ -67,3 +68,18 @@ class CEmitter(AbstractEmitter):
             line = "const {0} {1} = {2};"
         #
         self.emit_line(line.format(ctype, a_constant_symbol.name.upper(), cvalue))
+
+    def emit_action_3(self, a_variable_symbol):
+        #
+        ctype = a_variable_symbol.type
+        if a_variable_symbol.type == "INTEGER":
+            ctype = "int"
+        elif a_variable_symbol.type == "REAL":
+            ctype = "float"
+        elif a_variable_symbol.type == "BYTE":
+            ctype = "unsigned char"
+        elif a_variable_symbol.type == "BOOLEAN":
+            ctype = "_Bool"
+        #
+        line = "{0} {1};"
+        self.emit_line(line.format(ctype, a_variable_symbol.name))

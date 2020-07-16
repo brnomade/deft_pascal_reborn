@@ -68,10 +68,10 @@ class DeftPascalCompiler:
     def _action_0(self, my_number, input_list):
         """
         process PROGRAM
-        :param input_tree:
-        :return: tree
+        :param
+        :return:
         """
-        #print(input_list)
+        # print(input_list)
         if input_list[0].value.upper() == 'PROGRAM':
             identifier = input_list[1].value
             self._stack_scope.append((identifier, 0))
@@ -93,11 +93,10 @@ class DeftPascalCompiler:
     def _action_1(self, my_number, input_token):
         """
         process DOT
-        :param input_tree:
-        :return: tree
+        :param
+        :return:
         """
-        action_number = 1
-        #print(input_list)
+        # print(input_list)
         if input_token.type.upper() == 'DOT':
             self._emitter.emit_action_1()
             print("[{0}] {1} : stack: {2} {3} {4}".format(my_number,
@@ -111,10 +110,10 @@ class DeftPascalCompiler:
     def _action_2(self, my_number, input_list):
         """
         process CONSTANT_DEFINITION_PART
-        :param input_tree:
-        :return: tree
+        :param
+        :return:
         """
-        #print(input_list)
+        # print(input_list)
         if input_list[0].value.upper() == 'CONST':
             input_list = input_list[1:]
             for constant_definition in input_list:
@@ -147,10 +146,10 @@ class DeftPascalCompiler:
     def _action_3(self, my_number, input_list):
         """
         process VARIABLE_DECLARATION_PART
-        :param input_tree:
-        :return: tree
+        :param
+        :return:
         """
-        #print(input_list)
+        # print(input_list)
         if input_list[0].value.upper() == 'VAR':
             input_list = input_list[1:]
             for variable_declaration in input_list:
@@ -168,6 +167,7 @@ class DeftPascalCompiler:
                     else:
                         self._symbol_table.append(a_symbol)
                         self._stack_variables.append(a_symbol)
+                        self._emitter.emit_action_3(a_symbol)
                         print("[{0}] {1} : '{2}' - stack: {3} {4} {5}".format(my_number,
                                                                               "variable declared",
                                                                               identifier,
@@ -180,10 +180,8 @@ class DeftPascalCompiler:
     def _action_4(self, my_number, input_list):
         """
         process LABEL_DECLARATION_PART
-        :param
-        :return:
         """
-        #print(input_list)
+        # print(input_list)
         if input_list[0].value.upper() == "LABEL":
             print("[{0}] {1} : all will be ignored".format(my_number, "labels declared"))
         else:
@@ -192,8 +190,6 @@ class DeftPascalCompiler:
     def _action_5(self, my_number, input_list):
         """
         process
-        :param
-        :return:
         """
         print(input_list)
 
