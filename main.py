@@ -56,7 +56,7 @@ def example_program_2():
 
 
 def example_program_4():
-    test_code = "PROGRAMx my_test_program( A1, A2, A3); \n" \
+    test_code = "PROGRAM my_test_program( A1, A2, A3); \n" \
                 "LABEL 100, 200, 300, 400;             \n" \
                 "CONST C1 = 2;                         \n" \
                 "C2 = 1;                               \n" \
