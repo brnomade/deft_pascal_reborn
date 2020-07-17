@@ -19,7 +19,7 @@ class DeftPascalParser:
              
         module : IDENTIFIER    
         
-       _program : program_heading _SEMICOLON _block DOT 
+       _program : program_heading _SEMICOLON _block _DOT 
         
         program_heading : RESERVED_STRUCTURE_PROGRAM IDENTIFIER 
                         | RESERVED_STRUCTURE_PROGRAM IDENTIFIER _LEFT_PARENTHESES _identifier_list _RIGHT_PARENTHESES
@@ -50,6 +50,7 @@ class DeftPascalParser:
         constant_definition : IDENTIFIER _OPERATOR_EQUAL_TO _constant_expression _SEMICOLON
         
         _constant_expression : NUMBER_DECIMAL
+                             | NUMBER_REAL
                              | NUMBER_BINARY
                              | NUMBER_OCTAL
                              | NUMBER_HEXADECIMAL
@@ -83,9 +84,9 @@ class DeftPascalParser:
 
         // STATEMENTS
 
-        _statement_part : compound_statement
+        _statement_part : _compound_statement
         
-        compound_statement : RESERVED_STRUCTURE_BEGIN _statement_sequence RESERVED_STRUCTURE_END
+        _compound_statement : RESERVED_STRUCTURE_BEGIN _statement_sequence RESERVED_STRUCTURE_END
                  
         _statement_sequence : _statement_sequence _SEMICOLON _statement
                            | _statement
@@ -104,7 +105,7 @@ class DeftPascalParser:
 
         _non_labeled_open_statement : |
 
-        assignment_statement : _variable_access _OPERATOR_ASSIGNMENT _expression
+        assignment_statement : _variable_access OPERATOR_ASSIGNMENT _expression
 
         _variable_access : IDENTIFIER
         
@@ -154,7 +155,7 @@ class DeftPascalParser:
         _OPERATOR_GREATER_THEN : ">"
         _OPERATOR_LESS_OR_EQUAL_TO : "<="
         _OPERATOR_LESS_THEN : "<"
-        _OPERATOR_ASSIGNMENT : ":="
+        OPERATOR_ASSIGNMENT : ":="
         
         // arithmetic operators
         
@@ -166,14 +167,16 @@ class DeftPascalParser:
              
         CHARACTER : /\'[\ A-Za-z0-9!\"#$%^&\'()*+,\-.\/:;<=>?@\[\]]\'/
         STRING : /\'[\ A-Za-z0-9!\"#$%^&()*+,\-.\/:;<=>?@\[\]]{2,}\'/
-        NUMBER_DECIMAL : /[+-]?\d+([.]\d+([Ee][+-]?\d+)?)?/
+        // NUMBER_DECIMAL : /[+-]?\d+([.]\d+([Ee][+-]?\d+)?)?/
+        NUMBER_DECIMAL : /[+-]?\d+/
+        NUMBER_REAL : /[+-]?\d+[.]\d+([Ee][+-]?\d+)?/
         NUMBER_HEXADECIMAL : /\&[Hh][0-9A-F]+|\$[0-9A-F]+/
         NUMBER_OCTAL : /\&[Oo][0-7]+/
         NUMBER_BINARY : /\&[Bb][0-1]+/
         DIGSEQ : /\d+/
         
         _SEMICOLON : ";"
-        DOT : "."
+        _DOT : "."
         _LEFT_PARENTHESES : "("
         _RIGHT_PARENTHESES : ")"
         _COMMA : ","

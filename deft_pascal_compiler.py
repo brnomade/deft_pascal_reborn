@@ -21,15 +21,19 @@ class DeftPascalCompiler:
         self._stack_scope = []
 
         self._actions = {"PROGRAM_HEADING": self._action_0,
-                         "DOT": self._action_1,
+                         "RESERVED_STRUCTURE_BEGIN": self._action_1,
                          "CONSTANT_DEFINITION_PART": self._action_2,
                          "VARIABLE_DECLARATION_PART": self._action_3,
                          "LABEL_DECLARATION_PART": self._action_4,
-                         "assignment_statement": self._action_5
+                         "RESERVED_STRUCTURE_END": self._action_5,
+                         "ASSIGNMENT_STATEMENT": self._action_6
                          }
 
         self._emitter = None
 
+    @staticmethod
+    def exception_raiser(exception):
+        raise exception
 
     def check_syntax(self, input_program):
         tree = None
@@ -68,8 +72,6 @@ class DeftPascalCompiler:
     def _action_0(self, my_number, input_list):
         """
         process PROGRAM
-        :param
-        :return:
         """
         # print(input_list)
         if input_list[0].value.upper() == 'PROGRAM':
@@ -77,8 +79,8 @@ class DeftPascalCompiler:
             self._stack_scope.append((identifier, 0))
             context_label = self._stack_scope[-1][0]
             context_level = self._stack_scope[-1][1]
-            self._symbol_table.append(Constant('True', context_label, context_level, True, 0))
-            self._symbol_table.append(Constant('False', context_label, context_level, False, 0))
+            self._symbol_table.append(Constant('TRUE', context_label, context_level, 'true', 'CONSTANT_TRUE'))
+            self._symbol_table.append(Constant('FALSE', context_label, context_level, 'false', 'CONSTANT_FALSE'))
             self._emitter = CEmitter(identifier)
             self._emitter.emit_action_0()
             print("[{0}] {1} : '{2}' - stack: {3} {4} {5}".format(my_number,
@@ -92,26 +94,22 @@ class DeftPascalCompiler:
 
     def _action_1(self, my_number, input_token):
         """
-        process DOT
-        :param
-        :return:
+        process RESERVED_STRUCTURE_BEGIN
         """
         # print(input_list)
-        if input_token.type.upper() == 'DOT':
+        if input_token.value.upper() == "BEGIN":
             self._emitter.emit_action_1()
             print("[{0}] {1} : stack: {2} {3} {4}".format(my_number,
-                                                          "program finished",
+                                                          input_token.value.upper(),
                                                           self._stack_constants,
                                                           self._symbol_table,
                                                           self._stack_scope))
         else:
-            print("[{0}] - incorrect program finalisation".format(my_number))
+            print("[{0}] - incorrect declaration".format(my_number))
 
     def _action_2(self, my_number, input_list):
         """
         process CONSTANT_DEFINITION_PART
-        :param
-        :return:
         """
         # print(input_list)
         if input_list[0].value.upper() == 'CONST':
@@ -141,13 +139,11 @@ class DeftPascalCompiler:
                                                                           self._stack_scope))
 
         else:
-            print("[{0}] - incorrect constant declaration".format(my_number))
+            print("[{0}] - incorrect declaration".format(my_number))
 
     def _action_3(self, my_number, input_list):
         """
         process VARIABLE_DECLARATION_PART
-        :param
-        :return:
         """
         # print(input_list)
         if input_list[0].value.upper() == 'VAR':
@@ -168,14 +164,12 @@ class DeftPascalCompiler:
                         self._symbol_table.append(a_symbol)
                         self._stack_variables.append(a_symbol)
                         self._emitter.emit_action_3(a_symbol)
-                        print("[{0}] {1} : '{2}' - stack: {3} {4} {5}".format(my_number,
-                                                                              "variable declared",
-                                                                              identifier,
-                                                                              self._stack_variables,
-                                                                              self._symbol_table,
-                                                                              self._stack_scope))
+                        print("[{0}] {1} : '{2}' - {3}".format(my_number,
+                                                               "variable declared",
+                                                               identifier,
+                                                               a_symbol))
         else:
-            print("[{0}] - incorrect variable declaration".format(my_number))
+            print("[{0}] - incorrect declaration".format(my_number))
 
     def _action_4(self, my_number, input_list):
         """
@@ -185,11 +179,116 @@ class DeftPascalCompiler:
         if input_list[0].value.upper() == "LABEL":
             print("[{0}] {1} : all will be ignored".format(my_number, "labels declared"))
         else:
-            print("[{0}] - incorrect label declaration".format(my_number))
+            print("[{0}] - incorrect declaration".format(my_number))
 
-    def _action_5(self, my_number, input_list):
+    def _action_5(self, my_number, input_token):
         """
-        process
+        process END
         """
-        print(input_list)
+        # print(input_list)
+        if input_token.value.upper() == 'END':
+            self._emitter.emit_action_5()
+            print("[{0}] {1} : stack: {2} {3} {4}".format(my_number,
+                                                          input_token.value.upper(),
+                                                          self._stack_constants,
+                                                          self._symbol_table,
+                                                          self._stack_scope))
+        else:
+            print("[{0}] - incorrect declaration".format(my_number))
 
+    def _action_6(self, my_number, token_list):
+        # print(token_list)
+        if len(token_list) == 3 and token_list[1].type.upper() == 'OPERATOR_ASSIGNMENT':
+            # check variable exists
+            token = token_list[0]
+            identifier = token.value if token.type == "IDENTIFIER" else self.exception_raiser(UnexpectedToken)
+            context_label = self._stack_scope[-1][0]
+            context_level = self._stack_scope[-1][1]
+            a_variable = Variable(identifier, context_label, context_level, None, None)
+            # scenarios:
+            # - identifier not declared
+            # - identifier declared on same scope
+            # - identifier declared on a lower scope
+            if self._symbol_table.has_equal(a_variable, equal_type=True, equal_level=True, equal_name=True):
+                a_variable = self._symbol_table.get(a_variable)
+            elif self._symbol_table.has_equal(a_variable, equal_type=True, equal_level=False, equal_name=True):
+                a_variable = self._symbol_table.get_from_lower_scope(a_variable)
+            else:
+                msg = "[{0}] {1} : Error - assignment to undeclared variable : stack: {2} {3} {4}"
+                print(msg.format(my_number,
+                      token.value.upper(),
+                      self._stack_constants,
+                      self._symbol_table,
+                      self._stack_scope))
+            # check what is being assigned is of acceptable type
+            token = token_list[2]
+            context_label = self._stack_scope[-1][0]
+            context_level = self._stack_scope[-1][1]
+            a_constant = Constant(token.value, context_label, context_level, token.value, token.type)
+            valid_types = ["NUMBER_DECIMAL", "NUMBER_BINARY", "NUMBER_OCTAL", "NUMBER_HEXADECIMAL",
+                           "CHARACTER", "STRING", "CONSTANT_TRUE", "CONSTANT_FALSE", "NUMBER_REAL"
+                           ]
+            if a_constant.type not in valid_types:
+                msg = "[{0}] {1} : Error - unexpected variable type : stack: {2} {3} {4}"
+                print(msg.format(my_number,
+                                 a_constant.type.upper(),
+                                 self._stack_constants,
+                                 self._symbol_table,
+                                 self._stack_scope))
+            # check variable and constant are of compatible types
+            if a_variable.type == "REAL" and a_constant.type.upper() == "NUMBER_REAL":
+                self._emitter.emit_action_6(a_variable, a_constant)
+                print("[{0}] {1} : stack: {2} {3} {4}".format(my_number,
+                                                              token_list[0].value.upper(),
+                                                              self._stack_constants,
+                                                              self._symbol_table,
+                                                              self._stack_scope))
+            elif a_variable.type in ["INTEGER", "WORD", "BYTE"] and a_constant.type.upper() in ["NUMBER_DECIMAL", "NUMBER_BINARY", "NUMBER_OCTAL", "NUMBER_HEXADECIMAL"]:
+                self._emitter.emit_action_6(a_variable, a_constant)
+                print("[{0}] {1} : stack: {2} {3} {4}".format(my_number,
+                                                              token_list[1].value.upper(),
+                                                              self._stack_constants,
+                                                              self._symbol_table,
+                                                              self._stack_scope))
+            elif a_variable.type == "BOOLEAN" and a_constant.type.upper() in ["CONSTANT_TRUE", "CONSTANT_FALSE"]:
+                if self._symbol_table.has_equal(a_constant, equal_type=True, equal_level=True, equal_name=True):
+                    a_constant = self._symbol_table.get(a_constant)
+                elif self._symbol_table.has_equal(a_constant, equal_type=True, equal_level=False, equal_name=True):
+                    a_constant = self._symbol_table.get_from_lower_scope(a_constant)
+                else:
+                    msg = "[{0}] {1} : Error - use of undeclared boolean constant : stack: {2} {3} {4}"
+                    print(msg.format(my_number,
+                          a_constant.value.upper(),
+                          self._stack_constants,
+                          self._symbol_table,
+                          self._stack_scope))
+                self._emitter.emit_action_6(a_variable, a_constant)
+                print("[{0}] {1} : stack: {2} {3} {4}".format(my_number,
+                                                              token_list[1].value.upper(),
+                                                              self._stack_constants,
+                                                              self._symbol_table,
+                                                              self._stack_scope))
+            elif a_variable.type in ["STRING", "TEXT"] and a_constant.type.upper() in ["CHARACTER", "STRING"]:
+                self._emitter.emit_action_6(a_variable, a_constant)
+                print("[{0}] {1} : stack: {2} {3} {4}".format(my_number,
+                                                              token_list[1].value.upper(),
+                                                              self._stack_constants,
+                                                              self._symbol_table,
+                                                              self._stack_scope))
+            elif a_variable.type == "CHAR" and a_constant.type.upper() == "CHARACTER":
+                self._emitter.emit_action_6(a_variable, a_constant)
+                print("[{0}] {1} : stack: {2} {3} {4}".format(my_number,
+                                                              token_list[1].value.upper(),
+                                                              self._stack_constants,
+                                                              self._symbol_table,
+                                                              self._stack_scope))
+            else:
+                msg = "[{0}] {1} <- {2} : Error - assignment of incorrect data type : stack: {3} {4} {5}"
+                print(msg.format(my_number,
+                                 a_variable.type,
+                                 token.type.upper(),
+                                 self._stack_constants,
+                                 self._symbol_table,
+                                 self._stack_scope))
+        else:
+           print("[{0}] - incorrect declaration".format(my_number))

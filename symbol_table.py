@@ -3,7 +3,7 @@ from collections import deque
 
 class BaseSymbol:
 
-    def __init__(self, a_name, a_scope, a_level, attribute_a, attribute_b):
+    def __init__(self, a_name, a_scope=None, a_level=None, attribute_a=None, attribute_b=None):
         self._name = a_name
         self._scope = a_scope
         self._level = a_level

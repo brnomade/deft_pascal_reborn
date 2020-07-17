@@ -25,11 +25,9 @@ class CEmitter(AbstractEmitter):
     def emit_action_0(self):
         self.header_line("#include <stdio.h>")
         self.header_line("#include <stdbool.h>")
-        self.header_line("int main(void){")
 
     def emit_action_1(self):
-        self.emit_line("return 0;")
-        self.emit_line("}")
+        self.emit_line("int main(void){")
 
     def emit_action_2(self, a_constant_symbol):
         #
@@ -37,12 +35,13 @@ class CEmitter(AbstractEmitter):
             ctype = "unsigned char"
             cvalue = a_constant_symbol.value.strip("'").strip('"')
         elif a_constant_symbol.type == "NUMBER_DECIMAL":
-            if "." in a_constant_symbol.value:
-                ctype = "float"
-            elif "-" in a_constant_symbol.type:
+            if "-" in a_constant_symbol.value:
                 ctype = "int"
             else:
                 ctype = "unsigned int"
+            cvalue = a_constant_symbol.value
+        elif a_constant_symbol.type == "NUMBER_REAL":
+            ctype = "float"
             cvalue = a_constant_symbol.value
         elif a_constant_symbol.type in ["CONSTANT_TRUE", "CONSTANT_FALSE"]:
             ctype = "_Bool"
@@ -67,7 +66,7 @@ class CEmitter(AbstractEmitter):
         else:
             line = "const {0} {1} = {2};"
         #
-        self.emit_line(line.format(ctype, a_constant_symbol.name.upper(), cvalue))
+        self.header_line(line.format(ctype, a_constant_symbol.name.upper(), cvalue))
 
     def emit_action_3(self, a_variable_symbol):
         #
@@ -80,6 +79,17 @@ class CEmitter(AbstractEmitter):
             ctype = "unsigned char"
         elif a_variable_symbol.type == "BOOLEAN":
             ctype = "_Bool"
+        elif a_variable_symbol.type == "CHAR":
+            ctype = "unsigned char"
         #
         line = "{0} {1};"
-        self.emit_line(line.format(ctype, a_variable_symbol.name))
+        self.header_line(line.format(ctype, a_variable_symbol.name))
+
+    def emit_action_5(self):
+        self.emit_line("return 0;")
+        self.emit_line("}")
+
+    def emit_action_6(self, a_variable_symbol, a_constant_symbol):
+        line = "{0} = {1};"
+        self.emit_line(line.format(a_variable_symbol.name, a_constant_symbol.value))
+
