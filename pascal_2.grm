@@ -123,6 +123,7 @@ constant : non_string
  | CHARACTER_STRING
  ;
 
+[DONE]
 sign : PLUS
  | MINUS
  ;
@@ -438,6 +439,7 @@ actual_parameter_list : actual_parameter_list comma actual_parameter
  * writeln use the 2nd and 3rd forms, you really can't do it easily in
  * the grammar, especially since write and writeln aren't reserved
  */
+
 actual_parameter : expression
  | expression COLON expression
  | expression COLON expression COLON expression
@@ -483,22 +485,27 @@ record_variable_list : record_variable_list comma variable_access
 
 boolean_expression : expression ;
 
+[DONE]
 expression : simple_expression
  | simple_expression relop simple_expression
  ;
 
+[DONE]
 simple_expression : term
  | simple_expression addop term
  ;
 
+[DONE]
 term : factor
  | term mulop factor
  ;
 
+[DONE]
 factor : sign factor
  | exponentiation
  ;
 
+[DONE]
 exponentiation : primary
  | primary STARSTAR exponentiation
  ;
@@ -511,16 +518,20 @@ primary : variable_access
  | NOT primary
  ;
 
+[DONE]
 unsigned_constant : unsigned_number
  | CHARACTER_STRING
  | NIL
  ;
 
+[DONE]
 unsigned_number : unsigned_integer | unsigned_real ;
 
+[DONE]
 unsigned_integer : DIGSEQ
  ;
 
+[DONE]
 unsigned_real : REALNUMBER
  ;
 

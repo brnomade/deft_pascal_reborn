@@ -3,12 +3,12 @@ from collections import deque
 
 class BaseSymbol:
 
-    def __init__(self, a_name, a_scope=None, a_level=None, attribute_a=None, attribute_b=None):
+    def __init__(self, a_name, a_scope=None, a_level=None, a_type=None, a_value=None):
         self._name = a_name
         self._scope = a_scope
         self._level = a_level
-        self._attribute_a = attribute_a
-        self._attribute_b = attribute_b
+        self._type = a_type
+        self._value = a_value
         self._reference_stack = []
 
     def __str__(self):
@@ -16,8 +16,8 @@ class BaseSymbol:
                                                        self.name,
                                                        self.scope,
                                                        self.level,
-                                                       self.first_attribute,
-                                                       self.second_attribute,
+                                                       self.type,
+                                                       self.value,
                                                        self.references)
 
     def __repr__(self):
@@ -25,8 +25,8 @@ class BaseSymbol:
                                                        self.name,
                                                        self.scope,
                                                        self.level,
-                                                       self.first_attribute,
-                                                       self.second_attribute,
+                                                       self.type,
+                                                       self.value,
                                                        self.references)
 
     @property
@@ -42,12 +42,12 @@ class BaseSymbol:
         return self._level
 
     @property
-    def first_attribute(self):
-        return self._attribute_a
+    def type(self):
+        return self._type
 
     @property
-    def second_attribute(self):
-        return self._attribute_b
+    def value(self):
+        return self._value
 
     @property
     def category(self):
@@ -76,13 +76,13 @@ class BaseSymbol:
     def level(self, new_level):
         self._level = new_level
 
-    @first_attribute.setter
-    def first_attribute(self, new_attribute):
-        self._attribute_a = new_attribute
+    @type.setter
+    def type(self, new_type):
+        self._type = new_type
 
-    @second_attribute.setter
-    def second_attribute(self, new_attribute):
-        self._attribute_b = new_attribute
+    @value.setter
+    def value(self, new_value):
+        self._value = new_value
 
     def push_reference(self, reference):
         self._reference_stack.append(reference)
@@ -130,32 +130,20 @@ class EnumeratedField(BaseSymbol):
 
 class Variable(BaseSymbol):
 
-    @property
-    def type(self):
-        return self._attribute_a
-
-    @type.setter
-    def type(self, new_type):
-        self._attribute_a = new_type
+    def do_nothing(self):
+        pass
 
 
 class Constant(BaseSymbol):
 
-    @property
-    def value(self):
-        return self._attribute_a
+    def do_nothing(self):
+        pass
 
-    @property
-    def type(self):
-        return self._attribute_b
 
-    @value.setter
-    def value(self, new_value):
-        self._attribute_a = new_value
+class Operator(BaseSymbol):
 
-    @type.setter
-    def type(self, new_type):
-        self._attribute_b = new_type
+    def do_nothing(self):
+        pass
 
 
 class Procedure(BaseSymbol):

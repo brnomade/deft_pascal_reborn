@@ -22,7 +22,7 @@ class DeftPascalParser:
        _program : program_heading _SEMICOLON _block _DOT 
         
         program_heading : RESERVED_STRUCTURE_PROGRAM IDENTIFIER 
-                        | RESERVED_STRUCTURE_PROGRAM IDENTIFIER _LEFT_PARENTHESES _identifier_list _RIGHT_PARENTHESES
+                        | RESERVED_STRUCTURE_PROGRAM IDENTIFIER LEFT_PARENTHESES _identifier_list RIGHT_PARENTHESES
                                 
         _identifier_list : _identifier_list _COMMA IDENTIFIER
                          | IDENTIFIER
@@ -37,7 +37,7 @@ class DeftPascalParser:
         _label_list : _label_list _COMMA _label
                     | _label
 
-        _label : DIGSEQ
+        _label : UNSIGNED_DECIMAL
           
         // CONSTANT DECLARATIONS  
                       
@@ -49,8 +49,10 @@ class DeftPascalParser:
                   
         constant_definition : IDENTIFIER _OPERATOR_EQUAL_TO _constant_expression _SEMICOLON
         
-        _constant_expression : NUMBER_DECIMAL
-                             | NUMBER_REAL
+        _constant_expression : UNSIGNED_DECIMAL
+                             | SIGNED_DECIMAL
+                             | UNSIGNED_REAL
+                             | SIGNED_REAL
                              | NUMBER_BINARY
                              | NUMBER_OCTAL
                              | NUMBER_HEXADECIMAL
@@ -109,10 +111,63 @@ class DeftPascalParser:
 
         _variable_access : IDENTIFIER
         
-        _expression : _constant_expression
+        // _expression : _constant_expression
+  
+        //// NEW PART
+  
+        _expression : _simple_expression
+                    | _simple_expression relop _simple_expression
+ 
+        relop : _OPERATOR_EQUAL_TO
+              | _OPERATOR_NOT_EQUAL_TO
+              | _OPERATOR_LESS_THEN
+              | _OPERATOR_GREATER_THEN
+              | _OPERATOR_LESS_OR_EQUAL_TO
+              | _OPERATOR_GREATER_OR_EQUAL_TO
+              | RESERVED_IN
+             
+        _simple_expression : _term
+                           | _simple_expression _addop _term
+ 
+        _addop : OPERATOR_PLUS
+               | OPERATOR_MINUS
+               | RESERVED_OPERATOR_OR
 
-        IDENTIFIER: /[_A-Za-z]+[A-Za-z0-9_]*/
-        
+        _term : _factor
+              | _term _mulop _factor
+              
+        _mulop : OPERATOR_MULTIPLY
+               | OPERATOR_DIVIDE
+               | RESERVED_OPERATOR_DIV
+               | RESERVED_OPERATOR_MOD
+               | RESERVED_OPERATOR_AND
+    
+        _factor : _sign _factor
+                | _exponentiation
+ 
+        _sign : OPERATOR_PLUS
+              | OPERATOR_MINUS
+
+        _exponentiation : _primary
+                        | _primary OPERATOR_STARSTAR _exponentiation
+ 
+        _primary : _variable_access
+                 | _unsigned_constant
+                 | LEFT_PARENTHESES _expression RIGHT_PARENTHESES
+                 | RESERVED_OPERATOR_NOT _primary
+
+        _unsigned_constant : _unsigned_number
+                           | CHARACTER
+                           | CONSTANT_NIL
+                           | CONSTANT_TRUE
+                           | CONSTANT_FALSE
+                           
+        _unsigned_number : _unsigned_integer | _unsigned_real
+
+        _unsigned_integer : UNSIGNED_DECIMAL
+ 
+        _unsigned_real : UNSIGNED_REAL
+       
         // structure
         
         RESERVED_STRUCTURE_PROGRAM : "program"i
@@ -133,6 +188,7 @@ class DeftPascalParser:
         
         CONSTANT_TRUE : "true"i
         CONSTANT_FALSE : "false"i
+        CONSTANT_NIL : "nil"i       
         
         //types
         
@@ -147,6 +203,10 @@ class DeftPascalParser:
         RESERVED_TYPE_WORD : "word"i
         RESERVED_TYPE_SET : "set"i
             
+        // keywords
+        
+        RESERVED_IN : "in"i
+            
         // logical operators 
         
         _OPERATOR_EQUAL_TO : "="
@@ -156,33 +216,41 @@ class DeftPascalParser:
         _OPERATOR_LESS_OR_EQUAL_TO : "<="
         _OPERATOR_LESS_THEN : "<"
         OPERATOR_ASSIGNMENT : ":="
+        RESERVED_OPERATOR_OR : "or"i
+        RESERVED_OPERATOR_AND : "and"i
+        RESERVED_OPERATOR_NOT : "not"i
         
         // arithmetic operators
         
         OPERATOR_MULTIPLY : "*"
+        OPERATOR_STARSTAR : "**"
         OPERATOR_PLUS : "+"
         OPERATOR_MINUS : "-"
         OPERATOR_DIVIDE : "/"
-
+        RESERVED_OPERATOR_MOD : "mod"i
+        RESERVED_OPERATOR_DIV : "div"i
+        
+        // regular expressions
              
+        IDENTIFIER: /[_A-Za-z]+[A-Za-z0-9_]*/
         CHARACTER : /\'[\ A-Za-z0-9!\"#$%^&\'()*+,\-.\/:;<=>?@\[\]]\'/
         STRING : /\'[\ A-Za-z0-9!\"#$%^&()*+,\-.\/:;<=>?@\[\]]{2,}\'/
-        // NUMBER_DECIMAL : /[+-]?\d+([.]\d+([Ee][+-]?\d+)?)?/
-        NUMBER_DECIMAL : /[+-]?\d+/
-        NUMBER_REAL : /[+-]?\d+[.]\d+([Ee][+-]?\d+)?/
+        SIGNED_DECIMAL : /[+-]\d+/
+        UNSIGNED_DECIMAL : /\d+/
+        SIGNED_REAL : /[+-]?\d+[.]\d+([Ee][+-]?\d+)?/
+        UNSIGNED_REAL : /\d+[.]\d+([Ee][+-]?\d+)?/
         NUMBER_HEXADECIMAL : /\&[Hh][0-9A-F]+|\$[0-9A-F]+/
         NUMBER_OCTAL : /\&[Oo][0-7]+/
         NUMBER_BINARY : /\&[Bb][0-1]+/
-        DIGSEQ : /\d+/
+        //DIGSEQ : /\d+/
         
         _SEMICOLON : ";"
         _DOT : "."
-        _LEFT_PARENTHESES : "("
-        _RIGHT_PARENTHESES : ")"
+        LEFT_PARENTHESES : "("
+        RIGHT_PARENTHESES : ")"
         _COMMA : ","
         _COLON : ":"
         
-       
         %ignore /[\t \f\\n]+/  
         """
         return specification

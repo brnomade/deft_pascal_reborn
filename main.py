@@ -76,8 +76,9 @@ def example_program_4():
                 "    V5 : BYTE;                        \n" \
                 "    V6 : CHAR;                        \n" \
                 "BEGIN                                 \n" \
-                " V2 := 2;                             \n" \
+                " V2 := 2 + V1 * (2 / 3);               \n" \
                 " V4 := TRUE;                          \n" \
+                " V1 := 1;                             \n" \
                 " V6 := 'C';                           \n" \
                 "END.                                  \n"
     return test_code

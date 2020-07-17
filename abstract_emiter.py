@@ -34,13 +34,13 @@ class CEmitter(AbstractEmitter):
         if a_constant_symbol.type in ["CHARACTER", "STRING"]:
             ctype = "unsigned char"
             cvalue = a_constant_symbol.value.strip("'").strip('"')
-        elif a_constant_symbol.type == "NUMBER_DECIMAL":
-            if "-" in a_constant_symbol.value:
-                ctype = "int"
-            else:
-                ctype = "unsigned int"
+        elif a_constant_symbol.type == "SIGNED_DECIMAL":
+            ctype = "int"
             cvalue = a_constant_symbol.value
-        elif a_constant_symbol.type == "NUMBER_REAL":
+        elif a_constant_symbol.type == "UNSIGNED_DECIMAL":
+            ctype = "unsigned int"
+            cvalue = a_constant_symbol.value
+        elif a_constant_symbol.type in ["SIGNED_REAL", "UNSIGNED_REAL"]:
             ctype = "float"
             cvalue = a_constant_symbol.value
         elif a_constant_symbol.type in ["CONSTANT_TRUE", "CONSTANT_FALSE"]:
@@ -89,7 +89,12 @@ class CEmitter(AbstractEmitter):
         self.emit_line("return 0;")
         self.emit_line("}")
 
-    def emit_action_6(self, a_variable_symbol, a_constant_symbol):
-        line = "{0} = {1};"
-        self.emit_line(line.format(a_variable_symbol.name, a_constant_symbol.value))
+    def emit_action_6(self, a_symbol):
+        line = "{0} "
+        if a_symbol.type == "OPERATOR_ASSIGNMENT":
+            line = "= "
+        self.emit(line.format(a_symbol.name))
 
+    def emit_action_6_finish(self, ):
+        line = ";"
+        self.emit_line(line)
