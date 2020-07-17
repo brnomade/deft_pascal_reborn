@@ -45,28 +45,35 @@ class DeftPascalCompiler:
             print('ERROR 2 - {0}'.format(error))
         return tree
 
+    def _compile_tree(self, a_tree):
+        try:
+            action_name = a_tree.data.upper()
+            action_to_call = self._actions[action_name]
+            action_number = action_to_call.__name__.split("_")[-1]
+        except KeyError:
+            print("action '{0}' not yet implemented".format(a_tree.data.upper()))
+        else:
+            action_to_call(action_number, a_tree.children)
+
+    def _compile_token(self, a_token):
+        try:
+            action_name = a_token.type.upper()
+            action_to_call = self._actions[action_name]
+            action_number = action_to_call.__name__.split("_")[-1]
+        except KeyError:
+            print("action '{0}' not yet implemented".format(a_token.type.upper()))
+        else:
+            action_to_call(action_number, a_token)
+
     def compile(self, ast):
         for i in ast.children:
+            #
             if isinstance(i, Tree):
-                try:
-                    action_name = i.data.upper()
-                    action_to_call = self._actions[action_name]
-                    action_number = action_to_call.__name__.split("_")[-1]
-                except KeyError:
-                    print("action '{0}' not yet implemented".format(i.data.upper()))
-                else:
-                    action_to_call(action_number, i.children)
+                self._compile_tree(i)
             elif isinstance(i, Token):
-                try:
-                    action_name = i.type.upper()
-                    action_to_call = self._actions[action_name]
-                    action_number = action_to_call.__name__.split("_")[-1]
-                except KeyError:
-                    print("action '{0}' not yet implemented".format(i.type.upper()))
-                else:
-                    action_to_call(action_number, i)
+                self._compile_token(i)
             else:
-                print('Error')
+                raise TypeError('Error - unknown AST object {0}'.format(i))
         self._emitter.write_file()
 
     def _action_0(self, my_number, input_list):
@@ -131,12 +138,7 @@ class DeftPascalCompiler:
                 else:
                     self._symbol_table.append(a_symbol)
                     self._emitter.emit_action_2(a_symbol)
-                    print("[{0}] {1} : '{2}' - stack: {3} {4} {5}".format(my_number,
-                                                                          "constant declared",
-                                                                          identifier,
-                                                                          self._stack_constants,
-                                                                          self._symbol_table,
-                                                                          self._stack_scope))
+                    print("[{0}] {1} : {2}".format(my_number, "constant declared", a_symbol))
 
         else:
             print("[{0}] - incorrect declaration".format(my_number))
@@ -164,10 +166,7 @@ class DeftPascalCompiler:
                         self._symbol_table.append(a_symbol)
                         self._stack_variables.append(a_symbol)
                         self._emitter.emit_action_3(a_symbol)
-                        print("[{0}] {1} : '{2}' - {3}".format(my_number,
-                                                               "variable declared",
-                                                               identifier,
-                                                               a_symbol))
+                        print("[{0}] {1} : {2}".format(my_number, "variable declared", a_symbol))
         else:
             print("[{0}] - incorrect declaration".format(my_number))
 
@@ -243,7 +242,10 @@ class DeftPascalCompiler:
                                                               self._stack_constants,
                                                               self._symbol_table,
                                                               self._stack_scope))
-            elif a_variable.type in ["INTEGER", "WORD", "BYTE"] and a_constant.type.upper() in ["NUMBER_DECIMAL", "NUMBER_BINARY", "NUMBER_OCTAL", "NUMBER_HEXADECIMAL"]:
+            elif a_variable.type in ["INTEGER", "WORD", "BYTE"] and a_constant.type.upper() in ["NUMBER_DECIMAL",
+                                                                                                "NUMBER_BINARY",
+                                                                                                "NUMBER_OCTAL",
+                                                                                                "NUMBER_HEXADECIMAL"]:
                 self._emitter.emit_action_6(a_variable, a_constant)
                 print("[{0}] {1} : stack: {2} {3} {4}".format(my_number,
                                                               token_list[1].value.upper(),
@@ -291,4 +293,6 @@ class DeftPascalCompiler:
                                  self._symbol_table,
                                  self._stack_scope))
         else:
-           print("[{0}] - incorrect declaration".format(my_number))
+            print("[{0}] - incorrect declaration".format(my_number))
+
+

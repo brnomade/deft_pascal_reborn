@@ -58,8 +58,8 @@ def example_program_2():
 def example_program_4():
     test_code = "PROGRAM my_test_program( A1, A2, A3); \n" \
                 "LABEL 100, 200, 300, 400;             \n" \
-                "CONST C1 = -2;                         \n" \
-                "C2 = +1;                               \n" \
+                "CONST C1 = -2;                        \n" \
+                "C2 = +1;                              \n" \
                 "C3 = 1.0;                             \n" \
                 "C4 = &HFF;                            \n" \
                 "C5 = &B10;                            \n" \
@@ -77,9 +77,9 @@ def example_program_4():
                 "    V6 : CHAR;                        \n" \
                 "BEGIN                                 \n" \
                 " V2 := 2;                             \n" \
-                " V4 := TRUE;                           \n" \
+                " V4 := TRUE;                          \n" \
                 " V6 := 'C';                           \n" \
-                "END            .                      \n"
+                "END.                                  \n"
     return test_code
 
 
