@@ -30,6 +30,8 @@ class DeftPascalReservedSymbols:
             'program': 'RESERVED_STRUCTURE_PROGRAM',
             'interface': 'RESERVED_STRUCTURE_INTERFACE',
             'module': 'RESERVED_STRUCTURE_MODULE',
+            'begin': 'RESERVED_STRUCTURE_BEGIN',
+            'end': 'RESERVED_STRUCTURE_END',
 
             # declarations
             'const': 'RESERVED_DECLARATION_CONST',
@@ -40,8 +42,6 @@ class DeftPascalReservedSymbols:
             'function': 'RESERVED_DECLARATION_FUNCTION',
 
             # statements
-            'begin': 'RESERVED_STATEMENT_BEGIN',
-            'end': 'RESERVED_STATEMENT_END',
             'case': 'RESERVED_STATEMENT_CASE',
             'of': 'RESERVED_STATEMENT_OF',
             'else': 'RESERVED_STATEMENT_ELSE',
@@ -88,10 +88,9 @@ class DeftPascalReservedSymbols:
 
         }
 
-        self._reserved_literals = ['!', '"', '#', '$', '%', '^', '&', '(', ')',
-                                   '*', '+', ',', '-', '.', '/', ':', ';', '<',
-                                   '=', '>', '?', '@', '[', ']'
-                                  ]
+        self._reserved_literals = ['!', '"', '#', '$', '%', '^', '&',
+                                   '?', '@'
+                                   ]
 
     def reserved_keywords(self):
         return list(self._reserved_keywords.values())
@@ -106,10 +105,6 @@ class DeftPascalReservedSymbols:
 class DeftPascalLexer:
     tokens = [
                  # Symbols and operators
-                 #'PLUS',
-                 #'MINUS',
-                 #'MULTIPLY',
-                 #'DIVIDE',
 
                  #'LANGLE',  # LEFT ANGLE BRACKET '<'
                  #'RANGLE',
@@ -138,17 +133,26 @@ class DeftPascalLexer:
                  # strings
                  'CHARACTER',
                  'STRING',
+
                  'WHERE',
 
                  # identifiers
                  'IDENTIFIER',
 
-                 # operators
+                 # logical operators
                  'OPERATOR_EQUAL_TO',
                  'OPERATOR_NOT_EQUAL_TO',
                  'OPERATOR_GREATER_OR_EQUAL_TO',
+                 'OPERATOR_GREATER_THEN',
                  'OPERATOR_LESS_OR_EQUAL_TO',
+                 'OPERATOR_LESS_THEN',
                  'OPERATOR_ASSIGNMENT',
+
+                 # aritmetic operators
+                 'OPERATOR_MULTIPLY',
+                 'OPERATOR_PLUS',
+                 'OPERATOR_MINUS',
+                 'OPERATOR_DIVIDE',
 
                  # structures
                  'COMMENT',
@@ -160,6 +164,7 @@ class DeftPascalLexer:
                  'RANGE',
                  'LEFT_SQUARE_BRACKET',
                  'RIGHT_SQUARE_BRACKET',
+                 'DOT',
 
                  # constants
                  'CONSTANT_TRUE',
@@ -167,10 +172,8 @@ class DeftPascalLexer:
 
              ] + DeftPascalReservedSymbols().reserved_keywords()
 
-    #t_PLUS = r'\+'
-    #t_MINUS = r'\-'
-    #t_MULTIPLY = r'\*'
-    #t_DIVIDE = r'\/'
+    literals = DeftPascalReservedSymbols().reserved_literals()
+
     #t_POWER = r'\^'
     # t_ATRATE = r'\@'
     # t_LCURLY = r'\{'
@@ -179,30 +182,35 @@ class DeftPascalLexer:
     # t_PERCENT = r'\%'
     #t_DOUBLESTAR = r'\*\*'
     # t_DOUBLESLASH = r'\\\\'
-    #t_LANGLE = r'\<'
-    #t_RANGLE = r'\>'
-    #t_DOT = r'\.'
     # t_INVERTCOMMA = r'\''
     # t_INVERTDOUBLECOMMA = r'\"'
 
-    t_LEFT_PARENTHESES = r'\('
-    t_RIGHT_PARENTHESES = r'\)'
+    t_DOT = r'\.'
     t_COLON = r'\:'
     t_SEMICOLON = r'\;'
     t_COMMA = r'\,'
     t_RANGE = r'\.{2}'
+    t_LEFT_PARENTHESES = r'\('
+    t_RIGHT_PARENTHESES = r'\)'
     t_LEFT_SQUARE_BRACKET = r'\['
     t_RIGHT_SQUARE_BRACKET = r'\]'
 
     t_OPERATOR_EQUAL_TO = r'\='
     t_OPERATOR_NOT_EQUAL_TO = r'\<\>'
     t_OPERATOR_GREATER_OR_EQUAL_TO = r'\>\='
+    t_OPERATOR_GREATER_THEN = r'\>'
     t_OPERATOR_LESS_OR_EQUAL_TO = r'\<\='
+    t_OPERATOR_LESS_THEN = r'\<'
     t_OPERATOR_ASSIGNMENT = r'\:\='
+    t_OPERATOR_MULTIPLY = r'\*'
+    t_OPERATOR_PLUS = r'\+'
+    t_OPERATOR_MINUS = r'\-'
+    t_OPERATOR_DIVIDE = r'\/'
 
     def t_IDENTIFIER(self, t):
         r'[_A-Za-z]+[A-Za-z0-9_]*'
         t.type = self._reserved.get_keyword(t.value.lower(), 'IDENTIFIER')
+        # print("t_identifier -> searching '{0}' found '{1}'".format(t.value.lower(), t.type))
         if t.value == 'True':
             t.type = 'CONSTANT_TRUE'
         elif t.value == 'False':
@@ -257,11 +265,12 @@ class DeftPascalLexer:
 
     # Error handling rule
     def t_error(self, t):
-        print("Syntax error at {0},{1} - illegal character '{2}'".format(t.lineno, t.lexpos, t.value))
+        print("Error at {0},{1} - illegal character '{2}'".format(t.lineno, t.lexpos, t.value))
         t.lexer.skip(1)
 
     def __init__(self, debug_flag=False):
         self._reserved = DeftPascalReservedSymbols()
+        self._literals = DeftPascalReservedSymbols().reserved_literals()
         self._lexer = lex.lex(module=self, debug=debug_flag)
 
     def set_input(self, input_string):
@@ -270,3 +279,5 @@ class DeftPascalLexer:
     def get_token(self):
         return self._lexer.token()
 
+    def get_lexer(self):
+        return self._lexer

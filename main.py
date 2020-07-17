@@ -1,6 +1,8 @@
-from deft_pascal_parser import DeftPascalParser
+from deft_pascal_parser_3 import DeftPascalParser
+from deft_pascal_compiler import DeftPascalCompiler
 
 glb_new_line_symbol = "\n"
+
 
 def example_program_1():
     source = "PROGRAM Example;" \
@@ -27,18 +29,67 @@ def example_program_1():
     return source
 
 
-def example_labels():
-    source = "100: I" + glb_new_line_symbol + \
-                    "LABEL 100;"
-    return source
+def example_program_2():
+    test_code = "PROGRAM my_test_program;            \n" \
+                "CONST C1 = 2;                       \n" \
+                "C2 = 1;                             \n" \
+                "C3 = 1.0;                           \n" \
+                "C4 = &HFF;                          \n" \
+                "C5 = &B10;                          \n" \
+                "C6 = &O12;                          \n" \
+                "C7 = 'C';                           \n" \
+                "C8 = 'C8C8C8C8';                    \n" \
+                "C9 = True;                          \n" \
+                "C10 = False;                        \n" \
+                "VAR V1, V2 : INTEGER;               \n" \
+                "    V3 : REAL;                      \n" \
+                "    V4 : BOOLEAN;                   \n" \
+                "    V5 : BYTE;                      \n" \
+                "BEGIN BEGIN BEGIN BEGIN             \n" \
+                " V1 := 1 >= 2;                      \n" \
+                " V2 := (1 + 2)                      \n" \
+                "END END END END.                    \n"
+    return test_code
+
+
+
+
+
+def example_program_4():
+    test_code = "PROGRAM my_test_program( A1, A2, A3); \n" \
+                "LABEL 100, 200, 300, 400;             \n" \
+                "CONST C1 = 2;                         \n" \
+                "C2 = 1;                               \n" \
+                "C3 = 1.0;                             \n" \
+                "C4 = &HFF;                            \n" \
+                "C5 = &B10;                            \n" \
+                "C6 = &O12;                            \n" \
+                "C7 = 'C';                             \n" \
+                "C8 = 'C8C8C8C8';                      \n" \
+                "C9 = True;                            \n" \
+                "C10 = False;                          \n" \
+                "C11 = 1;                              \n" \
+                "_C11 = 1;                             \n" \
+                "VAR V1, V2 : INTEGER;                 \n" \
+                "    V3 : REAL;                        \n" \
+                "    V4 : BOOLEAN;                     \n" \
+                "    V5 : BYTE;                        \n" \
+                "    _V5 : BYTE;                       \n" \
+                "BEGIN                                 \n" \
+                " V1 := 2;                             \n" \
+                " V2 := 1;                             \n" \
+                "END            .                      \n"
+    return test_code
 
 
 def main():
-    deft_pascal_parser = DeftPascalParser()
-    print("start ----")
-    deft_pascal_parser.compile(example_program_1())
-    print("start ----")
-    deft_pascal_parser.compile(example_labels())
+    compiler = DeftPascalCompiler()
+    ast = compiler.check_syntax(example_program_4())
+    if ast:
+        print("Compilation result : \n {0}".format(ast.pretty()))
+        compiler.compile(ast)
+    else:
+        print("Compilation failed!")
 
 
 main()
