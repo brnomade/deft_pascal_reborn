@@ -53,7 +53,7 @@ block : label_declaration_part [DONE]
  type_definition_part
  variable_declaration_part [DONE]
  procedure_and_function_declaration_part
- statement_part
+ statement_part [DONE]
  ;
 
 module : constant_definition_part
@@ -352,7 +352,7 @@ closed_statement : label COLON non_labeled_closed_statement
  | non_labeled_closed_statement
  ;
 
-non_labeled_closed_statement : assignment_statement
+non_labeled_closed_statement : assignment_statement [DONE]
  | procedure_statement
  | goto_statement
  | compound_statement
@@ -371,6 +371,7 @@ non_labeled_open_statement : open_with_statement
  | open_for_statement
  ;
 
+[DONE]
 repeat_statement : REPEAT statement_sequence UNTIL boolean_expression
  ;
 
@@ -483,6 +484,7 @@ record_variable_list : record_variable_list comma variable_access
  | variable_access
  ;
 
+[DONE]
 boolean_expression : expression ;
 
 [DONE]

@@ -47,7 +47,7 @@ class DeftPascalParser:
         _constant_list : constant_definition 
                        | constant_definition _constant_list
                   
-        constant_definition : IDENTIFIER _OPERATOR_EQUAL_TO _constant_expression _SEMICOLON
+        constant_definition : IDENTIFIER OPERATOR_EQUAL_TO _constant_expression _SEMICOLON
         
         _constant_expression : UNSIGNED_DECIMAL
                              | SIGNED_DECIMAL
@@ -103,31 +103,31 @@ class DeftPascalParser:
                          | _non_labeled_closed_statement
 
         _non_labeled_closed_statement : assignment_statement
+                                      | repeat_statement
                                      
+        repeat_statement : RESERVED_STATEMENT_REPEAT _statement_sequence RESERVED_STATEMENT_UNTIL boolean_expression
 
         _non_labeled_open_statement : |
 
         assignment_statement : _variable_access OPERATOR_ASSIGNMENT _expression
 
         _variable_access : IDENTIFIER
-        
-        // _expression : _constant_expression
-  
-        //// NEW PART
-  
+         
+        boolean_expression : _expression 
+
         _expression : _simple_expression
-                    | _simple_expression relop _simple_expression
+                    | _simple_expression _relop _simple_expression
  
-        relop : _OPERATOR_EQUAL_TO
-              | _OPERATOR_NOT_EQUAL_TO
-              | _OPERATOR_LESS_THEN
-              | _OPERATOR_GREATER_THEN
-              | _OPERATOR_LESS_OR_EQUAL_TO
-              | _OPERATOR_GREATER_OR_EQUAL_TO
-              | RESERVED_IN
-             
         _simple_expression : _term
                            | _simple_expression _addop _term
+
+        _relop : OPERATOR_EQUAL_TO
+               | OPERATOR_NOT_EQUAL_TO
+               | OPERATOR_LESS_THEN
+               | OPERATOR_GREATER_THEN
+               | OPERATOR_LESS_OR_EQUAL_TO
+               | OPERATOR_GREATER_OR_EQUAL_TO
+               | RESERVED_IN          
  
         _addop : OPERATOR_PLUS
                | OPERATOR_MINUS
@@ -161,10 +161,14 @@ class DeftPascalParser:
                            | CONSTANT_NIL
                            | CONSTANT_TRUE
                            | CONSTANT_FALSE
+                           | STRING
                            
         _unsigned_number : _unsigned_integer | _unsigned_real
 
         _unsigned_integer : UNSIGNED_DECIMAL
+                          | NUMBER_HEXADECIMAL
+                          | NUMBER_OCTAL
+                          | NUMBER_BINARY
  
         _unsigned_real : UNSIGNED_REAL
        
@@ -206,15 +210,17 @@ class DeftPascalParser:
         // keywords
         
         RESERVED_IN : "in"i
+        RESERVED_STATEMENT_REPEAT : "repeat"i 
+        RESERVED_STATEMENT_UNTIL : "until"i
             
         // logical operators 
         
-        _OPERATOR_EQUAL_TO : "="
-        _OPERATOR_NOT_EQUAL_TO : "<>"
-        _OPERATOR_GREATER_OR_EQUAL_TO : ">="
-        _OPERATOR_GREATER_THEN : ">"
-        _OPERATOR_LESS_OR_EQUAL_TO : "<="
-        _OPERATOR_LESS_THEN : "<"
+        OPERATOR_EQUAL_TO : "="
+        OPERATOR_NOT_EQUAL_TO : "<>"
+        OPERATOR_GREATER_OR_EQUAL_TO : ">="
+        OPERATOR_GREATER_THEN : ">"
+        OPERATOR_LESS_OR_EQUAL_TO : "<="
+        OPERATOR_LESS_THEN : "<"
         OPERATOR_ASSIGNMENT : ":="
         RESERVED_OPERATOR_OR : "or"i
         RESERVED_OPERATOR_AND : "and"i

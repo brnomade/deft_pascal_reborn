@@ -93,8 +93,25 @@ class CEmitter(AbstractEmitter):
         line = "{0} "
         if a_symbol.type == "OPERATOR_ASSIGNMENT":
             line = "= "
-        self.emit(line.format(a_symbol.name))
+        self.emit(line.format(a_symbol.value))
 
-    def emit_action_6_finish(self, ):
+    def emit_action_6_finish(self):
         line = ";"
         self.emit_line(line)
+
+    def emit_action_7(self, step):
+        if step == 1:
+            line = "repeat"
+            self.emit_line(line)
+        elif step == 2:
+            line = "until "
+            self.emit(line)
+        elif step == 3:
+            line = ";"
+            self.emit_line(line)
+        else:
+            raise KeyError
+
+    def emit_action_8(self, a_symbol):
+        line = "{0} "
+        self.emit(line.format(a_symbol.value))

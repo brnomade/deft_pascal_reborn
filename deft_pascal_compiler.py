@@ -26,7 +26,9 @@ class DeftPascalCompiler:
                          "VARIABLE_DECLARATION_PART": self._action_3,
                          "LABEL_DECLARATION_PART": self._action_4,
                          "RESERVED_STRUCTURE_END": self._action_5,
-                         "ASSIGNMENT_STATEMENT": self._action_6
+                         "ASSIGNMENT_STATEMENT": self._action_6,
+                         "REPEAT_STATEMENT": self._action_7,
+                         "BOOLEAN_EXPRESSION": self._action_8
                          }
 
         self._emitter = None
@@ -65,15 +67,18 @@ class DeftPascalCompiler:
         else:
             action_to_call(action_number, a_token)
 
+    def _internal_compile(self, ast):
+        if isinstance(ast, Tree):
+            if len(ast.children) > 0:
+                self._compile_tree(ast)
+        elif isinstance(ast, Token):
+            self._compile_token(ast)
+        else:
+            raise TypeError('Error - unknown AST object {0}'.format(ast))
+
     def compile(self, ast):
         for i in ast.children:
-            #
-            if isinstance(i, Tree):
-                self._compile_tree(i)
-            elif isinstance(i, Token):
-                self._compile_token(i)
-            else:
-                raise TypeError('Error - unknown AST object {0}'.format(i))
+            self._internal_compile(i)
         self._emitter.write_file()
 
     def _action_0(self, my_number, input_list):
@@ -86,7 +91,7 @@ class DeftPascalCompiler:
             self._stack_scope.append((identifier, 0))
             context_label = self._stack_scope[-1][0]
             context_level = self._stack_scope[-1][1]
-            self._symbol_table.append(Constant('TRUE', context_label, context_level, 'CONSTANT_TRUE', 'true', ))
+            self._symbol_table.append(Constant('TRUE', context_label, context_level, 'CONSTANT_TRUE', 'true'))
             self._symbol_table.append(Constant('FALSE', context_label, context_level, 'CONSTANT_FALSE', 'false'))
             self._emitter = CEmitter(identifier)
             self._emitter.emit_action_0()
@@ -195,7 +200,7 @@ class DeftPascalCompiler:
         else:
             print("[{0}] - incorrect declaration".format(my_number))
 
-    def _action_6_check_variable_exists(self, my_number, a_variable):
+    def _check_variable_exists( self, my_number, a_variable ):
         # check variable exists
         # scenarios:
         # - identifier not declared
@@ -212,13 +217,15 @@ class DeftPascalCompiler:
         return a_variable
 
 
-    def _action_6_check_type_compatibility(self, my_number, a_variable, a_symbol):
-        # check variable and constant are of compatible types
-        type_a = a_variable.type
+    def _check_type_compatibility( self, my_number, a_variable, a_symbol ):
+        # check variable and symbol are of compatible types
+        type_a = a_variable.type.upper()
         type_b = a_symbol.type.upper()
         compatible = False
         #
-        if type_a == "REAL":
+        if a_symbol.is_equal(a_variable):
+            compatible = True
+        elif type_a == "REAL":
             compatible = type_b in ["SIGNED_REAL", "UNSIGNED_REAL"]
         elif type_a in ["INTEGER", "WORD", "BYTE"]:
             compatible = type_b in ["SIGNED_DECIMAL", "UNSIGNED_DECIMAL", "NUMBER_BINARY", "NUMBER_OCTAL",
@@ -236,6 +243,7 @@ class DeftPascalCompiler:
         #
         return compatible
 
+
     def _action_6(self, my_number, token_list):
         # print(token_list)
         if token_list[1].type.upper() == 'OPERATOR_ASSIGNMENT':
@@ -248,7 +256,7 @@ class DeftPascalCompiler:
             token = token_list[0]
             identifier = token.value if token.type == "IDENTIFIER" else self.exception_raiser(UnexpectedToken)
             a_variable = Variable(identifier, context_label, context_level)
-            a_variable = self._action_6_check_variable_exists(my_number, a_variable)
+            a_variable = self._check_variable_exists(my_number, a_variable)
 
             self._emitter.emit_action_6(a_variable)
 
@@ -270,13 +278,13 @@ class DeftPascalCompiler:
                         msg = "[{0}] : Error - undeclared boolean system constant {1}"
                         print(msg.format(my_number, a_symbol))
 
-                    self._action_6_check_type_compatibility(my_number, a_variable, a_symbol)
+                    self._check_type_compatibility(my_number, a_variable, a_symbol)
 
                 elif token.type == "IDENTIFIER":
 
                     a_symbol = Variable(token.value, context_label, context_level)
-                    a_symbol = self._action_6_check_variable_exists(my_number, a_symbol)
-                    self._action_6_check_type_compatibility(my_number, a_variable, a_symbol)
+                    a_symbol = self._check_variable_exists(my_number, a_symbol)
+                    self._check_type_compatibility(my_number, a_variable, a_symbol)
                     #print("variable -> {0}".format(a_symbol))
 
                 elif token.type in ["UNSIGNED_DECIMAL", "SIGNED_DECIMAL", "NUMBER_BINARY", "NUMBER_OCTAL",
@@ -285,7 +293,7 @@ class DeftPascalCompiler:
                                      ]:
 
                     a_symbol = Constant(token.value, context_label, context_level, token.type, token.value)
-                    self._action_6_check_type_compatibility(my_number, a_variable, a_symbol)
+                    self._check_type_compatibility(my_number, a_variable, a_symbol)
 
                 else:
 
@@ -297,7 +305,67 @@ class DeftPascalCompiler:
                 #
                 self._emitter.emit_action_6(a_symbol)
             self._emitter.emit_action_6_finish()
+            print("[{0}] assignment : {1}".format(my_number, a_variable))
         else:
             print("[{0} incorrect declaration {1}] ".format(my_number, token_list))
+
+    def _action_7(self, my_number, token_list):
+        if token_list[0].type.upper() == 'RESERVED_STATEMENT_REPEAT':
+
+            context_label = self._stack_scope[-1][0]
+            context_level = self._stack_scope[-1][1]
+
+            self._emitter.emit_action_7(1)
+            print("[{0}] repeat".format(my_number))
+
+            self._internal_compile(token_list[1])
+
+            self._emitter.emit_action_7(2)
+            print("[{0}] until".format(my_number))
+
+            self._internal_compile(token_list[3])
+
+            self._emitter.emit_action_7(3)
+        else:
+            print("[{0} incorrect declaration {1}] ".format(my_number, token_list))
+
+    def _action_8(self, my_number, token_list):
+        context_label = self._stack_scope[-1][0]
+        context_level = self._stack_scope[-1][1]
+
+        for token in token_list:
+            print(token.type, token.value)
+
+            if token.type in ["CONSTANT_TRUE", "CONSTANT_FALSE"]:
+
+                a_symbol = Constant(token.value, context_label, context_level, token.type, token.value)
+                if self._symbol_table.has_equal(a_symbol, equal_type=True, equal_level=True, equal_name=True):
+                    a_symbol = self._symbol_table.get(a_symbol)
+                elif self._symbol_table.has_equal(a_symbol, equal_type=True, equal_level=False, equal_name=True):
+                    a_symbol = self._symbol_table.get_from_lower_scope(a_symbol)
+                else:
+                    msg = "[{0}] : Error - undeclared boolean system constant {1}"
+                    print(msg.format(my_number, a_symbol))
+
+            elif token.type == "IDENTIFIER":
+
+                a_symbol = Variable(token.value, context_label, context_level)
+                a_symbol = self._check_variable_exists(my_number, a_symbol)
+
+            elif token.type in ["UNSIGNED_DECIMAL", "SIGNED_DECIMAL", "NUMBER_BINARY", "NUMBER_OCTAL",
+                                "NUMBER_HEXADECIMAL", "CHARACTER", "STRING", "CONSTANT_TRUE", "CONSTANT_FALSE",
+                                "UNSIGNED_REAL", "SIGNED_REAL"
+                                ]:
+
+                a_symbol = Constant(token.value, context_label, context_level, token.type, token.value)
+
+            else:
+
+                a_symbol = BaseSymbol(token.value, context_label, context_level, token.type, token.value)
+
+            self._emitter.emit_action_8(a_symbol)
+        print("[{0}] boolean expression".format(my_number))
+
+
 
 

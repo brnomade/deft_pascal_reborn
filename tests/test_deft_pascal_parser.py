@@ -114,22 +114,24 @@ class TestDeftPascalParser(TestCase):
         self.assertIsNotNone(_run_parser(test_code))
 
     def test_constant_declaration(self):
-        test_code = "PROGRAM my_test_program;              \n" \
-                    "CONST                                 \n" \
-                    "C1 = 2;                               \n" \
-                    "C2 = -1;                              \n" \
-                    "C3 = 1.0;                             \n" \
-                    "C4 = &HFF;                            \n" \
-                    "C5 = &B10;                            \n" \
-                    "C6 = &O12;                            \n" \
-                    "C7 = 'C';                             \n" \
-                    "C8 = 'C8C8C8C8';                      \n" \
-                    "C9 = True;                            \n" \
-                    "C10 = False;                          \n" \
-                    "C11 = 1;                              \n" \
-                    "_C11 = 1;                             \n" \
-                    "BEGIN                                 \n" \
-                    "END.                                  \n"
+        test_code = "PROGRAM my_test_program;             \n" \
+                    "CONST                                \n" \
+                    "C = 2;                               \n" \
+                    "C = -1;                              \n" \
+                    "C = +1;                              \n" \
+                    "C = 1.0;                             \n" \
+                    "C = -1.0;                            \n" \
+                    "C = +1.0;                            \n" \
+                    "C = 1.0e-12;                         \n" \
+                    "C = &HFF;                            \n" \
+                    "C = &B10;                            \n" \
+                    "C = &O12;                            \n" \
+                    "C = 'C';                             \n" \
+                    "C = 'C8C8C8C8';                      \n" \
+                    "C = True;                            \n" \
+                    "C = False;                           \n" \
+                    "BEGIN                                \n" \
+                    "END.                                 \n"
         self.assertIsNotNone(_run_parser(test_code))
 
     def test_variable_declaration(self):
@@ -147,7 +149,7 @@ class TestDeftPascalParser(TestCase):
                     "END.                                  \n"
         self.assertIsNotNone(_run_parser(test_code))
 
-    def test_variable_assignment(self):
+    def test_variable_assignment_with_single_value(self):
         test_code = "PROGRAM my_test_program;              \n" \
                     "BEGIN                                 \n" \
                     " V1 := 2;                             \n" \
@@ -155,10 +157,56 @@ class TestDeftPascalParser(TestCase):
                     " V3 := 'C';                           \n" \
                     " V4 := 'STRING';                      \n" \
                     " V5 := V4;                            \n" \
+                    " V6 := -1;                            \n" \
+                    " V7 := -1.0;                          \n" \
+                    " V8 := &HFF;                          \n" \
+                    " V9 := &B10;                          \n" \
+                    " V10 := &O11;                         \n" \
+                    " V11 := NIL;                          \n" \
+                    " V12 := -1.1E-23;                     \n" \
                     "END.                                  \n"
         self.assertIsNotNone(_run_parser(test_code))
 
-def xtest_program_definition_2(self):
+    def test_variable_assignment_with_expression(self):
+        test_code = "PROGRAM my_test_program;                  \n" \
+                    "BEGIN                                     \n" \
+                    " V1 := 2 + V1 * 3 + (1 / 2);              \n" \
+                    " V1 := -2 + V1 * 3.0 + (&HFF / -1.1E-23); \n" \
+                    "END.                                      \n"
+        self.assertIsNotNone(_run_parser(test_code))
+
+    def test_variable_assignment_with_same_variable(self):
+        test_code = "PROGRAM my_test_program;                  \n" \
+                    "BEGIN                                     \n" \
+                        " V1 := V1 + 1;                        \n" \
+                    "END.                                      \n"
+        self.assertIsNotNone(_run_parser(test_code))
+
+    def test_repeat_loop_with_boolean(self):
+        test_code = "PROGRAM my_test_program;                  \n" \
+                    "BEGIN                                     \n" \
+                    "   REPEAT                                 \n" \
+                    "      V1 := 2 + V1 * 3 + (1 / 2);         \n" \
+                    "   UNTIL True                             \n" \
+                    "END.                                      \n"
+
+    def test_repeat_loop_with_variable(self):
+        test_code = "PROGRAM my_test_program;                  \n" \
+                    "BEGIN                                     \n" \
+                    "   REPEAT                                 \n" \
+                    "      V1 := 2 + V1 * 3 + (1 / 2);         \n" \
+                    "   UNTIL V2                               \n" \
+                    "END.                                      \n"
+
+    def test_repeat_loop_with_expression(self):
+        test_code = "PROGRAM my_test_program;                  \n" \
+                    "BEGIN                                     \n" \
+                    "   REPEAT                                 \n" \
+                    "      V1 := 2 + V1 * 3 + (1 / 2);         \n" \
+                    "   UNTIL V2 + 1 > 2                       \n" \
+                    "END.                                      \n"
+
+    def xtest_program_definition_2(self):
         test_code = "program test;                        \n"\
                     " const                               \n"\
                     "   PI = 3.1415;                      \n"\
