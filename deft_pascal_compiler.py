@@ -156,7 +156,7 @@ class DeftPascalCompiler:
                     identifier = token.value
                     context_label = self._stack_scope[-1][0]
                     context_level = self._stack_scope[-1][1]
-                    a_symbol = Variable(identifier, context_label, context_level, data_type, None)
+                    a_symbol = Variable(identifier, context_label, context_level, data_type, identifier)
                     # scenarios:
                     # - identifier not declared
                     # - identifier already declared (as a constant or a variable)
@@ -201,13 +201,14 @@ class DeftPascalCompiler:
         # - identifier not declared
         # - identifier declared on same scope
         # - identifier declared on a lower scope
-        if self._symbol_table.has_equal(a_variable, equal_type=True, equal_level=True, equal_name=True):
+
+        if self._symbol_table.has_equal(a_variable, equal_class=True, equal_type=False, equal_level=True, equal_name=True):
             a_variable = self._symbol_table.get(a_variable)
-        elif self._symbol_table.has_equal(a_variable, equal_type=True, equal_level=False, equal_name=True):
+        elif self._symbol_table.has_equal(a_variable, equal_class=True, equal_type=False, equal_level=False, equal_name=True):
             a_variable = self._symbol_table.get_from_lower_scope(a_variable)
         else:
             msg = "[{0}] {1} : Error - assignment to undeclared variable"
-            raise RuntimeError(msg.format(my_number, a_variable))
+            print(msg.format(my_number, a_variable))
         return a_variable
 
 
@@ -221,7 +222,7 @@ class DeftPascalCompiler:
             compatible = type_b in ["SIGNED_REAL", "UNSIGNED_REAL"]
         elif type_a in ["INTEGER", "WORD", "BYTE"]:
             compatible = type_b in ["SIGNED_DECIMAL", "UNSIGNED_DECIMAL", "NUMBER_BINARY", "NUMBER_OCTAL",
-                              "NUMBER_HEXADECIMAL"]
+                                    "NUMBER_HEXADECIMAL"]
         elif type_a == "BOOLEAN":
             compatible = type_b in ["CONSTANT_TRUE", "CONSTANT_FALSE"]
         elif type_a in ["STRING", "TEXT"]:
@@ -230,8 +231,8 @@ class DeftPascalCompiler:
             compatible = type_b == "CHARACTER"
         #
         if not compatible:
-            msg = "[{0}] {1} {2} : Error - type violation in assignment"
-            raise RuntimeError(msg.format(my_number, a_variable, a_symbol))
+            msg = "[{0}] Error - type violation in assignment: {1} {2} "
+            print(msg.format(my_number, a_variable, a_symbol))
         #
         return compatible
 
@@ -246,33 +247,53 @@ class DeftPascalCompiler:
 
             token = token_list[0]
             identifier = token.value if token.type == "IDENTIFIER" else self.exception_raiser(UnexpectedToken)
-            a_variable = Variable(identifier, context_label, context_level, None, None)
+            a_variable = Variable(identifier, context_label, context_level)
             a_variable = self._action_6_check_variable_exists(my_number, a_variable)
 
             self._emitter.emit_action_6(a_variable)
 
             # iterate over assignment list and check type compatibility
 
-            token_list = token_list[1:]
+            #token_list = token_list[1:]
 
-            for token in token_list:
-                print(token.type, token.value)
-                a_symbol = BaseSymbol(token.value, context_label, context_level, token.type, token.value)
+            for token in token_list[1:]:
+                #print(token.type, token.value)
 
-                if a_symbol.type in ["CONSTANT_TRUE", "CONSTANT_FALSE"]:
+                if token.type in ["CONSTANT_TRUE", "CONSTANT_FALSE"]:
+
+                    a_symbol = Constant(token.value, context_label, context_level, token.type, token.value)
                     if self._symbol_table.has_equal(a_symbol, equal_type=True, equal_level=True, equal_name=True):
                         a_symbol = self._symbol_table.get(a_symbol)
                     elif self._symbol_table.has_equal(a_symbol, equal_type=True, equal_level=False, equal_name=True):
                         a_symbol = self._symbol_table.get_from_lower_scope(a_symbol)
                     else:
-                        msg = "[{0}] {1} : Error - undeclared boolean system constant"
-                        raise RuntimeError(msg.format(my_number, a_symbol))
-                #
-                if a_symbol.type in ["UNSIGNED_DECIMAL", "SIGNED_DECIMAL", "NUMBER_BINARY", "NUMBER_OCTAL",
+                        msg = "[{0}] : Error - undeclared boolean system constant {1}"
+                        print(msg.format(my_number, a_symbol))
+
+                    self._action_6_check_type_compatibility(my_number, a_variable, a_symbol)
+
+                elif token.type == "IDENTIFIER":
+
+                    a_symbol = Variable(token.value, context_label, context_level)
+                    a_symbol = self._action_6_check_variable_exists(my_number, a_symbol)
+                    self._action_6_check_type_compatibility(my_number, a_variable, a_symbol)
+                    #print("variable -> {0}".format(a_symbol))
+
+                elif token.type in ["UNSIGNED_DECIMAL", "SIGNED_DECIMAL", "NUMBER_BINARY", "NUMBER_OCTAL",
                                      "NUMBER_HEXADECIMAL", "CHARACTER", "STRING", "CONSTANT_TRUE", "CONSTANT_FALSE",
                                      "UNSIGNED_REAL", "SIGNED_REAL"
                                      ]:
+
+                    a_symbol = Constant(token.value, context_label, context_level, token.type, token.value)
                     self._action_6_check_type_compatibility(my_number, a_variable, a_symbol)
+
+                else:
+
+                    a_symbol = BaseSymbol(token.value, context_label, context_level, token.type, token.value)
+                #
+                #if token.type not in ["OPERATOR_ASSIGNMENT"]:
+
+                #    self._action_6_check_type_compatibility(my_number, a_variable, a_symbol)
                 #
                 self._emitter.emit_action_6(a_symbol)
             self._emitter.emit_action_6_finish()

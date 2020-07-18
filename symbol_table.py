@@ -90,11 +90,13 @@ class BaseSymbol:
     def pop_reference(self):
         return self._reference_stack.pop()
 
-    def is_equal(self, a_base_symbol, equal_type=True, equal_level=True, equal_name=True):
+    def is_equal(self, a_base_symbol, equal_class=True, equal_type=True, equal_level=True, equal_name=True):
         if isinstance(a_base_symbol, BaseSymbol):
             result = True
-            if equal_type:
+            if equal_class:
                 result = result and (type(self) == type(a_base_symbol))
+            if equal_type:
+                result = result and (self._type == a_base_symbol._type)
             if equal_level:
                 result = result and (self.scope == a_base_symbol.scope and self.level == a_base_symbol.level)
             if equal_name:
@@ -183,10 +185,11 @@ class SymbolTable:
         return "{0}({1})".format(self.__class__.__name__,
                                  self._symbol_table)
 
-    def has_equal(self, a_symbol, equal_type=True, equal_level=True, equal_name=True):
+    def has_equal(self, a_symbol, equal_class=True, equal_type=True, equal_level=True, equal_name=True):
         if a_symbol.level in self._symbol_table:
             if a_symbol.name in self._symbol_table[a_symbol.level]:
                 return self._symbol_table[a_symbol.level][a_symbol.name].is_equal(a_symbol,
+                                                                                   equal_class,
                                                                                    equal_type,
                                                                                    equal_level,
                                                                                    equal_name)
@@ -195,11 +198,15 @@ class SymbolTable:
         else:
             return False
 
-    def has_equal_at_lower_scope(self, a_symbol, equal_type=True, equal_name=True):
+    def has_equal_at_lower_scope(self, a_symbol, equal_class=True, equal_type=True, equal_name=True):
         for i in range(a_symbol.level - 1, -1, -1):
             if i in self._symbol_table:
                 if a_symbol.name in self._symbol_table[i]:
-                    return self._symbol_table[i][a_symbol.name].is_equal(a_symbol, equal_type, False, equal_name)
+                    return self._symbol_table[i][a_symbol.name].is_equal(a_symbol,
+                                                                         equal_class,
+                                                                         equal_type,
+                                                                         False,
+                                                                         equal_name)
         return False
 
     def append(self, a_symbol):
