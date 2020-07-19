@@ -14,24 +14,28 @@ class BaseSymbol:
     def __str__(self):
         return "{0}('{1}'|{2}|{3}|{4}|{5}|{6})".format(self.category,
                                                        self.name,
+                                                       self.type,
                                                        self.scope,
                                                        self.level,
-                                                       self.type,
                                                        self.value,
                                                        self.references)
 
     def __repr__(self):
         return "{0}('{1}'|{2}|{3}|{4}|{5}|{6})".format(self.category,
                                                        self.name,
+                                                       self.type,
                                                        self.scope,
                                                        self.level,
-                                                       self.type,
                                                        self.value,
                                                        self.references)
 
     @property
-    def name(self):
-        return self._name
+    def category(self):
+        return type(self).__name__
+
+    @property
+    def type(self):
+        return self._type
 
     @property
     def scope(self):
@@ -42,16 +46,12 @@ class BaseSymbol:
         return self._level
 
     @property
-    def type(self):
-        return self._type
+    def name(self):
+        return self._name
 
     @property
     def value(self):
         return self._value
-
-    @property
-    def category(self):
-        return type(self).__name__
 
     @property
     def references(self):
@@ -106,16 +106,36 @@ class BaseSymbol:
             raise NotImplementedError
 
 
-class IntegerVariable(BaseSymbol):
+class NumericVariable(BaseSymbol):
+    """
+        VariavelInteira   = 1;
+    VariavelBooleana  = 2;
+    VariavelEnumerada = 3;
+    CampoEnumeracao   = 4;
+    Constante         = 5;
+    Procedure         = 6;
+    Rotulo            = 7;
+    Parametro         = 8;
+
+    """
 
     def do_nothing(self):
         pass
 
 
-class BooleanVariable(BaseSymbol):
+class BooleanConstant(BaseSymbol):
 
-    def do_nothing(self):
-        pass
+    @classmethod
+    def true(cls, a_scope=None, a_level=None):
+        return cls('TRUE', a_scope, a_level, 'CONSTANT_TRUE', True)
+
+    @classmethod
+    def false(cls, a_scope=None, a_level=None):
+        return cls('FALSE', a_scope, a_level, 'CONSTANT_FALSE', False)
+
+    @classmethod
+    def from_value(cls, value, a_scope=None, a_level=None):
+        return cls.true(a_scope, a_level) if (not value or value.upper() == 'TRUE') else cls.false(a_scope, a_level)
 
 
 class EnumeratedVariable(BaseSymbol):
