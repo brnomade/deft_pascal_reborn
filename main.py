@@ -51,25 +51,34 @@ def example_program_2():
                 "END END END END.                    \n"
     return test_code
 
+def example_program_5():
+    code = \
+            "PROGRAM my_scenario_program;              \n" \
+            "VAR                                   \n" \
+            "V1 : INTEGER;                         \n" \
+            "BEGIN                                 \n" \
+            "V1 := NIL                                 \n" \
+            "END.                                  \n"
+    return code
 
 def example_program_4():
     test_code = "PROGRAM my_test_program( A1, A2, A3); \n" \
                 "LABEL 100, 200, 300, 400;             \n" \
                 "CONST                                 \n" \
-                "C1 = 0;                               \n" \
+                "C1 = 0.5;  B = 1;                             \n" \
                 "VAR V1 : INTEGER;                     \n" \
                 "V2 : BOOLEAN;                         \n" \
                 "BEGIN                                 \n" \
                 "   REPEAT                             \n" \
-                "     V1 := V1 + 1                   \n" \
-                "   UNTIL V1 + V1 > 10 + 1      \n" \
+                "     V1 := V2 + 1                   \n" \
+                "   UNTIL V1 + V3 > 10 + 1      \n" \
                 "END.                                  \n"
     return test_code
 
 
 def main():
     compiler = DeftPascalCompiler()
-    ast = compiler.check_syntax(example_program_4())
+    ast = compiler.check_syntax(example_program_5())
     if ast:
         print("Compilation result : \n {0}".format(ast.pretty()))
         compiler.compile(ast)

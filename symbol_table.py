@@ -123,7 +123,13 @@ class NumericVariable(BaseSymbol):
         pass
 
 
-class BooleanConstant(BaseSymbol):
+class Constant(BaseSymbol):
+
+    def do_nothing(self):
+        pass
+
+
+class BooleanConstant(Constant):
 
     @classmethod
     def true(cls, a_scope=None, a_level=None):
@@ -138,55 +144,7 @@ class BooleanConstant(BaseSymbol):
         return cls.true(a_scope, a_level) if (not value or value.upper() == 'TRUE') else cls.false(a_scope, a_level)
 
 
-class EnumeratedVariable(BaseSymbol):
-
-    def do_nothing(self):
-        pass
-
-
-class EnumeratedField(BaseSymbol):
-
-    def do_nothing(self):
-        pass
-
-
-class Variable(BaseSymbol):
-
-    def do_nothing(self):
-        pass
-
-
-class Constant(BaseSymbol):
-
-    def do_nothing(self):
-        pass
-
-
-class Operator(BaseSymbol):
-
-    def do_nothing(self):
-        pass
-
-
-class Procedure(BaseSymbol):
-
-    def do_nothing(self):
-        pass
-
-
-class Function(BaseSymbol):
-
-    def do_nothing(self):
-        pass
-
-
-class Label(BaseSymbol):
-
-    def do_nothing(self):
-        pass
-
-
-class Parameter(BaseSymbol):
+class Identifier(BaseSymbol):
 
     def do_nothing(self):
         pass

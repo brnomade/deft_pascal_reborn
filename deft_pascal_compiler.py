@@ -1,10 +1,11 @@
 from lark import Tree, Token, UnexpectedToken, UnexpectedCharacters
 from deft_pascal_parser_3 import DeftPascalParser
-from symbol_table import SymbolTable, BaseSymbol, Constant, Variable, BooleanConstant
+from symbol_table import SymbolTable, BaseSymbol, Constant, Identifier, BooleanConstant
 from abstract_emiter import CEmitter
 import logging
+from logging import ERROR, WARNING, INFO
 
-logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 
 class DeftPascalCompiler:
@@ -31,26 +32,41 @@ class DeftPascalCompiler:
                          "BOOLEAN_EXPRESSION": self._action_8
                          }
 
+        self._error_list = []
+
         self._emitter = None
+
 
     def check_syntax(self, input_program):
         tree = None
         try:
             tree = self._parser.parse(input_program)
         except UnexpectedToken as error:
-            print('ERROR 1 - {0}'.format(error))
+            self._log(ERROR, '1 - {0}'.format(error))
         except UnexpectedCharacters as error:
-            print('ERROR 2 - {0}'.format(error))
+            self._log(ERROR, '2 - {0}'.format(error))
         return tree
 
     def compile(self, ast):
+        self._error_list = []
         for i in ast.children:
             self._internal_compile(i)
         self._emitter.write_file()
+        return self._error_list
 
     @staticmethod
     def _exception_raiser(exception):
         raise exception
+
+    def _log(self, log_type=INFO, log_info=""):
+        if log_type == ERROR:
+            msg = "{0} - {1}".format("ERROR", log_info)
+            self._error_list.append(msg)
+            logger.error(log_info)
+        elif log_type == WARNING:
+            logger.warning(log_info)
+        else:
+            logger.info(log_info)
 
     def _compile_tree(self, a_tree):
         try:
@@ -58,7 +74,7 @@ class DeftPascalCompiler:
             action_to_call = self._actions[action_name]
             action_number = action_to_call.__name__.split("_")[-1]
         except KeyError:
-            print("action '{0}' not yet implemented".format(a_tree.data.upper()))
+            self._log(WARNING, "action '{0}' not yet implemented".format(a_tree.data.upper()))
         else:
             action_to_call(action_number, action_name, a_tree.children)
 
@@ -68,7 +84,7 @@ class DeftPascalCompiler:
             action_to_call = self._actions[action_name]
             action_number = action_to_call.__name__.split("_")[-1]
         except KeyError:
-            print("action '{0}' not yet implemented".format(a_token.type.upper()))
+            self._log(WARNING, "action '{0}' not yet implemented".format(a_token.type.upper()))
         else:
             action_to_call(action_number, action_name, a_token)
 
@@ -79,9 +95,10 @@ class DeftPascalCompiler:
         elif isinstance(ast, Token):
             self._compile_token(ast)
         else:
-            raise TypeError('Error - unknown AST object {0}'.format(ast))
+            self._log(ERROR, 'Error - unknown AST object {0}'.format(ast))
+            raise TypeError
 
-    def _retrieve_global_boolean_constant(self, action_number, value):
+    def _retrieve_global_boolean_constant(self, action_number, action_name, value):
         a_symbol = BooleanConstant.from_value(value)
         a_symbol.scope = self._stack_scope[-1][0]
         a_symbol.level = self._stack_scope[-1][1]
@@ -90,12 +107,30 @@ class DeftPascalCompiler:
         elif self._symbol_table.has_equal(a_symbol, equal_type=True, equal_level=False, equal_name=True):
             a_symbol = self._symbol_table.get_from_lower_scope(a_symbol)
         else:
-            msg = "Error! [{0}] - undeclared boolean system constant {1}"
-            print(msg.format(action_number, a_symbol))
+            msg = "[{0}] {1} - undeclared boolean system constant {2}"
+            self._log(ERROR, msg.format(action_number, action_name, a_symbol))
             a_symbol = None
         return a_symbol
 
-    def _get_declared_variable( self, action_number, action_name, a_variable ):
+    def _retrieve_from_symbol_table(self, action_number, action_name, a_symbol ):
+        # check symbol exists
+        # scenarios:
+        # - symbol not declared
+        # - symbol declared on same scope
+        # - symbol declared on a lower scope
+        # returns None if seymbol not found
+
+        if self._symbol_table.has_equal(a_symbol, equal_class=False, equal_type=False, equal_level=True, equal_name=True):
+            a_symbol = self._symbol_table.get(a_symbol)
+        elif self._symbol_table.has_equal(a_symbol, equal_class=False, equal_type=False, equal_level=False, equal_name=True):
+            a_symbol = self._symbol_table.get_from_lower_scope(a_symbol)
+        else:
+            msg = "Error! [{0}] {1} - Reference to undeclared symbol {2}"
+            self._log(ERROR, msg.format(action_number, action_name, a_symbol))
+            a_symbol = None
+        return a_symbol
+
+    def _get_declared_variable(self, action_number, action_name, a_variable ):
         # check variable exists
         # scenarios:
         # - identifier not declared
@@ -107,8 +142,8 @@ class DeftPascalCompiler:
         elif self._symbol_table.has_equal(a_variable, equal_class=True, equal_type=False, equal_level=False, equal_name=True):
             a_symbol = self._symbol_table.get_from_lower_scope(a_variable)
         else:
-            msg = "Error! [{0}] {1} - Reference to undeclared symbol {2}"
-            print(msg.format(action_number, action_name, a_variable))
+            msg = "[{0}] {1} - Reference to undeclared symbol {2}"
+            self._log(ERROR, msg.format(action_number, action_name, a_variable))
             a_variable = None
         return a_variable
 
@@ -140,8 +175,8 @@ class DeftPascalCompiler:
                 compatible = type_b in char_type
 
         if not compatible:
-            msg = "[{0}] {1} -  Error : type violation in expression: {2} {3} "
-            print(msg.format(action_number, action_name, symbol_a, symbol_b))
+            msg = "[{0}] {1} - type violation in expression: {2} {3} "
+            self._log(ERROR, msg.format(action_number, action_name, symbol_a, symbol_b))
         #
         return compatible
 
@@ -161,18 +196,18 @@ class DeftPascalCompiler:
 
             self._emitter = CEmitter(identifier)
             self._emitter.emit_action_0()
-            print("[{0}] {1} : '{2}' - stack: {3} {4} {5}".format(action_number,
+            self._log(INFO, "[{0}] {1} : '{2}' - stack: {3} {4} {5}".format(action_number,
                                                                   action_name,
                                                                   identifier,
                                                                   self._stack_constants,
                                                                   self._symbol_table,
                                                                   self._stack_scope))
         else:
-            print("[{0}] {1} - incorrect declaration".format(action_number, action_name))
+            self._log(ERROR, "[{0}] {1} - incorrect declaration".format(action_number, action_name))
             self._exception_raiser()
 
         if len(input_list) > 2:
-            print("[{0}] {1} : variables detected - all will be ignored".format(action_number, action_name))
+            self._log(WARNING, "[{0}] {1} : variables detected - all will be ignored".format(action_number, action_name))
 
     def _action_1(self, action_number, action_name, input_token):
         """
@@ -180,42 +215,43 @@ class DeftPascalCompiler:
         """
         if action_name == "RESERVED_STRUCTURE_BEGIN":
             self._emitter.emit_action_1()
-            print("[{0}] {1} : stack: {2} {3} {4}".format(action_number,
+            self._log(INFO, "[{0}] {1} : stack: {2} {3} {4}".format(action_number,
                                                           action_name,
                                                           self._stack_constants,
                                                           self._symbol_table,
                                                           self._stack_scope))
         else:
-            print("[{0}] {1} - incorrect declaration".format(action_number, action_name))
+            self._log(ERROR, "[{0}] {1} - incorrect declaration".format(action_number, action_name))
             self._exception_raiser()
 
     def _action_2(self, action_number, action_name, input_list):
         """
         process CONSTANT_DEFINITION_PART
         """
+        context_label = self._stack_scope[-1][0]
+        context_level = self._stack_scope[-1][1]
+
         if action_name == 'CONSTANT_DEFINITION_PART':
             input_list = input_list[1:]
             for constant_definition in input_list:
+
                 declaration = constant_definition.children
-                identifier = declaration[0].value
-                value = declaration[1].value
-                data_type = declaration[1].type
-                # TODO: the data_type needs to be adjusted to a real data_type
-                context_label = self._stack_scope[-1][0]
-                context_level = self._stack_scope[-1][1]
-                a_symbol = Constant(identifier, context_label, context_level, data_type,  value)
-                # scenarios:
-                # - identifier not declared
-                # - identifier already declared (as a constant or a variable)
-                if self._symbol_table.has_equal(a_symbol, equal_type=False):
-                    print('ERROR 6 - Identifier already declared in the current scope')
+                # the constant definition (declaration) has 3 parts: identifier, operator and constant
+
+                identifier = Identifier(declaration[0].value, context_label, context_level, declaration[0].type, declaration[0].value)
+                constant = Constant(declaration[2].value, context_label, context_level, declaration[2].type, declaration[2].value)
+                identifier.type = constant.type
+                identifier.value = constant.value
+
+                if self._symbol_table.has_equal(identifier, equal_class=False, equal_type=False, equal_level=True, equal_name=True):
+                    self._log(ERROR, 'ERROR 6 - Identifier already declared in the current scope')
                 else:
-                    self._symbol_table.append(a_symbol)
-                    self._emitter.emit_action_2(a_symbol)
-                    print("[{0}] {1} : {2}".format(action_number, action_name, a_symbol))
+                    self._symbol_table.append(identifier)
+                    self._emitter.emit_action_2(identifier)
+                    self._log(INFO, "[{0}] {1} : {2}".format(action_number, action_name, identifier))
 
         else:
-            print("[{0}] {1} - incorrect declaration".format(action_number, action_name))
+            self._log(ERROR, "[{0}] {1} - incorrect declaration".format(action_number, action_name))
             self._exception_raiser(UnexpectedToken)
 
     def _action_3(self, action_number, action_name, input_list):
@@ -231,19 +267,19 @@ class DeftPascalCompiler:
                     identifier = token.value
                     context_label = self._stack_scope[-1][0]
                     context_level = self._stack_scope[-1][1]
-                    a_symbol = Variable(identifier, context_label, context_level, data_type, identifier)
+                    a_symbol = Identifier(identifier, context_label, context_level, data_type, identifier)
                     # scenarios:
                     # - identifier not declared
                     # - identifier already declared (as a constant or a variable)
                     if self._symbol_table.has_equal(a_symbol, equal_type=False):
-                        print('ERROR 2 - Identifier already declared in the current scope')
+                        self._log(ERROR, 'ERROR 2 - Identifier already declared in the current scope')
                     else:
                         self._symbol_table.append(a_symbol)
                         self._stack_variables.append(a_symbol)
                         self._emitter.emit_action_3(a_symbol)
-                        print("[{0}] {1} : {2}".format(action_number, action_name, a_symbol))
+                        self._log(INFO, "[{0}] {1} : {2}".format(action_number, action_name, a_symbol))
         else:
-            print("[{0}] {1} - incorrect declaration".format(action_number, action_name))
+            self._log(ERROR, "[{0}] {1} - incorrect declaration".format(action_number, action_name))
             self._exception_raiser(UnexpectedToken)
 
     def _action_4(self, action_number, action_name, input_list):
@@ -251,9 +287,9 @@ class DeftPascalCompiler:
         process LABEL_DECLARATION_PART
         """
         if action_name == "LABEL_DECLARATION_PART":
-            print("[{0}] {1} - all will be ignored".format(action_number, action_name))
+            self._log(WARNING, "[{0}] {1} - all will be ignored".format(action_number, action_name))
         else:
-            print("[{0}] {1} - incorrect declaration".format(action_number, action_name))
+            self._log(ERROR, "[{0}] {1} - incorrect declaration".format(action_number, action_name))
             self._exception_raiser(UnexpectedToken)
 
     def _action_5(self, action_number, action_name, input_token):
@@ -262,14 +298,11 @@ class DeftPascalCompiler:
         """
         if action_name == 'RESERVED_STRUCTURE_END':
             self._emitter.emit_action_5()
-            print("[{0}] {1} {2} : stack: {3} {4} {5}".format(action_number,
-                                                              action_name,
-                                                              input_token.value.upper(),
-                                                              self._stack_constants,
-                                                              self._symbol_table,
-                                                              self._stack_scope))
+            self._log(INFO, "[{0}] {1} : {2}".format(action_number,
+                                           action_name,
+                                           self._symbol_table))
         else:
-            print("[{0}] {1} - incorrect declaration".format(action_number, action_name))
+            self._log(ERROR, "[{0}] {1} - incorrect declaration".format(action_number, action_name))
             self._exception_raiser(UnexpectedToken)
 
     def _action_6(self, action_number, action_name, token_list):
@@ -283,7 +316,7 @@ class DeftPascalCompiler:
 
             token = token_list[0]
             identifier = token.value if token.type == "IDENTIFIER" else self._exception_raiser(UnexpectedToken)
-            a_variable = Variable(identifier, context_label, context_level)
+            a_variable = Identifier(identifier, context_label, context_level)
             a_variable = self._get_declared_variable(action_number, action_name, a_variable)
             if a_variable:
                 self._emitter.emit_action_6(a_variable)
@@ -297,12 +330,12 @@ class DeftPascalCompiler:
 
                 if token.type in ["CONSTANT_TRUE", "CONSTANT_FALSE"]:
 
-                    a_symbol = self._retrieve_global_boolean_constant(token.value)
+                    a_symbol = self._retrieve_global_boolean_constant(action_number, action_name, token.value)
                     self._check_type_compatibility(action_number, action_name, a_variable, a_symbol)
 
                 elif token.type == "IDENTIFIER":
 
-                    a_symbol = Variable(token.value, context_label, context_level)
+                    a_symbol = Identifier(token.value, context_label, context_level)
                     a_symbol = self._get_declared_variable(action_number, action_name, a_symbol)
                     self._check_type_compatibility(action_number, action_name, a_variable, a_symbol)
                     #print("variable -> {0}".format(a_symbol))
@@ -326,9 +359,9 @@ class DeftPascalCompiler:
                 if a_symbol:
                     self._emitter.emit_action_6(a_symbol)
             self._emitter.emit_action_6_finish()
-            print("[{0}] {1} assignment : {2}".format(action_number, action_name, a_variable))
+            self._log(INFO, "[{0}] {1} : {2}".format(action_number, action_name, a_variable))
         else:
-            print("[{0}] {1} incorrect declaration {2} ".format(action_number, action_name, token_list))
+            self._log(ERROR, "[{0}] {1} incorrect declaration {2} ".format(action_number, action_name, token_list))
             self._exception_raiser(UnexpectedToken)
 
     def _action_7(self, action_number, action_name, token_list):
@@ -338,22 +371,23 @@ class DeftPascalCompiler:
             context_level = self._stack_scope[-1][1]
 
             self._emitter.emit_action_7(1)
-            print("[{0}] {1} - REPEAT".format(action_number, action_name))
+            self._log(INFO, "[{0}] {1} : REPEAT".format(action_number, action_name))
 
             self._internal_compile(token_list[1])
 
             self._emitter.emit_action_7(2)
-            print("[{0}] {1} - UNTIL".format(action_number, action_name))
+            self._log(INFO, "[{0}] {1} : UNTIL".format(action_number, action_name))
 
             self._internal_compile(token_list[3])
 
             self._emitter.emit_action_7(3)
+
         else:
-            print("[{0}] {1} incorrect declaration {2} ".format(action_number, action_name, token_list))
+
+            self._log(ERROR, "[{0}] {1} incorrect declaration {2} ".format(action_number, action_name, token_list))
             self._exception_raiser(UnexpectedToken)
 
     def _action_8(self, action_number, action_name, token_list):
-        #TODO: How to check for type compatibility?
 
         context_label = self._stack_scope[-1][0]
         context_level = self._stack_scope[-1][1]
@@ -365,12 +399,12 @@ class DeftPascalCompiler:
 
             if token.type in ["CONSTANT_TRUE", "CONSTANT_FALSE"]:
 
-                a_symbol = self._retrieve_global_boolean_constant(action_number, token.value)
+                a_symbol = self._retrieve_global_boolean_constant(action_number, action_name, token.value)
                 stack_expression.append(a_symbol)
 
             elif token.type == "IDENTIFIER":
 
-                a_symbol = Variable(token.value, context_label, context_level)
+                a_symbol = Identifier(token.value, context_label, context_level)
                 a_symbol = self._get_declared_variable(action_number, action_name, a_symbol)
                 stack_expression.append(a_symbol)
 
@@ -392,7 +426,7 @@ class DeftPascalCompiler:
         for i in range(0, len(stack_expression) - 1):
             self._check_type_compatibility(action_number, action_name, stack_expression[i], stack_expression[i+1])
 
-        print("[{0}] {1} - {2}".format(action_number, action_name, stack_expression))
+        self._log(INFO, "[{0}] {1} : {2}".format(action_number, action_name, stack_expression))
 
 
 

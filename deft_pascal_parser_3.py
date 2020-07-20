@@ -60,6 +60,7 @@ class DeftPascalParser:
                              | STRING
                              | CONSTANT_TRUE
                              | CONSTANT_FALSE
+                             | CONSTANT_NIL
            
        // DATA TYPES
        
