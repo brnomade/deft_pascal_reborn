@@ -28,8 +28,10 @@ class DeftPascalCompiler:
                          "LABEL_DECLARATION_PART": self._action_4,
                          "RESERVED_STRUCTURE_END": self._action_5,
                          "ASSIGNMENT_STATEMENT": self._action_6,
-                         "REPEAT_STATEMENT": self._action_7,
-                         "BOOLEAN_EXPRESSION": self._action_8
+                         "EXPRESSION": self._action_7,
+                         "REPEAT_STATEMENT": self._action_8,
+                         "BOOLEAN_EXPRESSION": self._action_9,
+                         "CLOSED_FOR_STATEMENT" : self._action_10,
                          }
 
         self._error_list = []
@@ -74,7 +76,7 @@ class DeftPascalCompiler:
             action_to_call = self._actions[action_name]
             action_number = action_to_call.__name__.split("_")[-1]
         except KeyError:
-            self._log(WARNING, "action '{0}' not yet implemented".format(a_tree.data.upper()))
+            self._log(ERROR, "action '{0}' not yet implemented".format(a_tree.data.upper()))
         else:
             action_to_call(action_number, action_name, a_tree.children)
 
@@ -84,7 +86,7 @@ class DeftPascalCompiler:
             action_to_call = self._actions[action_name]
             action_number = action_to_call.__name__.split("_")[-1]
         except KeyError:
-            self._log(WARNING, "action '{0}' not yet implemented".format(a_token.type.upper()))
+            self._log(ERROR, "action '{0}' not yet implemented".format(a_token.type.upper()))
         else:
             action_to_call(action_number, action_name, a_token)
 
@@ -180,6 +182,7 @@ class DeftPascalCompiler:
         #
         return compatible
 
+
     def _action_0(self, action_number, action_name, input_list):
         """
         process PROGRAM
@@ -254,140 +257,163 @@ class DeftPascalCompiler:
             self._log(ERROR, "[{0}] {1} - incorrect declaration".format(action_number, action_name))
             self._exception_raiser(UnexpectedToken)
 
+
     def _action_3(self, action_number, action_name, input_list):
         """
-        process VARIABLE_DECLARATION_PART
+        input_list -> VAR [v1 v2 TYPE] [v3 TYPE] ...
         """
-        # print(input_list)
-        if action_name == 'VARIABLE_DECLARATION_PART':
-            input_list = input_list[1:]
-            for variable_declaration in input_list:
-                data_type = variable_declaration.children.pop().value
-                for token in variable_declaration.children:
-                    identifier = token.value
-                    context_label = self._stack_scope[-1][0]
-                    context_level = self._stack_scope[-1][1]
-                    a_symbol = Identifier(identifier, context_label, context_level, data_type, identifier)
-                    # scenarios:
-                    # - identifier not declared
-                    # - identifier already declared (as a constant or a variable)
-                    if self._symbol_table.has_equal(a_symbol, equal_type=False):
-                        self._log(ERROR, 'ERROR 2 - Identifier already declared in the current scope')
-                    else:
-                        self._symbol_table.append(a_symbol)
-                        self._stack_variables.append(a_symbol)
-                        self._emitter.emit_action_3(a_symbol)
-                        self._log(INFO, "[{0}] {1} : {2}".format(action_number, action_name, a_symbol))
-        else:
-            self._log(ERROR, "[{0}] {1} - incorrect declaration".format(action_number, action_name))
-            self._exception_raiser(UnexpectedToken)
+        # skip reserved word VAR
+
+        input_list = input_list[1:]
+
+        for variable_declaration in input_list:
+
+            # the TYPE is at the end of the children list. pop it out and collect the value.
+
+            data_type = variable_declaration.children.pop().value
+
+            # process each identifier for the given data_type
+
+            for token in variable_declaration.children:
+
+                identifier = token.value
+                context_label = self._stack_scope[-1][0]
+                context_level = self._stack_scope[-1][1]
+                a_symbol = Identifier(identifier, context_label, context_level, data_type, identifier)
+
+                # scenarios:
+                # - identifier not declared
+                # - identifier already declared
+
+                if self._symbol_table.has_equal(a_symbol, equal_type=False):
+
+                    msg = "[{0}] {1} :  Identifier '{2}' already declared in current scope"
+                    self._log(ERROR, msg.format(action_number, action_name, a_symbol))
+
+                else:
+
+                    self._symbol_table.append(a_symbol)
+                    self._emitter.emit_action_3(a_symbol)
+                    self._log(INFO, "[{0}] {1} : {2}".format(action_number, action_name, a_symbol))
 
     def _action_4(self, action_number, action_name, input_list):
         """
         process LABEL_DECLARATION_PART
         """
-        if action_name == "LABEL_DECLARATION_PART":
-            self._log(WARNING, "[{0}] {1} - all will be ignored".format(action_number, action_name))
-        else:
-            self._log(ERROR, "[{0}] {1} - incorrect declaration".format(action_number, action_name))
-            self._exception_raiser(UnexpectedToken)
+        self._log(WARNING, "[{0}] {1} - all will be ignored".format(action_number, action_name))
 
     def _action_5(self, action_number, action_name, input_token):
         """
         process END
         """
-        if action_name == 'RESERVED_STRUCTURE_END':
-            self._emitter.emit_action_5()
-            self._log(INFO, "[{0}] {1} : {2}".format(action_number,
-                                           action_name,
-                                           self._symbol_table))
-        else:
-            self._log(ERROR, "[{0}] {1} - incorrect declaration".format(action_number, action_name))
-            self._exception_raiser(UnexpectedToken)
+        self._emitter.emit_action_5()
+        self._log(INFO, "[{0}] {1} : {2}".format(action_number,
+                                                 action_name,
+                                                 self._symbol_table))
+
 
     def _action_6(self, action_number, action_name, token_list):
-        # print(token_list)
-        if action_name == 'ASSIGNMENT_STATEMENT':
+        """
+        token_list -> identifier := expression
+        """
+        context_label = self._stack_scope[-1][0]
+        context_level = self._stack_scope[-1][1]
 
-            context_label = self._stack_scope[-1][0]
-            context_level = self._stack_scope[-1][1]
+        # check identifier exists
 
-            # check variable exists
+        token = token_list[0]
+        identifier = token.value if token.type == "IDENTIFIER" else self._exception_raiser(UnexpectedToken)
+        a_symbol = Identifier(identifier, context_label, context_level)
+        a_symbol = self._retrieve_from_symbol_table(action_number, action_name, a_symbol)
+        if a_symbol:
+            self._emitter.emit_action_6(a_symbol)
 
-            token = token_list[0]
-            identifier = token.value if token.type == "IDENTIFIER" else self._exception_raiser(UnexpectedToken)
-            a_variable = Identifier(identifier, context_label, context_level)
-            a_variable = self._get_declared_variable(action_number, action_name, a_variable)
-            if a_variable:
-                self._emitter.emit_action_6(a_variable)
+        # emit operator :=
 
-            # iterate over assignment list and check type compatibility
+        token = token_list[1]
+        operator = BaseSymbol(token.value, context_label, context_level, token.type, token.value)
+        self._emitter.emit_action_6(operator)
 
-            #token_list = token_list[1:]
+        # process the expression
 
-            for token in token_list[1:]:
-                #print(token.type, token.value)
+        self._internal_compile(token_list[2])
 
-                if token.type in ["CONSTANT_TRUE", "CONSTANT_FALSE"]:
+        self._emitter.emit_action_6_finish()
+        self._log(INFO, "[{0}] {1} : {2}".format(action_number, action_name, a_symbol))
 
-                    a_symbol = self._retrieve_global_boolean_constant(action_number, action_name, token.value)
-                    self._check_type_compatibility(action_number, action_name, a_variable, a_symbol)
-
-                elif token.type == "IDENTIFIER":
-
-                    a_symbol = Identifier(token.value, context_label, context_level)
-                    a_symbol = self._get_declared_variable(action_number, action_name, a_symbol)
-                    self._check_type_compatibility(action_number, action_name, a_variable, a_symbol)
-                    #print("variable -> {0}".format(a_symbol))
-
-                elif token.type in ["UNSIGNED_DECIMAL", "SIGNED_DECIMAL", "NUMBER_BINARY", "NUMBER_OCTAL",
-                                     "NUMBER_HEXADECIMAL", "CHARACTER", "STRING", "CONSTANT_TRUE", "CONSTANT_FALSE",
-                                     "UNSIGNED_REAL", "SIGNED_REAL"
-                                     ]:
-
-                    a_symbol = Constant(token.value, context_label, context_level, token.type, token.value)
-                    self._check_type_compatibility(action_number, action_name, a_variable, a_symbol)
-
-                else:
-
-                    a_symbol = BaseSymbol(token.value, context_label, context_level, token.type, token.value)
-                #
-                #if token.type not in ["OPERATOR_ASSIGNMENT"]:
-
-                #    self._action_6_check_type_compatibility(action_number, a_variable, a_symbol)
-                #
-                if a_symbol:
-                    self._emitter.emit_action_6(a_symbol)
-            self._emitter.emit_action_6_finish()
-            self._log(INFO, "[{0}] {1} : {2}".format(action_number, action_name, a_variable))
-        else:
-            self._log(ERROR, "[{0}] {1} incorrect declaration {2} ".format(action_number, action_name, token_list))
-            self._exception_raiser(UnexpectedToken)
+        # # iterate over assignment list and check type compatibility
+        #
+        # #token_list = token_list[1:]
+        #
+        # for token in token_list[1:]:
+        #     #print(token.type, token.value)
+        #
+        #     if token.type in ["CONSTANT_TRUE", "CONSTANT_FALSE"]:
+        #
+        #         a_symbol = self._retrieve_global_boolean_constant(action_number, action_name, token.value)
+        #         self._check_type_compatibility(action_number, action_name, a_variable, a_symbol)
+        #
+        #     elif token.type == "IDENTIFIER":
+        #
+        #         a_symbol = Identifier(token.value, context_label, context_level)
+        #         a_symbol = self._get_declared_variable(action_number, action_name, a_symbol)
+        #         self._check_type_compatibility(action_number, action_name, a_variable, a_symbol)
+        #         #print("variable -> {0}".format(a_symbol))
+        #
+        #     elif token.type in ["UNSIGNED_DECIMAL", "SIGNED_DECIMAL", "NUMBER_BINARY", "NUMBER_OCTAL",
+        #                          "NUMBER_HEXADECIMAL", "CHARACTER", "STRING", "CONSTANT_TRUE", "CONSTANT_FALSE",
+        #                          "UNSIGNED_REAL", "SIGNED_REAL"
+        #                          ]:
+        #
+        #         a_symbol = Constant(token.value, context_label, context_level, token.type, token.value)
+        #         self._check_type_compatibility(action_number, action_name, a_variable, a_symbol)
+        #
+        #     else:
+        #
+        #         a_symbol = BaseSymbol(token.value, context_label, context_level, token.type, token.value)
+        #     #
+        #     #if token.type not in ["OPERATOR_ASSIGNMENT"]:
+        #
+        #     #    self._action_6_check_type_compatibility(action_number, a_variable, a_symbol)
+        #     #
+        #     if a_symbol:
+        #         self._emitter.emit_action_6(a_symbol)
+        # self._emitter.emit_action_6_finish()
+        # self._log(INFO, "[{0}] {1} : {2}".format(action_number, action_name, a_variable))
 
     def _action_7(self, action_number, action_name, token_list):
+        context_label = self._stack_scope[-1][0]
+        context_level = self._stack_scope[-1][1]
+        print(token_list)
+        #TODO: fix the assigment of expressions.
+        # single values are also incorrect. Value -1 is comming in 2 tokens (signal and decimal)
+
+
+
+    def _action_8(self, action_number, action_name, token_list):
         if action_name == 'REPEAT_STATEMENT':
 
             context_label = self._stack_scope[-1][0]
             context_level = self._stack_scope[-1][1]
 
-            self._emitter.emit_action_7(1)
+            self._emitter.emit_action_8(1)
             self._log(INFO, "[{0}] {1} : REPEAT".format(action_number, action_name))
 
             self._internal_compile(token_list[1])
 
-            self._emitter.emit_action_7(2)
+            self._emitter.emit_action_8(2)
             self._log(INFO, "[{0}] {1} : UNTIL".format(action_number, action_name))
 
             self._internal_compile(token_list[3])
 
-            self._emitter.emit_action_7(3)
+            self._emitter.emit_action_8(3)
 
         else:
 
             self._log(ERROR, "[{0}] {1} incorrect declaration {2} ".format(action_number, action_name, token_list))
             self._exception_raiser(UnexpectedToken)
 
-    def _action_8(self, action_number, action_name, token_list):
+    def _action_9(self, action_number, action_name, token_list):
 
         context_label = self._stack_scope[-1][0]
         context_level = self._stack_scope[-1][1]
@@ -421,13 +447,67 @@ class DeftPascalCompiler:
                 a_symbol = BaseSymbol(token.value, context_label, context_level, token.type, token.value)
 
             if a_symbol:
-                self._emitter.emit_action_8(a_symbol)
+                self._emitter.emit_action_9(a_symbol)
 
         for i in range(0, len(stack_expression) - 1):
             self._check_type_compatibility(action_number, action_name, stack_expression[i], stack_expression[i+1])
 
         self._log(INFO, "[{0}] {1} : {2}".format(action_number, action_name, stack_expression))
 
+    def _action_10(self, action_number, action_name, token_list):
+        """
+        token_list will have: FOR identifier := expression TO/DOWNTO expression DO assignment_statement
+        expression is a Tree of multiple objects
+        assignment_statement is a Tree of multiple objects
+        """
+
+        context_label = self._stack_scope[-1][0]
+        context_level = self._stack_scope[-1][1]
+
+        # stack_expression = []
+
+        # emit reserved word FOR
+
+        self._emitter.emit_action_10(token_list[0])
+
+        # check control variable exists
+
+        self._internal_compile(token_list[1])
+        #token = token_list[1]
+        #identifier = token.value if token.type == "IDENTIFIER" else self._exception_raiser(UnexpectedToken)
+        #a_variable = Identifier(identifier, context_label, context_level)
+        #a_variable = self._get_declared_variable(action_number, action_name, a_variable)
+        #if a_variable:
+        #    self._emitter.emit_action_10(a_variable)
+
+        # emit operator :=
+
+        self._emitter.emit_action_10(token_list[2])
+
+        # process the expression
+
+        self._internal_compile(token_list[3])
+
+        # process reserved word TO/DOWNTO
+
+        self._emitter.emit_action_10(token_list[4])
+
+        # process the expression
+
+        self._internal_compile(token_list[5])
+
+        # process reserved word DO
+
+        self._emitter.emit_action_10(token_list[4])
+
+        # process the assignment_statement
+
+        self._internal_compile(token_list[5])
+
+        #for i in range(0, len(stack_expression) - 1):
+        #    self._check_type_compatibility(action_number, action_name, stack_expression[i], stack_expression[i+1])
+
+        self._log(INFO, "[{0}] {1}".format(action_number, action_name))
 
 
 

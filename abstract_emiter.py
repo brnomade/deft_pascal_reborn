@@ -103,7 +103,7 @@ class CEmitter(AbstractEmitter):
         line = ";"
         self.emit_line(line)
 
-    def emit_action_7(self, step):
+    def emit_action_8(self, step):
         if step == 1:
             line = "do"
             self.emit_line(line)
@@ -117,6 +117,10 @@ class CEmitter(AbstractEmitter):
         else:
             raise KeyError
 
-    def emit_action_8(self, a_symbol):
+    def emit_action_9(self, a_symbol):
+        line = "{0} "
+        self.emit(line.format(a_symbol.value))
+
+    def emit_action_10(self, a_symbol):
         line = "{0} "
         self.emit(line.format(a_symbol.value))

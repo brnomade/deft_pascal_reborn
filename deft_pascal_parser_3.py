@@ -62,18 +62,6 @@ class DeftPascalParser:
                              | CONSTANT_FALSE
                              | CONSTANT_NIL
            
-       // DATA TYPES
-       
-       _type_denoter : RESERVED_TYPE_REAL
-                     | RESERVED_TYPE_BOOLEAN
-                     | RESERVED_TYPE_BYTE
-                     | RESERVED_TYPE_CHAR
-                     | RESERVED_TYPE_INTEGER
-                     | RESERVED_TYPE_STRING
-                     | RESERVED_TYPE_TEXT
-                     | RESERVED_TYPE_WORD
-                     | RESERVED_TYPE_SET
-                     |
 
        // VARIABLE DECLARATION
        
@@ -84,6 +72,17 @@ class DeftPascalParser:
                                    | variable_declaration
 
         variable_declaration : _identifier_list _COLON _type_denoter
+
+       _type_denoter : RESERVED_TYPE_REAL
+                     | RESERVED_TYPE_BOOLEAN
+                     | RESERVED_TYPE_BYTE
+                     | RESERVED_TYPE_CHAR
+                     | RESERVED_TYPE_INTEGER
+                     | RESERVED_TYPE_STRING
+                     | RESERVED_TYPE_TEXT
+                     | RESERVED_TYPE_WORD
+                     | RESERVED_TYPE_SET
+                     |
 
         // STATEMENTS
 
@@ -98,25 +97,50 @@ class DeftPascalParser:
                   | _closed_statement
                   
         _open_statement : _label _COLON _non_labeled_open_statement
-                       | _non_labeled_open_statement
+                        | _non_labeled_open_statement
  
         _closed_statement : _label _COLON _non_labeled_closed_statement
-                         | _non_labeled_closed_statement
+                          | _non_labeled_closed_statement
 
         _non_labeled_closed_statement : assignment_statement
                                       | repeat_statement
+                                      | closed_for_statement
+                                      | _compound_statement
+                                     
+        // REPEAT UNTIL                             
                                      
         repeat_statement : RESERVED_STATEMENT_REPEAT _statement_sequence RESERVED_STATEMENT_UNTIL boolean_expression
 
+        // FOR
+        
+        open_for_statement : RESERVED_STATEMENT_FOR _control_variable OPERATOR_ASSIGNMENT _initial_value _direction _final_value RESERVED_STATEMENT_DO _open_statement
+
+        closed_for_statement : RESERVED_STATEMENT_FOR _control_variable OPERATOR_ASSIGNMENT _initial_value _direction _final_value RESERVED_STATEMENT_DO _closed_statement
+        
+        _control_variable : IDENTIFIER
+        
+        _initial_value : expression
+        
+        _direction : RESERVED_STATEMENT_TO
+                   | RESERVED_STATEMENT_DOWNTO
+
+        _final_value : expression
+
+
+
+        //
+
         _non_labeled_open_statement : |
 
-        assignment_statement : _variable_access OPERATOR_ASSIGNMENT _expression
+        // ASSIGNMENT STATEMENT
+
+        assignment_statement : _variable_access OPERATOR_ASSIGNMENT expression
 
         _variable_access : IDENTIFIER
          
-        boolean_expression : _expression 
+        boolean_expression : expression 
 
-        _expression : _simple_expression
+        expression : _simple_expression
                     | _simple_expression _relop _simple_expression
  
         _simple_expression : _term
@@ -154,7 +178,7 @@ class DeftPascalParser:
  
         _primary : _variable_access
                  | _unsigned_constant
-                 | LEFT_PARENTHESES _expression RIGHT_PARENTHESES
+                 | LEFT_PARENTHESES expression RIGHT_PARENTHESES
                  | RESERVED_OPERATOR_NOT _primary
 
         _unsigned_constant : _unsigned_number
@@ -213,6 +237,11 @@ class DeftPascalParser:
         RESERVED_IN : "in"i
         RESERVED_STATEMENT_REPEAT : "repeat"i 
         RESERVED_STATEMENT_UNTIL : "until"i
+        RESERVED_STATEMENT_FOR : "for"i
+        RESERVED_STATEMENT_TO : "to"i
+        RESERVED_STATEMENT_DO : "do"i
+        RESERVED_STATEMENT_DOWNTO : "downto"i
+
             
         // logical operators 
         
@@ -244,7 +273,7 @@ class DeftPascalParser:
         STRING : /\'[\ A-Za-z0-9!\"#$%^&()*+,\-.\/:;<=>?@\[\]]{2,}\'/
         SIGNED_DECIMAL : /[+-]\d+/
         UNSIGNED_DECIMAL : /\d+/
-        SIGNED_REAL : /[+-]?\d+[.]\d+([Ee][+-]?\d+)?/
+        SIGNED_REAL : /[+-]\d+[.]\d+([Ee][+-]?\d+)?/
         UNSIGNED_REAL : /\d+[.]\d+([Ee][+-]?\d+)?/
         NUMBER_HEXADECIMAL : /\&[Hh][0-9A-F]+|\$[0-9A-F]+/
         NUMBER_OCTAL : /\&[Oo][0-7]+/

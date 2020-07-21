@@ -6,7 +6,7 @@ from common_test_cases import LanguageTests
 
 class TestDeftPascalCompiler(TestCase):
 
-    @parameterized.expand(LanguageTests.tests_to_run())
+    @parameterized.expand(LanguageTests.compiler_tests_to_run())
     def test(self, name, source_code):
         compiler = DeftPascalCompiler()
         #

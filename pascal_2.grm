@@ -355,13 +355,13 @@ closed_statement : label COLON non_labeled_closed_statement
 non_labeled_closed_statement : assignment_statement [DONE]
  | procedure_statement
  | goto_statement
- | compound_statement
+ | compound_statement [DONE]
  | case_statement
- | repeat_statement
+ | repeat_statement [DONE]
  | closed_with_statement
  | closed_if_statement
  | closed_while_statement
- | closed_for_statement
+ | closed_for_statement [DONE]
  |
  ;
 
@@ -381,10 +381,12 @@ open_while_statement : WHILE boolean_expression DO open_statement
 closed_while_statement : WHILE boolean_expression DO closed_statement
  ;
 
+[DONE]
 open_for_statement : FOR control_variable ASSIGNMENT initial_value direction
    final_value DO open_statement
  ;
 
+[DONE]
 closed_for_statement : FOR control_variable ASSIGNMENT initial_value direction
    final_value DO closed_statement
  ;
@@ -470,14 +472,18 @@ otherwisepart : OTHERWISE
  | OTHERWISE COLON
  ;
 
+[DONE]
 control_variable : identifier ;
 
+[DONE]
 initial_value : expression ;
 
+[DONE]
 direction : TO
  | DOWNTO
  ;
 
+[DONE]
 final_value : expression ;
 
 record_variable_list : record_variable_list comma variable_access

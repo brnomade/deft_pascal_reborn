@@ -2,8 +2,21 @@
 class TestSuit:
 
     @staticmethod
+    def parser_tests_to_run():
+        return TestSuit.tests_to_run()
+
+    @staticmethod
+    def compiler_tests_to_run():
+        return [
+    ["scenario_variable_assignment_with_single_value", LanguageTests().scenario_variable_assignment_with_single_value()],
+    ["scenario_for_to_loop_with_constants", LanguageTests.scenario_for_to_loop_with_constants()],
+                ]
+
+    @staticmethod
     def tests_to_run():
         return [
+    ["tdd_1", TDD().tdd_1()],
+    ["tdd_2", TDD().tdd_2()],
     ["scenario_program_definition_with_variables", LanguageTests().scenario_program_definition_with_variables()],
     ["scenario_program_definition_without_variables", LanguageTests().scenario_program_definition_without_variables()],
     ["scenario_label_declaration", LanguageTests().scenario_label_declaration()],
@@ -21,8 +34,14 @@ class TestSuit:
     ["scenario_variable_assignment_with_same_variable", LanguageTests().scenario_variable_assignment_with_same_variable()],
     ["scenario_repeat_loop_with_boolean", LanguageTests().scenario_repeat_loop_with_boolean()],
     ["scenario_repeat_loop_with_variable", LanguageTests().scenario_repeat_loop_with_variable()],
-    ["scenario_repeat_loop_with_expression", LanguageTests().scenario_repeat_loop_with_expression()]
+    ["scenario_repeat_loop_with_expression", LanguageTests().scenario_repeat_loop_with_expression()],
+    ["scenario_for_to_loop_with_constants", LanguageTests.scenario_for_to_loop_with_constants()],
+    ["scenario_for_to_loop_with_expressions", LanguageTests.scenario_for_to_loop_with_expressions()],
                 ]
+
+#    ["scenario_for_downto_loop", LanguageTests.scenario_for_downto_loop()],
+#    ["scenario_for_to_loop_with_begin_end", LanguageTests.scenario_for_to_loop_with_begin_end()],
+#    ["scenario_for_downto_loop_with_begin_end", LanguageTests.scenario_for_downto_loop_with_begin_end()],
 
 
 class LanguageTests(TestSuit):
@@ -305,8 +324,94 @@ class LanguageTests(TestSuit):
             "END.                                      \n"
         return code
 
+    @staticmethod
+    def scenario_for_to_loop_with_constants():
+        code = \
+            "PROGRAM my_scenario_program;              \n" \
+            "VAR X : INTEGER;                          \n" \
+            "BEGIN                                     \n" \
+            "   FOR X := 1 TO 10 DO                    \n" \
+            "      V1 := X;                            \n" \
+            "END.                                      \n"
+        return code
 
-class DeftPascalTests():
+    @staticmethod
+    def scenario_for_to_loop_with_expressions():
+        code = \
+            "PROGRAM my_scenario_program;                \n" \
+            "VAR V1 : INTEGER;                           \n" \
+            "BEGIN                                       \n" \
+            "   FOR X := (1 + 2 * 3) TO (10 + 1 * 2) DO  \n" \
+            "      V1 := X;                              \n" \
+            "END.                                        \n"
+        return code
+
+
+    @staticmethod
+    def scenario_for_downto_loop():
+        code = \
+            "PROGRAM my_scenario_program;              \n" \
+            "VAR V1 : INTEGER;                         \n" \
+            "BEGIN                                     \n" \
+            "   FOR X := 10 DOWNTO 1 DO                \n" \
+            "      V1 := X;                            \n" \
+            "END.                                      \n"
+        return code
+
+    @staticmethod
+    def scenario_for_to_loop_with_begin_end():
+        code = \
+            "PROGRAM my_scenario_program;              \n" \
+            "VAR V1 : INTEGER;                         \n" \
+            "BEGIN                                     \n" \
+            "   FOR X := 1 TO 10 DO                    \n" \
+            "      BEGIN                               \n" \
+            "         V1 := X;                         \n" \
+            "      END;                                \n" \
+            "END.                                      \n"
+        return code
+
+    @staticmethod
+    def scenario_for_downto_loop_with_begin_end():
+        code = \
+            "PROGRAM my_scenario_program;              \n" \
+            "VAR V1 : INTEGER;                         \n" \
+            "BEGIN                                     \n" \
+            "   FOR X := 10 DOWNTO 1 DO                \n" \
+            "      BEGIN                               \n" \
+            "         V1 := X;                         \n" \
+            "      END;                                \n" \
+            "END.                                      \n"
+        return code
+
+class TDD(TestSuit):
+
+    @staticmethod
+    def tdd_1():
+        code = \
+            "PROGRAM my_scenario_program;              \n" \
+            "VAR                                   \n" \
+            "V1 : INTEGER;                         \n" \
+            "BEGIN                                 \n" \
+            "V1 := NIL                                 \n" \
+            "END.                                  \n"
+        return code
+
+    @staticmethod
+    def tdd_2():
+        code = \
+            "PROGRAM my_test_program( A1, A2, A3); \n" \
+            "LABEL 100, 200, 300, 400;             \n" \
+            "CONST                                 \n" \
+            "C1 = 0.5;  B = 1;                             \n" \
+            "VAR V1, V3 : INTEGER;                     \n" \
+            "V2 : BOOLEAN;                         \n" \
+            "BEGIN                                 \n" \
+            "   REPEAT                             \n" \
+            "     V1 := V1 + 1                   \n" \
+            "   UNTIL V1 + V3 > 10 + 1      \n" \
+            "END.                                  \n"
+        return code
 
     @staticmethod
     def scenario_program_definition_2():
