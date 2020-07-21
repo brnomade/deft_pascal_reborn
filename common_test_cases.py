@@ -1,5 +1,31 @@
 
-class CommonTestCases:
+class TestSuit:
+
+    @staticmethod
+    def tests_to_run():
+        return [
+    ["scenario_program_definition_with_variables", LanguageTests().scenario_program_definition_with_variables()],
+    ["scenario_program_definition_without_variables", LanguageTests().scenario_program_definition_without_variables()],
+    ["scenario_label_declaration", LanguageTests().scenario_label_declaration()],
+    ["scenario_decimal_numbers", LanguageTests().scenario_decimal_numbers()],
+    ["scenario_binary_numbers", LanguageTests().scenario_binary_numbers()],
+    ["scenario_octal_numbers", LanguageTests().scenario_octal_numbers()],
+    ["scenario_hexadecimal_numbers", LanguageTests().scenario_hexadecimal_numbers()],
+    ["scenario_strings", LanguageTests().scenario_strings()],
+    ["scenario_booleans", LanguageTests().scenario_booleans()],
+    ["scenario_constant_declaration", LanguageTests().scenario_constant_declaration()],
+    ["scenario_variable_declaration", LanguageTests().scenario_variable_declaration()],
+    ["scenario_variable_assignment_with_nil", LanguageTests.scenario_variable_assignment_with_nil()],
+    ["scenario_variable_assignment_with_single_value", LanguageTests().scenario_variable_assignment_with_single_value()],
+    ["scenario_variable_assignment_with_expression", LanguageTests().scenario_variable_assignment_with_expression()],
+    ["scenario_variable_assignment_with_same_variable", LanguageTests().scenario_variable_assignment_with_same_variable()],
+    ["scenario_repeat_loop_with_boolean", LanguageTests().scenario_repeat_loop_with_boolean()],
+    ["scenario_repeat_loop_with_variable", LanguageTests().scenario_repeat_loop_with_variable()],
+    ["scenario_repeat_loop_with_expression", LanguageTests().scenario_repeat_loop_with_expression()]
+                ]
+
+
+class LanguageTests(TestSuit):
 
     @staticmethod
     def scenario_program_definition_without_variables():
@@ -277,5 +303,30 @@ class CommonTestCases:
             "      V1 := 2 + V1 * 3 + (1 / 2);         \n" \
             "   UNTIL V2 + 1 > 2                       \n" \
             "END.                                      \n"
+        return code
+
+
+class DeftPascalTests():
+
+    @staticmethod
+    def scenario_program_definition_2():
+        code = \
+            "program test;                        \n"\
+            " const                               \n"\
+            "   PI = 3.1415;                      \n"\
+            "                                     \n"\
+            " var                                 \n"\
+            "   a, b: real;                       \n"\
+            "   c : MEUTIPO;                      \n"\
+            " procedure hello(s: string; n: real);\n"\
+            " begin                               \n"\
+            "   writeln(s);                       \n"\
+            " end;                                \n"\
+            "                                     \n"\
+            " begin                               \n"\
+            "   a := PI;                          \n"\
+            "   b := a * 10;                      \n"\
+            "   hello('Hello World!', b);         \n"\
+            " end.                                \n"
         return code
 
