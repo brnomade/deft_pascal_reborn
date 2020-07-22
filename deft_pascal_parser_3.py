@@ -73,6 +73,8 @@ class DeftPascalParser:
 
         variable_declaration : _identifier_list _COLON _type_denoter
 
+        // TYPE - IN BUILT TYPE DECLARATIONS
+
        _type_denoter : RESERVED_TYPE_REAL
                      | RESERVED_TYPE_BOOLEAN
                      | RESERVED_TYPE_BYTE
@@ -82,7 +84,15 @@ class DeftPascalParser:
                      | RESERVED_TYPE_TEXT
                      | RESERVED_TYPE_WORD
                      | RESERVED_TYPE_SET
-                     |
+                     | _new_type
+
+        _new_type : _new_pointer_type
+
+        // TYPE - POINTER DECLARATION
+
+        _new_pointer_type : UPARROW _domain_type
+        UPARROW : "^"
+        _domain_type : IDENTIFIER 
 
         // STATEMENTS
 
@@ -231,7 +241,7 @@ class DeftPascalParser:
         RESERVED_TYPE_TEXT : "text"i
         RESERVED_TYPE_WORD : "word"i
         RESERVED_TYPE_SET : "set"i
-            
+                        
         // keywords
         
         RESERVED_IN : "in"i
@@ -242,7 +252,6 @@ class DeftPascalParser:
         RESERVED_STATEMENT_DO : "do"i
         RESERVED_STATEMENT_DOWNTO : "downto"i
 
-            
         // logical operators 
         
         OPERATOR_EQUAL_TO : "="

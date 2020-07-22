@@ -144,6 +144,7 @@ type_definition_list : type_definition_list type_definition
 type_definition : identifier EQUAL type_denoter semicolon
  ;
 
+[DONE]
 type_denoter : identifier
  | new_type
  ;
@@ -239,9 +240,11 @@ base_type : ordinal_type ;
 file_type : PFILE OF component_type
  ;
 
+[DONE]
 new_pointer_type : UPARROW domain_type
  ;
 
+[DONE]
 domain_type : identifier ;
 
 [DONE]
