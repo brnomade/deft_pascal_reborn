@@ -129,6 +129,12 @@ class Constant(BaseSymbol):
         pass
 
 
+class Operator(BaseSymbol):
+
+    def do_nothing(self):
+        pass
+
+
 class BooleanConstant(Constant):
 
     @classmethod

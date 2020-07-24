@@ -40,6 +40,8 @@ class CEmitter(AbstractEmitter):
             cvalue = "0{0}".format(a_token.value.upper().strip("&O"))
         elif a_token.type == "NUMBER_BINARY":
             cvalue = "0b{0}".format(a_token.value.upper().strip("&B"))
+        elif a_token.type == "RESERVED_OPERATOR_AND":
+            cvalue = "&&"
         else:
             cvalue = a_token.value
         return cvalue
@@ -69,10 +71,16 @@ class CEmitter(AbstractEmitter):
         return ctype
 
     def emit_action_0(self):
+        """
+        PROGRAM_HEADING
+        """
         self.emit_header_line("#include <stdio.h>")
         self.emit_header_line("#include <stdbool.h>")
 
     def emit_action_1(self):
+        """
+        RESERVED_STRUCTURE_BEGIN
+        """
         self.emit_line("int main(void){")
 
     def emit_action_2(self, a_token):
@@ -119,6 +127,9 @@ class CEmitter(AbstractEmitter):
 
 
     def emit_action_3(self, a_token):
+        """
+        VARIABLE_DECLARATION_PART
+        """
         #
         # ctype = a_variable_symbol.type
         # if a_variable_symbol.type == "INTEGER":
@@ -137,6 +148,9 @@ class CEmitter(AbstractEmitter):
         self.emit_header_line(line.format(ctype, a_token.name))
 
     def emit_action_5(self):
+        """
+        RESERVED_STRUCTURE_END
+        """
         self.emit_line("return 0;")
         self.emit_line("}")
 
@@ -147,8 +161,12 @@ class CEmitter(AbstractEmitter):
     #    self.emit(line.format(a_symbol.value))
 
     def emit_action_6(self, input_list):
-        # emit assignment expressions
-        # C SYNTAX IS:  c = a + b;
+        """
+        ASSIGNMENT_STATEMENT
+         emit assignment expressions
+         C SYNTAX IS:  c = a + -b;
+         INPUT IS   :  c := a + - b
+        """
         for token in input_list:
             if token.type == "OPERATOR_MINUS":
                 particle = "{0}"
@@ -157,15 +175,21 @@ class CEmitter(AbstractEmitter):
             self.emit(particle.format(self._translate_token_value_to_c(token)))
         self.emit_line(";")
 
-    def emit_action_8(self, step):
-        if step == 1:
+    def emit_action_8(self, input_list):
+        """
+        REPEAT_STATEMENT
+        """
+        token = input_list.pop(0)
+        if token.type == "RESERVED_STATEMENT_REPEAT":
             line = "do"
             self.emit_line(line)
             self.emit_line("{")
-        elif step == 2:
-            line = "} while (!("
+        elif token.type == "RESERVED_STATEMENT_UNTIL":
+            line = "} while ( ! ( "
             self.emit(line)
-        elif step == 3:
+            line = "{0} "
+            for token in input_list:
+                self.emit(line.format(self._translate_token_value_to_c(token)))
             line = "));"
             self.emit_line(line)
         else:
@@ -173,8 +197,8 @@ class CEmitter(AbstractEmitter):
 
     def emit_action_9(self, a_symbol):
         line = "{0} "
-        self.emit(line.format(a_symbol.value))
+        self.emit(line.format(self._translate_token_value_to_c(a_symbol)))
 
     def emit_action_10(self, a_symbol):
         line = "{0} "
-        self.emit(line.format(a_symbol.value))
+        self.emit(line.format(self._translate_token_value_to_c(a_symbol)))

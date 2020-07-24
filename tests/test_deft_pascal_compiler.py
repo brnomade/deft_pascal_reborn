@@ -11,7 +11,7 @@ import sys
 
 logger = logging.getLogger(__name__)
 glb_output_filename = "my_scenario_program.c"
-param_remove_file_after_test = False
+param_remove_file_after_test = True
 
 
 def safe_path( in_str ):
@@ -35,20 +35,65 @@ class TestDeftPascalCompiler(TestCase):
             logger.warning(msg.format(set(available_tests)-set(selected_tests)))
             # print("\n\nWARNING!\nNot all test scenarios are being run. Review TestSuit class\n\n")
 
-    def tearDown(self):
-        if os.path.exists(glb_output_filename):
+    # def tearDown(self):
+    #    if os.path.exists(glb_output_filename):
+    #        if param_remove_file_after_test:
+    #            os.remove(glb_output_filename)
+    #    else:
+    #        print("can't find file", glb_output_filename, ". will not delete it.")
+
+    @staticmethod
+    def compile_in_gcc(output_c):
+        output_err = output_c.split(".")[0] + ".err"
+        output_out = output_c.split(".")[0] + ".out"
+
+        home_dir = os.getcwd()
+        mig_dir = "C:\\MinGW\\bin"
+        c_dir = home_dir
+        c_win = "gcc.exe -c "
+        c_env = "{0}\\{1} > {0}\\{2} 2> {0}\\{3}".format(c_dir, output_c, output_out, output_err)
+
+        logger.info(c_dir + "\\" + c_win + c_env)
+
+        os.chdir(mig_dir)
+        subprocess.run(c_win + c_env, shell=True)
+        os.chdir(home_dir)
+
+        if os.path.exists(os.path.join(home_dir, output_out)):
+            file = open(output_out)
+            result_out = file.read()
+            file.close()
+            logger.info(result_out)
             if param_remove_file_after_test:
-                os.remove(glb_output_filename)
-        else:
-            print("can't find file", glb_output_filename, ". will not delete it.")
+                os.remove(output_out)
+
+        if os.path.exists(os.path.join(home_dir, output_err)):
+            file = open(output_err)
+            result_err = file.read()
+            file.close()
+            logger.info(result_err)
+            if param_remove_file_after_test:
+                os.remove(output_err)
+
+        return result_out + result_err
 
     @staticmethod
     def compile_in_clang():
-        clang_path = os.path.join("C:\\", "Program Files", "LLVM", "bin", "clang.exe")
-        oscmd = safe_path(clang_path)
-        oscmd = oscmd + " -fsyntax-only --analyzer-output text -E -x c"
-        oscmd = oscmd + " " + glb_output_filename
-        oscmd = oscmd + " " + "> out.txt 2> out2.txt"
+        #clang_path = os.path.join("C:\\", "Program Files", "LLVM", "bin", "clang.exe")
+        #oscmd = safe_path(clang_path)
+        # oscmd = oscmd + " -I " + '"' + os.path.join("C:\\", "Program Files (x86)", "Windows Kits", "10", "Include", "10.0.19041.0", "ucrt") + '"'
+        #oscmd = oscmd + " -I " + '"' + "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\Llvm\\x64\\lib\\clang\\10.0.0\\include" + '"'
+        #oscmd = oscmd + " -I " + '"' + "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.26.28801\\include" + '"'
+        # oscmd = oscmd + " -I " + '"' + "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.26.28801\\atlmfc\\include" + '"'
+        # oscmd = oscmd + " -I " + '"' + "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.19041.0\\ucrt" + '"'
+        # oscmd = oscmd + " -I " + '"' + "C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.19041.0\\shared" + '"'
+        # oscmd = oscmd + " -I " + '"' + "C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.19041.0\\um" + '"'
+        # oscmd = oscmd + " -I " + '"' + "C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.19041.0\\winrt" + '"'
+        # oscmd = oscmd + " -fsyntax-only -g "
+        #oscmd = oscmd + " " + glb_output_filename
+        #oscmd = oscmd + " " + "> out.txt 2> out2.txt"
+        oscmd = "clang_for_windows.bat {0} out.txt out2.txt".format(glb_output_filename)
+        # oscmd = "type {0}".format(glb_output_filename)
         print(oscmd)
         subprocess.run(oscmd, shell=True)
 
@@ -65,13 +110,16 @@ class TestDeftPascalCompiler(TestCase):
     def test(self, name, source_code):
         compiler = DeftPascalCompiler()
         #
+        if "{{{0}}}" in source_code:
+            source_code = source_code.replace("{{{0}}}", name)
         ast = compiler.check_syntax(source_code)
         self.assertIsNotNone(ast)
         #
         error_log = compiler.compile(ast)
         self.assertEqual(error_log, [])
         #
-        output = self.compile_in_clang()
+        #output = self.compile_in_clang()
+        output = self.compile_in_gcc("{0}.c".format(name))
         print(output)
         self.assertNotIn("error", output)
 

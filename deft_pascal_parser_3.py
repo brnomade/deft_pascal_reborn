@@ -119,7 +119,7 @@ class DeftPascalParser:
                                      
         // REPEAT UNTIL                             
                                      
-        repeat_statement : RESERVED_STATEMENT_REPEAT _statement_sequence RESERVED_STATEMENT_UNTIL boolean_expression
+        repeat_statement : RESERVED_STATEMENT_REPEAT _statement_sequence RESERVED_STATEMENT_UNTIL _boolean_expression
 
         // FOR
         
@@ -148,7 +148,7 @@ class DeftPascalParser:
 
         _variable_access : IDENTIFIER
          
-        boolean_expression : expression 
+        _boolean_expression : expression 
 
         expression : _simple_expression
                     | _simple_expression _relop _simple_expression

@@ -8,10 +8,11 @@ class TestSuit:
     @staticmethod
     def compiler_tests_to_run():
         return [
-    ["scenario_variable_assignment_with_nil", LanguageTests.scenario_variable_assignment_with_nil()],
-    ["scenario_variable_assignment_with_single_value", LanguageTests().scenario_variable_assignment_with_single_value()],
-    ["scenario_variable_assignment_with_variable", LanguageTests().scenario_variable_assignment_with_variable()],
-    ["scenario_variable_assignment_with_expression", LanguageTests().scenario_variable_assignment_with_expression()],
+            ["scenario_repeat_loop_with_boolean_constant", LanguageTests().scenario_repeat_loop_with_boolean_constant()],
+            ["scenario_repeat_loop_with_boolean_expression", LanguageTests().scenario_repeat_loop_with_boolean_expression()],
+            ["scenario_repeat_loop_with_variable", LanguageTests().scenario_repeat_loop_with_variable()],
+            ["scenario_repeat_loop_with_expression", LanguageTests().scenario_repeat_loop_with_expression()],
+
         ]
 
     #["scenario_for_to_loop_with_constants", LanguageTests.scenario_for_to_loop_with_constants()],
@@ -35,8 +36,11 @@ class TestSuit:
     ["scenario_variable_assignment_with_nil", LanguageTests.scenario_variable_assignment_with_nil()],
     ["scenario_variable_assignment_with_single_value", LanguageTests().scenario_variable_assignment_with_single_value()],
     ["scenario_variable_assignment_with_variable", LanguageTests().scenario_variable_assignment_with_variable()],
-    ["scenario_variable_assignment_with_expression", LanguageTests().scenario_variable_assignment_with_expression()],
-    ["scenario_repeat_loop_with_boolean", LanguageTests().scenario_repeat_loop_with_boolean()],
+    ["scenario_variable_assignment_with_numeric_expression", LanguageTests().scenario_variable_assignment_with_numeric_expression()],
+    ["scenario_variable_assignment_with_logical_expression_same_types", LanguageTests().scenario_variable_assignment_with_logical_expression_same_types()],
+    ["scenario_variable_assignment_with_logical_expression_mixed_types", LanguageTests().scenario_variable_assignment_with_logical_expression_mixed_types()],
+    ["scenario_repeat_loop_with_boolean_constant", LanguageTests().scenario_repeat_loop_with_boolean_constant()],
+    ["scenario_repeat_loop_with_boolean_expression", LanguageTests().scenario_repeat_loop_with_boolean_expression()],
     ["scenario_repeat_loop_with_variable", LanguageTests().scenario_repeat_loop_with_variable()],
     ["scenario_repeat_loop_with_expression", LanguageTests().scenario_repeat_loop_with_expression()],
     ["scenario_for_to_loop_with_constants", LanguageTests.scenario_for_to_loop_with_constants()],
@@ -53,7 +57,7 @@ class LanguageTests(TestSuit):
     @staticmethod
     def scenario_program_definition_without_variables():
         code = \
-            "PROGRAM my_scenario_program;        \n" \
+            "PROGRAM {{{0}}};        \n" \
             "BEGIN                               \n" \
             "END.                                \n"
         return code
@@ -61,7 +65,7 @@ class LanguageTests(TestSuit):
     @staticmethod
     def scenario_program_definition_with_variables():
         code = \
-            "PROGRAM my_scenario_program( A1, A2, A3); \n" \
+            "PROGRAM {{{0}}}( A1, A2, A3); \n" \
             "BEGIN                                     \n" \
             "END.                                      \n"
         return code
@@ -70,7 +74,7 @@ class LanguageTests(TestSuit):
     @staticmethod
     def scenario_label_declaration():
         code = \
-            "PROGRAM my_scenario_program( A1, A2, A3); \n" \
+            "PROGRAM {{{0}}}( A1, A2, A3); \n" \
             "LABEL 100, 200, 300, 400;             \n" \
             "BEGIN                                 \n" \
             "END.                                  \n"
@@ -80,7 +84,7 @@ class LanguageTests(TestSuit):
     @staticmethod
     def scenario_decimal_numbers():
         code = \
-            "PROGRAM my_scenario_program;              \n" \
+            "PROGRAM {{{0}}};              \n" \
             "CONST                                 \n" \
             "C1 = 0;                               \n" \
             "C2 = +0;                              \n" \
@@ -100,7 +104,7 @@ class LanguageTests(TestSuit):
     @staticmethod
     def scenario_binary_numbers():
         code = \
-            "PROGRAM my_scenario_program;              \n" \
+            "PROGRAM {{{0}}};              \n" \
             "CONST                                 \n" \
             "C1 = &B00;                            \n" \
             "C2 = &b11;                            \n" \
@@ -114,7 +118,7 @@ class LanguageTests(TestSuit):
     @staticmethod
     def scenario_octal_numbers():
         code = \
-            "PROGRAM my_scenario_program;              \n" \
+            "PROGRAM {{{0}}};              \n" \
             "CONST                                 \n" \
             "C1 = &O00;                            \n" \
             "C2 = &o00;                            \n" \
@@ -128,7 +132,7 @@ class LanguageTests(TestSuit):
     @staticmethod
     def scenario_hexadecimal_numbers():
         code = \
-            "PROGRAM my_scenario_program;              \n" \
+            "PROGRAM {{{0}}};              \n" \
             "CONST                                 \n" \
             "C1 = &h00;                            \n" \
             "C2 = &H00;                            \n" \
@@ -146,7 +150,7 @@ class LanguageTests(TestSuit):
     @staticmethod
     def scenario_strings():
         code = \
-            "PROGRAM my_scenario_program;              \n" \
+            "PROGRAM {{{0}}};              \n" \
             "CONST                                 \n" \
             "C7 = 'C';                             \n" \
             "C8 = 'C8C8C8C8';                      \n" \
@@ -158,7 +162,7 @@ class LanguageTests(TestSuit):
     @staticmethod
     def scenario_booleans():
         code = \
-            "PROGRAM my_scenario_program;              \n" \
+            "PROGRAM {{{0}}};              \n" \
             "CONST                                 \n" \
             "C1 = True;                            \n" \
             "C2 = False;                          \n" \
@@ -176,7 +180,7 @@ class LanguageTests(TestSuit):
     @staticmethod
     def scenario_constant_declaration():
         code = \
-            "PROGRAM my_scenario_program;             \n" \
+            "PROGRAM {{{0}}};             \n" \
             "CONST                                \n" \
             "C1 = 2;                               \n" \
             "C1a = -1;                              \n" \
@@ -203,7 +207,7 @@ class LanguageTests(TestSuit):
     @staticmethod
     def scenario_variable_declaration():
         code = """
-            PROGRAM my_scenario_program;          
+            PROGRAM {{{0}}};          
             VAR V1, V2 : INTEGER;                 
                 _V3    : REAL;                    
                 _V3_b  : BOOLEAN;                 
@@ -225,7 +229,7 @@ class LanguageTests(TestSuit):
     @staticmethod
     def scenario_variable_assignment_with_nil():
         code = """
-            PROGRAM my_scenario_program;            
+            PROGRAM {{{0}}};            
             VAR                                     
             V1 : ^BYTE;                             
             BEGIN                                   
@@ -238,7 +242,7 @@ class LanguageTests(TestSuit):
     @staticmethod
     def scenario_variable_assignment_with_single_value():
         code = \
-            "PROGRAM my_scenario_program;              \n" \
+            "PROGRAM {{{0}}};              \n" \
             "VAR                                 \n" \
             " V1 : INTEGER;                             \n" \
             " V2 : BOOLEAN;                          \n" \
@@ -267,10 +271,11 @@ class LanguageTests(TestSuit):
             "END.                                  \n"
         return code
 
+
     @staticmethod
     def scenario_variable_assignment_with_variable():
         code = """
-            PROGRAM my_scenario_program;                 
+            PROGRAM {{{0}}};                 
             VAR V1, V2 : INTEGER;                         
             BEGIN                                     
              V1 := V1;
@@ -279,10 +284,11 @@ class LanguageTests(TestSuit):
         """
         return code
 
+
     @staticmethod
-    def scenario_variable_assignment_with_expression():
+    def scenario_variable_assignment_with_numeric_expression():
         code = """
-            PROGRAM my_scenario_program;                  
+            PROGRAM {{{0}}};                  
             VAR V1 : INTEGER;                         
                 V2 : REAL;                         
             BEGIN                                     
@@ -292,51 +298,87 @@ class LanguageTests(TestSuit):
         """
         return code
 
+    @staticmethod
+    def scenario_variable_assignment_with_logical_expression_same_types():
+        code = """
+            PROGRAM {{{0}}};                  
+            VAR V1 : BOOLEAN;   
+            BEGIN           
+             V1 := V1 and True or V1 and (not ((V1 <> False) and (V1 = True)));              
+            END.                                      
+        """
+        return code
 
     @staticmethod
-    def scenario_repeat_loop_with_boolean():
-        code = \
-            "PROGRAM my_scenario_program;              \n" \
-            "VAR V1 : INTEGER;                         \n" \
-            "BEGIN                                     \n" \
-            "   REPEAT                                 \n" \
-            "      V1 := 2 + V1 * -3 + (1 / 2);        \n" \
-            "   UNTIL True                             \n" \
-            "END.                                      \n"
+    def scenario_variable_assignment_with_logical_expression_mixed_types():
+        code = """
+            PROGRAM {{{0}}};                  
+            VAR V1 : BOOLEAN;   
+             V2 : INTEGER;                     
+            BEGIN           
+             V2 := 0;                          
+             V1 := V1 and True or V1 and (not (V2 >= 1));              
+            END.                                      
+        """
+        return code
+
+    @staticmethod
+    def scenario_repeat_loop_with_boolean_constant():
+        code = """
+            PROGRAM {{{0}}};  
+            VAR v1 : INTEGER;            
+            BEGIN                                     
+               REPEAT                
+               v1 := 1;
+               v1 := 2;                 
+               UNTIL True                             
+            END. 
+        """
+        return code
+
+    @staticmethod
+    def scenario_repeat_loop_with_boolean_expression():
+        code = """
+            PROGRAM {{{0}}};              
+            BEGIN                                     
+               REPEAT                                 
+               UNTIL True and True                    
+            END.                                      
+        """
         return code
 
 
     @staticmethod
     def scenario_repeat_loop_with_variable():
-        code = \
-            "PROGRAM my_scenario_program;                  \n" \
-            "VAR V1 : INTEGER;                         \n" \
-            "    V2 : REAL;                         \n" \
-            "BEGIN                                     \n" \
-            "   REPEAT                                 \n" \
-            "      V1 := 2 + V1 * 3 + (1 / 2);         \n" \
-            "   UNTIL V2;                               \n" \
-            "END.                                      \n"
+        code = """
+            PROGRAM {{{0}}};     
+            VAR             
+                V2 : REAL;                         
+            BEGIN                                     
+               REPEAT     
+               UNTIL V2 = 1.0;                              
+            END.                                      
+        """
         return code
 
 
     @staticmethod
     def scenario_repeat_loop_with_expression():
-        code = \
-            "PROGRAM my_scenario_program;                  \n" \
-            "VAR V1 : INTEGER;                         \n" \
-            "    V2 : INTEGER;                         \n" \
-            "BEGIN                                     \n" \
-            "   REPEAT                                 \n" \
-            "      V1 := 2 + V1 * 3 + (1 / 2);         \n" \
-            "   UNTIL V2 + 1 > 2                       \n" \
-            "END.                                      \n"
+        code = """
+            PROGRAM {{{0}}};                  
+            VAR V1 : INTEGER;                         
+                V2 : INTEGER;                         
+            BEGIN                                     
+               REPEAT                                 
+               UNTIL V2 + 1 > V1 * (V1 + V2)                       
+            END. 
+        """
         return code
 
     @staticmethod
     def scenario_for_to_loop_with_constants():
         code = \
-            "PROGRAM my_scenario_program;              \n" \
+            "PROGRAM {{{0}}};              \n" \
             "VAR X : INTEGER;                          \n" \
             "BEGIN                                     \n" \
             "   FOR X := 1 TO 10 DO                    \n" \
@@ -347,7 +389,7 @@ class LanguageTests(TestSuit):
     @staticmethod
     def scenario_for_to_loop_with_expressions():
         code = \
-            "PROGRAM my_scenario_program;                \n" \
+            "PROGRAM {{{0}}};                \n" \
             "VAR V1 : INTEGER;                           \n" \
             "BEGIN                                       \n" \
             "   FOR X := (1 + 2 * 3) TO (10 + 1 * 2) DO  \n" \
@@ -359,7 +401,7 @@ class LanguageTests(TestSuit):
     @staticmethod
     def scenario_for_to_loop_with_begin_end():
         code = \
-            "PROGRAM my_scenario_program;              \n" \
+            "PROGRAM {{{0}}};              \n" \
             "VAR V1 : INTEGER;                         \n" \
             "BEGIN                                     \n" \
             "   FOR X := 1 TO 10 DO                    \n" \
@@ -373,7 +415,7 @@ class LanguageTests(TestSuit):
     @staticmethod
     def scenario_for_downto_loop_with_constants():
         code = \
-            "PROGRAM my_scenario_program;              \n" \
+            "PROGRAM {{{0}}};              \n" \
             "VAR V1 : INTEGER;                         \n" \
             "BEGIN                                     \n" \
             "   FOR X := 10 DOWNTO 1 DO                \n" \
@@ -384,7 +426,7 @@ class LanguageTests(TestSuit):
     @staticmethod
     def scenario_for_downto_loop_with_expressions():
         code = \
-            "PROGRAM my_scenario_program;                \n" \
+            "PROGRAM {{{0}}};                \n" \
             "VAR V1 : INTEGER;                           \n" \
             "BEGIN                                       \n" \
             "   FOR X := (1 + 2 * 3) DOWNTO (10 + 1 * 2) DO  \n" \
@@ -395,7 +437,7 @@ class LanguageTests(TestSuit):
     @staticmethod
     def scenario_for_downto_loop_with_begin_end():
         code = \
-            "PROGRAM my_scenario_program;              \n" \
+            "PROGRAM {{{0}}};              \n" \
             "VAR V1 : INTEGER;                         \n" \
             "BEGIN                                     \n" \
             "   FOR X := 10 DOWNTO 1 DO                \n" \
@@ -405,12 +447,13 @@ class LanguageTests(TestSuit):
             "END.                                      \n"
         return code
 
+
 class TDD(TestSuit):
 
     @staticmethod
     def tdd_1():
         code = \
-            "PROGRAM my_scenario_program;              \n" \
+            "PROGRAM {{{0}}};              \n" \
             "VAR                                   \n" \
             "V1 : INTEGER;                         \n" \
             "BEGIN                                 \n" \
