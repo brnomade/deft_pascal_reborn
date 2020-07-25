@@ -158,6 +158,7 @@ class DeftPascalCompiler:
         """
         expression - is a list of tokens.
         """
+        # TODO: Needs adjustment to address the use of parenthesis
         compatible = False
         # collect the native types of all symbols in the expression
         types = [i for i in expression if not i.is_operator()]
