@@ -14,7 +14,7 @@ glb_output_filename = "my_scenario_program.c"
 param_remove_file_after_test = True
 
 
-def safe_path( in_str ):
+def safe_path(in_str):
     # function to handle windows path names with empty spaces
     # in linux or ios this function is neutral
     if sys.platform.startswith('win'):
@@ -33,14 +33,6 @@ class TestDeftPascalCompiler(TestCase):
         if not set(available_tests).issubset(set(selected_tests)):
             msg = "\n\nWARNING!\nNot all test scenarios are being run. Review TestSuit class.\n\nDifferences:\n{0}\n\n\n"
             logger.warning(msg.format(set(available_tests)-set(selected_tests)))
-            # print("\n\nWARNING!\nNot all test scenarios are being run. Review TestSuit class\n\n")
-
-    # def tearDown(self):
-    #    if os.path.exists(glb_output_filename):
-    #        if param_remove_file_after_test:
-    #            os.remove(glb_output_filename)
-    #    else:
-    #        print("can't find file", glb_output_filename, ". will not delete it.")
 
     @staticmethod
     def compile_in_gcc(output_c):
@@ -79,21 +71,7 @@ class TestDeftPascalCompiler(TestCase):
 
     @staticmethod
     def compile_in_clang():
-        #clang_path = os.path.join("C:\\", "Program Files", "LLVM", "bin", "clang.exe")
-        #oscmd = safe_path(clang_path)
-        # oscmd = oscmd + " -I " + '"' + os.path.join("C:\\", "Program Files (x86)", "Windows Kits", "10", "Include", "10.0.19041.0", "ucrt") + '"'
-        #oscmd = oscmd + " -I " + '"' + "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\Llvm\\x64\\lib\\clang\\10.0.0\\include" + '"'
-        #oscmd = oscmd + " -I " + '"' + "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.26.28801\\include" + '"'
-        # oscmd = oscmd + " -I " + '"' + "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Community\\VC\\Tools\\MSVC\\14.26.28801\\atlmfc\\include" + '"'
-        # oscmd = oscmd + " -I " + '"' + "C:\\Program Files (x86)\\Windows Kits\\10\\Include\\10.0.19041.0\\ucrt" + '"'
-        # oscmd = oscmd + " -I " + '"' + "C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.19041.0\\shared" + '"'
-        # oscmd = oscmd + " -I " + '"' + "C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.19041.0\\um" + '"'
-        # oscmd = oscmd + " -I " + '"' + "C:\\Program Files (x86)\\Windows Kits\\10\\include\\10.0.19041.0\\winrt" + '"'
-        # oscmd = oscmd + " -fsyntax-only -g "
-        #oscmd = oscmd + " " + glb_output_filename
-        #oscmd = oscmd + " " + "> out.txt 2> out2.txt"
         oscmd = "clang_for_windows.bat {0} out.txt out2.txt".format(glb_output_filename)
-        # oscmd = "type {0}".format(glb_output_filename)
         print(oscmd)
         subprocess.run(oscmd, shell=True)
 
@@ -118,7 +96,6 @@ class TestDeftPascalCompiler(TestCase):
         error_log = compiler.compile(ast)
         self.assertEqual(error_log, [])
         #
-        #output = self.compile_in_clang()
         output = self.compile_in_gcc("{0}.c".format(name))
         print(output)
         self.assertNotIn("error", output)

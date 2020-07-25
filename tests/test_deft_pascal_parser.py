@@ -22,6 +22,9 @@ class TestDeftPascalParser(TestCase):
 
     @parameterized.expand(LanguageTests.parser_tests_to_run())
     def test(self, name, source_code):
+        if "{{{0}}}" in source_code:
+            source_code = source_code.replace("{{{0}}}", name)
+
         deft_pascal_parser = DeftPascalParser()
         ast = deft_pascal_parser.parse(source_code)
         print(ast.pretty())

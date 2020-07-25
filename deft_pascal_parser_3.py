@@ -77,12 +77,10 @@ class DeftPascalParser:
 
        _type_denoter : RESERVED_TYPE_REAL
                      | RESERVED_TYPE_BOOLEAN
-                     | RESERVED_TYPE_BYTE
                      | RESERVED_TYPE_CHAR
                      | RESERVED_TYPE_INTEGER
                      | RESERVED_TYPE_STRING
                      | RESERVED_TYPE_TEXT
-                     | RESERVED_TYPE_WORD
                      | RESERVED_TYPE_SET
                      | _new_type
 
@@ -162,20 +160,20 @@ class DeftPascalParser:
                | OPERATOR_GREATER_THEN
                | OPERATOR_LESS_OR_EQUAL_TO
                | OPERATOR_GREATER_OR_EQUAL_TO
-               | RESERVED_IN          
+               | OPERATOR_IN          
  
         _addop : OPERATOR_PLUS
                | OPERATOR_MINUS
-               | RESERVED_OPERATOR_OR
+               | OPERATOR_OR
 
         _term : _factor
               | _term _mulop _factor
               
         _mulop : OPERATOR_MULTIPLY
                | OPERATOR_DIVIDE
-               | RESERVED_OPERATOR_DIV
-               | RESERVED_OPERATOR_MOD
-               | RESERVED_OPERATOR_AND
+               | OPERATOR_DIV
+               | OPERATOR_MOD
+               | OPERATOR_AND
     
         _factor : _sign _factor
                 | _exponentiation
@@ -189,7 +187,7 @@ class DeftPascalParser:
         _primary : _variable_access
                  | _unsigned_constant
                  | LEFT_PARENTHESES expression RIGHT_PARENTHESES
-                 | RESERVED_OPERATOR_NOT _primary
+                 | OPERATOR_NOT _primary
 
         _unsigned_constant : _unsigned_number
                            | CHARACTER
@@ -233,24 +231,24 @@ class DeftPascalParser:
         
         RESERVED_TYPE_ARRAY : "array"i
         RESERVED_TYPE_BOOLEAN : "boolean"i
-        RESERVED_TYPE_BYTE : "byte"i
         RESERVED_TYPE_CHAR : "char"i
         RESERVED_TYPE_INTEGER : "integer"i
         RESERVED_TYPE_REAL : "real"i
         RESERVED_TYPE_STRING : "string"i
         RESERVED_TYPE_TEXT : "text"i
-        RESERVED_TYPE_WORD : "word"i
         RESERVED_TYPE_SET : "set"i
                         
         // keywords
         
-        RESERVED_IN : "in"i
         RESERVED_STATEMENT_REPEAT : "repeat"i 
         RESERVED_STATEMENT_UNTIL : "until"i
         RESERVED_STATEMENT_FOR : "for"i
         RESERVED_STATEMENT_TO : "to"i
         RESERVED_STATEMENT_DO : "do"i
         RESERVED_STATEMENT_DOWNTO : "downto"i
+        RESERVED_STATEMENT_BYTE : "byte"i
+        RESERVED_STATEMENT_WORD : "word"i
+        RESERVED_STATEMENT_ABS : "abs"i
 
         // logical operators 
         
@@ -261,9 +259,20 @@ class DeftPascalParser:
         OPERATOR_LESS_OR_EQUAL_TO : "<="
         OPERATOR_LESS_THEN : "<"
         OPERATOR_ASSIGNMENT : ":="
-        RESERVED_OPERATOR_OR : "or"i
-        RESERVED_OPERATOR_AND : "and"i
-        RESERVED_OPERATOR_NOT : "not"i
+        OPERATOR_OR : "or"i
+        OPERATOR_AND : "and"i
+        OPERATOR_NOT : "not"i
+
+        // set operators
+        
+        OPERATOR_IN : "in"i
+        
+        // bitwise operators
+        OPERATOR_LSL : "lsl"i
+        OPERATOR_LSR : "lsr"i
+        OPERATOR_SHL : "shl"i
+        OPERATOR_SHR : "shr"i
+        OPERATOR_XOR : "xor"i
         
         // arithmetic operators
         
@@ -272,8 +281,8 @@ class DeftPascalParser:
         OPERATOR_PLUS : "+"
         OPERATOR_MINUS : "-"
         OPERATOR_DIVIDE : "/"
-        RESERVED_OPERATOR_MOD : "mod"i
-        RESERVED_OPERATOR_DIV : "div"i
+        OPERATOR_MOD : "mod"i
+        OPERATOR_DIV : "div"i
         
         // regular expressions
              

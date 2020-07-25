@@ -105,10 +105,13 @@ class BaseSymbol:
         else:
             raise NotImplementedError
 
+    def is_operator(self):
+        return False
+
 
 class NumericVariable(BaseSymbol):
     """
-        VariavelInteira   = 1;
+    VariavelInteira   = 1;
     VariavelBooleana  = 2;
     VariavelEnumerada = 3;
     CampoEnumeracao   = 4;
@@ -131,19 +134,113 @@ class Constant(BaseSymbol):
 
 class Operator(BaseSymbol):
 
-    def do_nothing(self):
-        pass
+    def is_operator(self):
+        return self.type in ["OPERATOR_ASSIGNMENT",
+                             "OPERATOR_PLUS", "OPERATOR_MINUS", "OPERATOR_MULTIPLY", "OPERATOR_DIVIDE",
+                             "OPERATOR_STARSTAR",
+                             "OPERATOR_DIV", "OPERATOR_MOD", "OPERATOR_ABS",
+                             "OPERATOR_LSL", "OPERATOR_LSR", "OPERATOR_XOR", "OPERATOR_SHL", "OPERATOR_SHR",
+                             "OPERATOR_NOT", "OPERATOR_AND", "OPERATOR_OR",
+                             "OPERATOR_IN",
+                             "OPERATOR_EQUAL_TO", "OPERATOR_NOT_EQUAL_TO", "OPERATOR_LESS_THEN",
+                             "OPERATOR_GREATER_THEN",
+                             "OPERATOR_LESS_OR_EQUAL_TO", "OPERATOR_GREATER_OR_EQUAL_TO"
+                             ]
+
+    def is_unary(self):
+        return self.type in ["OPERATOR_NOT"]
+
+    def _test_unary_compatibility(self, symbol):
+        if self.is_unary():
+            return symbol.type == "RESERVED_TYPE_BOOLEAN"
+        else:
+            return False
+
+    def _test_type_real_compatibility(self):
+        return self.type in ["OPERATOR_ASSIGNMENT",
+                             "OPERATOR_PLUS", "OPERATOR_MINUS", "OPERATOR_MULTIPLY", "OPERATOR_DIVIDE"]
+
+    def _test_type_integer_compatibility(self):
+        return self.type in ["OPERATOR_ASSIGNMENT",
+                             "OPERATOR_PLUS", "OPERATOR_MINUS", "OPERATOR_MULTIPLY", "OPERATOR_DIVIDE",
+                             "OPERATOR_STARSTAR",
+                             "OPERATOR_DIV", "OPERATOR_MOD",
+                             "OPERATOR_LSL", "OPERATOR_LSR", "OPERATOR_SHL", "OPERATOR_SHR",
+                             "OPERATOR_AND", "OPERATOR_OR", "OPERATOR_XOR",
+                             "OPERATOR_EQUAL_TO", "OPERATOR_NOT_EQUAL_TO", "OPERATOR_LESS_THEN",
+                             "OPERATOR_GREATER_THEN",
+                             "OPERATOR_LESS_OR_EQUAL_TO", "OPERATOR_GREATER_OR_EQUAL_TO"
+                             ]
+
+    def _test_type_set_compatibility(self):
+        return self.type in ["OPERATOR_ASSIGNMENT",
+                             "OPERATOR_PLUS", "OPERATOR_MINUS", "OPERATOR_MULTIPLY",
+                             "OPERATOR_IN",
+                             "OPERATOR_EQUAL_TO", "OPERATOR_NOT_EQUAL_TO", "OPERATOR_LESS_THEN",
+                             "OPERATOR_GREATER_THEN",
+                             "OPERATOR_LESS_OR_EQUAL_TO", "OPERATOR_GREATER_OR_EQUAL_TO"
+                             ]
+
+    def _test_type_boolean_compatibility(self):
+        return self.type in ["OPERATOR_ASSIGNMENT",
+                             "OPERATOR_NOT", "OPERATOR_AND", "OPERATOR_OR",
+                             "OPERATOR_IN",
+                             "OPERATOR_EQUAL_TO", "OPERATOR_NOT_EQUAL_TO", "OPERATOR_LESS_THEN",
+                             "OPERATOR_GREATER_THEN",
+                             "OPERATOR_LESS_OR_EQUAL_TO", "OPERATOR_GREATER_OR_EQUAL_TO"
+                             ]
+
+    def _test_type_string_compatibility(self):
+        return self.type in ["OPERATOR_ASSIGNMENT", "OPERATOR_PLUS", "OPERATOR_IN", "OPERATOR_EQUAL_TO"]
+
+    def _test_type_char_compatibility(self):
+        return self.type in ["OPERATOR_ASSIGNMENT", "OPERATOR_PLUS", "OPERATOR_IN", "OPERATOR_EQUAL_TO"]
+
+    def is_compatible(self, symbol_a, symbol_b=None):
+        if self.is_unary():
+            if symbol_b is not None:
+                raise ValueError(symbol_b)
+            else:
+                return self._test_unary_compatibility(symbol_a)
+        else:
+            if not symbol_a.type == symbol_b.type:
+                # Exceptions:
+                # operator IN - example: 'C' in STRING
+                # operator ** - example: -1.0e25**2
+                if self.type == "OPERATOR_IN":
+                    return symbol_a.type == "RESERVED_TYPE_CHAR" and symbol_b.type == "RESERVED_TYPE_STRING"
+                elif self.type == "OPERATOR_STARSTAR":
+                    return symbol_a.type == "RESERVED_TYPE_REAL" and symbol_b.type == "RESERVED_TYPE_INTEGER"
+                else:
+                    return False
+            else:
+                if symbol_a.type == "RESERVED_TYPE_REAL":
+                    return self._test_type_real_compatibility()
+                elif symbol_a.type == "RESERVED_TYPE_INTEGER":
+                    return self._test_type_integer_compatibility()
+                elif symbol_a.type == "RESERVED_TYPE_SET":
+                    return self._test_type_set_compatibility()
+                elif symbol_a.type == "RESERVED_TYPE_BOOLEAN":
+                    return self._test_type_boolean_compatibility()
+                elif symbol_a.type == "RESERVED_TYPE_STRING":
+                    return self._test_type_string_compatibility()
+                elif symbol_a.type == "RESERVED_TYPE_CHAR":
+                    return self._test_type_char_compatibility()
+                elif symbol_a.type == "RESERVED_TYPE_TEXT":
+                    raise NotImplementedError(symbol_a)
+                else:
+                    raise KeyError(symbol_a)
 
 
 class BooleanConstant(Constant):
 
     @classmethod
     def true(cls, a_scope=None, a_level=None):
-        return cls('TRUE', a_scope, a_level, 'CONSTANT_TRUE', True)
+        return cls('CONSTANT_TRUE', a_scope, a_level, 'RESERVED_TYPE_BOOLEAN', True)
 
     @classmethod
     def false(cls, a_scope=None, a_level=None):
-        return cls('FALSE', a_scope, a_level, 'CONSTANT_FALSE', False)
+        return cls('CONSTANT_FALSE', a_scope, a_level, 'RESERVED_TYPE_BOOLEAN', False)
 
     @classmethod
     def from_value(cls, value, a_scope=None, a_level=None):

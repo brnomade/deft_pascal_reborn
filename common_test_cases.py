@@ -8,14 +8,8 @@ class TestSuit:
     @staticmethod
     def compiler_tests_to_run():
         return [
-            ["scenario_repeat_loop_with_boolean_constant", LanguageTests().scenario_repeat_loop_with_boolean_constant()],
-            ["scenario_repeat_loop_with_boolean_expression", LanguageTests().scenario_repeat_loop_with_boolean_expression()],
-            ["scenario_repeat_loop_with_variable", LanguageTests().scenario_repeat_loop_with_variable()],
-            ["scenario_repeat_loop_with_expression", LanguageTests().scenario_repeat_loop_with_expression()],
-
+            ["scenario_variable_declaration", LanguageTests().scenario_variable_declaration()],
         ]
-
-    #["scenario_for_to_loop_with_constants", LanguageTests.scenario_for_to_loop_with_constants()],
 
     @staticmethod
     def tests_to_run():
@@ -56,151 +50,161 @@ class LanguageTests(TestSuit):
 
     @staticmethod
     def scenario_program_definition_without_variables():
-        code = \
-            "PROGRAM {{{0}}};        \n" \
-            "BEGIN                               \n" \
-            "END.                                \n"
+        code = """
+            PROGRAM {{{0}}};        
+            BEGIN                               
+            END.                                
+        """
         return code
 
     @staticmethod
     def scenario_program_definition_with_variables():
-        code = \
-            "PROGRAM {{{0}}}( A1, A2, A3); \n" \
-            "BEGIN                                     \n" \
-            "END.                                      \n"
+        code = """
+            PROGRAM {{{0}}}( A1, A2, A3);    
+            BEGIN                                        
+            END.                                       
+        """
         return code
 
 
     @staticmethod
     def scenario_label_declaration():
-        code = \
-            "PROGRAM {{{0}}}( A1, A2, A3); \n" \
-            "LABEL 100, 200, 300, 400;             \n" \
-            "BEGIN                                 \n" \
-            "END.                                  \n"
+        code = """
+            PROGRAM {{{0}}}( A1, A2, A3);    
+            LABEL 100, 200, 300, 400;                
+            BEGIN                                    
+            END.                                   
+        """
         return code
 
 
     @staticmethod
     def scenario_decimal_numbers():
-        code = \
-            "PROGRAM {{{0}}};              \n" \
-            "CONST                                 \n" \
-            "C1 = 0;                               \n" \
-            "C2 = +0;                              \n" \
-            "C3 = -1;                              \n" \
-            "C4 = +1;                              \n" \
-            "C5 = -0.5;                            \n" \
-            "C6 = +0.5;                            \n" \
-            "C7 = 0.5e1;                           \n" \
-            "C8 = 0.5E1;                           \n" \
-            "C9 = -0.5E+1;                         \n" \
-            "C10 = +0.5E-1;                        \n" \
-            "BEGIN                                 \n" \
-            "END.                                  \n"
+        code = """
+            PROGRAM {{{0}}};                 
+            CONST                                    
+            C1 = 0;                                  
+            C2 = +0;                                 
+            C3 = -1;                                 
+            C4 = +1;                                 
+            C5 = -0.5;                               
+            C6 = +0.5;                               
+            C7 = 0.5e1;                              
+            C8 = 0.5E1;                              
+            C9 = -0.5E+1;                            
+            C10 = +0.5E-1;                           
+            BEGIN                                    
+            END.                                   
+        """
         return code
 
 
     @staticmethod
     def scenario_binary_numbers():
-        code = \
-            "PROGRAM {{{0}}};              \n" \
-            "CONST                                 \n" \
-            "C1 = &B00;                            \n" \
-            "C2 = &b11;                            \n" \
-            "C3 = &B101010101010;                  \n" \
-            "C4 = &b101010101010;                  \n" \
-            "BEGIN                                 \n" \
-            "END.                                  \n"
+        code = """
+            PROGRAM {{{0}}};                 
+            CONST                                    
+            C1 = &B00;                               
+            C2 = &b11;                               
+            C3 = &B101010101010;                     
+            C4 = &b101010101010;                     
+            BEGIN                                    
+            END.                                   
+        """
         return code
 
 
     @staticmethod
     def scenario_octal_numbers():
-        code = \
-            "PROGRAM {{{0}}};              \n" \
-            "CONST                                 \n" \
-            "C1 = &O00;                            \n" \
-            "C2 = &o00;                            \n" \
-            "C3 = &O01234567;                      \n" \
-            "C4 = &O01234567;                      \n" \
-            "BEGIN                                 \n" \
-            "END.                                  \n"
+        code = """
+            PROGRAM {{{0}}};                 
+            CONST                                    
+            C1 = &O00;                               
+            C2 = &o00;                               
+            C3 = &O01234567;                         
+            C4 = &O01234567;                         
+            BEGIN                                    
+            END.                                   
+        """
         return code
 
 
     @staticmethod
     def scenario_hexadecimal_numbers():
-        code = \
-            "PROGRAM {{{0}}};              \n" \
-            "CONST                                 \n" \
-            "C1 = &h00;                            \n" \
-            "C2 = &H00;                            \n" \
-            "C3 = &hABCDFE;                        \n" \
-            "C4 = &HABCDFE;                        \n" \
-            "C5 = &h0123456789;                    \n" \
-            "C6 = &H0123456789;                    \n" \
-            "C7 = &H0123456789ABCDEF;              \n" \
-            "C8 = &h0123456789ABCDEF;              \n" \
-            "BEGIN                                 \n" \
-            "END.                                  \n"
+        code = """
+            PROGRAM {{{0}}};                 
+            CONST                                    
+            C1 = &h00;                               
+            C2 = &H00;                               
+            C3 = &hABCDFE;                           
+            C4 = &HABCDFE;                           
+            C5 = &h0123456789;                       
+            C6 = &H0123456789;                       
+            C7 = &H0123456789ABCDEF;                 
+            C8 = &h0123456789ABCDEF;                 
+            BEGIN                                    
+            END.                                   
+        """
         return code
 
 
     @staticmethod
     def scenario_strings():
-        code = \
-            "PROGRAM {{{0}}};              \n" \
-            "CONST                                 \n" \
-            "C7 = 'C';                             \n" \
-            "C8 = 'C8C8C8C8';                      \n" \
-            "BEGIN                                 \n" \
-            "END.                                  \n"
+        code = """
+            PROGRAM {{{0}}};                 
+            CONST                                    
+            C7 = 'C';                                
+            C8 = 'C8C8C8C8';                         
+            BEGIN                                    
+            END.                                   
+        """
         return code
 
 
     @staticmethod
     def scenario_booleans():
-        code = \
-            "PROGRAM {{{0}}};              \n" \
-            "CONST                                 \n" \
-            "C1 = True;                            \n" \
-            "C2 = False;                          \n" \
-            "C3 = TRUE;                            \n" \
-            "C4 = FALSE;                          \n" \
-            "C5 = true;                            \n" \
-            "C6 = false;                          \n" \
-            "C7 = TrUe;                            \n" \
-            "C8 = fAlSe;                          \n" \
-            "BEGIN                                 \n" \
-            "END.                                  \n"
+        code = """
+            PROGRAM {{{0}}};                 
+            CONST                                    
+            C1 = True;                               
+            C2 = False;                             
+            C3 = TRUE;                               
+            C4 = FALSE;                             
+            C5 = true;                               
+            C6 = false;                             
+            C7 = TrUe;                               
+            C8 = fAlSe;                             
+            BEGIN                                    
+            END.                                   
+        """
         return code
 
 
     @staticmethod
     def scenario_constant_declaration():
-        code = \
-            "PROGRAM {{{0}}};             \n" \
-            "CONST                                \n" \
-            "C1 = 2;                               \n" \
-            "C1a = -1;                              \n" \
-            "C1b = +1;                              \n" \
-            "C2 = 1.0;                             \n" \
-            "C2a = -1.0;                            \n" \
-            "C2b = +1.0;                            \n" \
-            "C3 = 1.0e-12;                         \n" \
-            "C3a = -1.0e+12;                         \n" \
-            "C3b = 1.0e12;                         \n" \
-            "C4 = &HFF;                            \n" \
-            "C4a = &B10;                            \n" \
-            "C4b = &O12;                            \n" \
-            "C5 = 'C';                             \n" \
-            "C6 = 'C8C8C8C8';                      \n" \
-            "C7 = True;                            \n" \
-            "C8 = False;                           \n" \
-            "C9 = Nil;                           \n" \
-            "BEGIN                                \n" \
-            "END.                                 \n"
+        code = """
+            PROGRAM {{{0}}};                
+            CONST                                   
+            C1 = 2;                                  
+            C1a = -1;                                 
+            C1b = +1;                                 
+            C2 = 1.0;                                
+            C2a = -1.0;                               
+            C2b = +1.0;                               
+            C3 = 1.0e-12;                            
+            C3a = -1.0e+12;                            
+            C3b = 1.0e12;                            
+            C4 = &HFF;                               
+            C4a = &B10;                               
+            C4b = &O12;                               
+            C5 = 'C';                                
+            C6 = 'C8C8C8C8';                         
+            C7 = True;                               
+            C8 = False;                              
+            C9 = Nil;                              
+            BEGIN                                   
+            END.                                  
+        """
         return code
 
 
@@ -211,15 +215,12 @@ class LanguageTests(TestSuit):
             VAR V1, V2 : INTEGER;                 
                 _V3    : REAL;                    
                 _V3_b  : BOOLEAN;                 
-                _V3c   : BYTE;                    
                 _V3_d  : CHAR;                    
-                _V3_e   : STRING;                 
+                _V3_e  : STRING;                 
                 _V3_f  : TEXT;                    
-                _V3g   : WORD;                    
                 _V3h   : SET;      
-                V4     : ^BYTE;
-                V5     : ^V4;               
-                V6, V7 : ^V5;               
+                V5     : ^V1;               
+                V6, V7 : ^V3;               
             BEGIN                                 
             END.                                  
         """
@@ -241,34 +242,35 @@ class LanguageTests(TestSuit):
 
     @staticmethod
     def scenario_variable_assignment_with_single_value():
-        code = \
-            "PROGRAM {{{0}}};              \n" \
-            "VAR                                 \n" \
-            " V1 : INTEGER;                             \n" \
-            " V2 : BOOLEAN;                          \n" \
-            " V3 : CHAR;                           \n" \
-            " V4 : STRING;                      \n" \
-            " V5 : STRING;                      \n" \
-            " V6 : INTEGER;                            \n" \
-            " V7 : REAL;                          \n" \
-            " V8 : BYTE;                          \n" \
-            " V9 : BYTE;                          \n" \
-            " V10 : BYTE;                         \n" \
-            " V11 : ^WORD;                          \n" \
-            " V12 : REAL;                          \n" \
-            "BEGIN                                 \n" \
-            " V1 := 2;                             \n" \
-            " V2 := True;                          \n" \
-            " V3 := 'C';                           \n" \
-            " V4 := 'STRING';                      \n" \
-            " V6 := -1;                            \n" \
-            " V7 := -1.0;                          \n" \
-            " V8 := &HFF;                          \n" \
-            " V9 := &B10;                          \n" \
-            " V10 := &O11;                         \n" \
-            " V11 := NIL;                          \n" \
-            " V12 := -1.1E-23;                     \n" \
-            "END.                                  \n"
+        code = """
+            PROGRAM {{{0}}};                 
+            VAR                                    
+             V1 : INTEGER;                                
+             V2 : BOOLEAN;                             
+             V3 : CHAR;                              
+             V4 : STRING;                         
+             V5 : STRING;                         
+             V6 : INTEGER;                               
+             V7 : REAL;                             
+             V8 : INTEGER;                             
+             V9 : INTEGER;                             
+             V10 : INTEGER;                            
+             V11 : ^WORD;                             
+             V12 : REAL;                             
+            BEGIN                                    
+             V1 := 2;                                
+             V2 := True;                             
+             V3 := 'C';                              
+             V4 := 'STRING';                         
+             V6 := -1;                               
+             V7 := -1.0;                             
+             V8 := &HFF;                             
+             V9 := &B10;                             
+             V10 := &O11;                            
+             V11 := NIL;                             
+             V12 := -1.1E-23;                        
+            END.                                   
+        """
         return code
 
 
@@ -377,74 +379,80 @@ class LanguageTests(TestSuit):
 
     @staticmethod
     def scenario_for_to_loop_with_constants():
-        code = \
-            "PROGRAM {{{0}}};              \n" \
-            "VAR X : INTEGER;                          \n" \
-            "BEGIN                                     \n" \
-            "   FOR X := 1 TO 10 DO                    \n" \
-            "      V1 := X;                            \n" \
-            "END.                                      \n"
+        code = """
+            PROGRAM {{{0}}};                 
+            VAR X : INTEGER;                             
+            BEGIN                                        
+               FOR X := 1 TO 10 DO                       
+                  V1 := X;                               
+            END.                                       
+        """
         return code
 
     @staticmethod
     def scenario_for_to_loop_with_expressions():
-        code = \
-            "PROGRAM {{{0}}};                \n" \
-            "VAR V1 : INTEGER;                           \n" \
-            "BEGIN                                       \n" \
-            "   FOR X := (1 + 2 * 3) TO (10 + 1 * 2) DO  \n" \
-            "      V1 := X;                              \n" \
-            "END.                                        \n"
+        code = """
+            PROGRAM {{{0}}};                   
+            VAR V1 : INTEGER;                              
+            BEGIN                                          
+               FOR X := (1 + 2 * 3) TO (10 + 1 * 2) DO     
+                  V1 := X;                                 
+            END.                                         
+        """
         return code
 
 
     @staticmethod
     def scenario_for_to_loop_with_begin_end():
-        code = \
-            "PROGRAM {{{0}}};              \n" \
-            "VAR V1 : INTEGER;                         \n" \
-            "BEGIN                                     \n" \
-            "   FOR X := 1 TO 10 DO                    \n" \
-            "      BEGIN                               \n" \
-            "         V1 := X;                         \n" \
-            "      END;                                \n" \
-            "END.                                      \n"
+        code = """
+            PROGRAM {{{0}}};                 
+            VAR V1 : INTEGER;                            
+            BEGIN                                        
+               FOR X := 1 TO 10 DO                       
+                  BEGIN                                  
+                     V1 := X;                            
+                  END;                                   
+            END.                                       
+        """
         return code
 
 
     @staticmethod
     def scenario_for_downto_loop_with_constants():
-        code = \
-            "PROGRAM {{{0}}};              \n" \
-            "VAR V1 : INTEGER;                         \n" \
-            "BEGIN                                     \n" \
-            "   FOR X := 10 DOWNTO 1 DO                \n" \
-            "      V1 := X;                            \n" \
-            "END.                                      \n"
+        code = """
+            PROGRAM {{{0}}};                 
+            VAR V1 : INTEGER;                            
+            BEGIN                                        
+               FOR X := 10 DOWNTO 1 DO                   
+                  V1 := X;                               
+            END.                                       
+        """
         return code
 
     @staticmethod
     def scenario_for_downto_loop_with_expressions():
-        code = \
-            "PROGRAM {{{0}}};                \n" \
-            "VAR V1 : INTEGER;                           \n" \
-            "BEGIN                                       \n" \
-            "   FOR X := (1 + 2 * 3) DOWNTO (10 + 1 * 2) DO  \n" \
-            "      V1 := X;                              \n" \
-            "END.                                        \n"
+        code = """
+            PROGRAM {{{0}}};                   
+            VAR V1 : INTEGER;                              
+            BEGIN                                          
+               FOR X := (1 + 2 * 3) DOWNTO (10 + 1 * 2) DO     
+                  V1 := X;                                 
+            END.                                         
+        """
         return code
 
     @staticmethod
     def scenario_for_downto_loop_with_begin_end():
-        code = \
-            "PROGRAM {{{0}}};              \n" \
-            "VAR V1 : INTEGER;                         \n" \
-            "BEGIN                                     \n" \
-            "   FOR X := 10 DOWNTO 1 DO                \n" \
-            "      BEGIN                               \n" \
-            "         V1 := X;                         \n" \
-            "      END;                                \n" \
-            "END.                                      \n"
+        code = """
+            PROGRAM {{{0}}};                 
+            VAR V1 : INTEGER;                            
+            BEGIN                                        
+               FOR X := 10 DOWNTO 1 DO                   
+                  BEGIN                                  
+                     V1 := X;                            
+                  END;                                   
+            END.                                       
+        """
         return code
 
 
@@ -452,50 +460,55 @@ class TDD(TestSuit):
 
     @staticmethod
     def tdd_1():
-        code = \
-            "PROGRAM {{{0}}};              \n" \
-            "VAR                                   \n" \
-            "V1 : INTEGER;                         \n" \
-            "BEGIN                                 \n" \
-            "V1 := NIL                                 \n" \
-            "END.                                  \n"
+        code = """
+            PROGRAM {{{0}}};                 
+            VAR                                      
+            V1 : INTEGER;                            
+            BEGIN                                    
+            V1 := NIL                                    
+            END.                                   
+        """
         return code
 
     @staticmethod
     def tdd_2():
-        code = \
-            "PROGRAM my_test_program( A1, A2, A3); \n" \
-            "LABEL 100, 200, 300, 400;             \n" \
-            "CONST                                 \n" \
-            "C1 = 0.5;  B = 1;                             \n" \
-            "VAR V1, V3 : INTEGER;                     \n" \
-            "V2 : BOOLEAN;                         \n" \
-            "BEGIN                                 \n" \
-            "   REPEAT                             \n" \
-            "     V1 := V1 + 1                   \n" \
-            "   UNTIL V1 + V3 > 10 + 1      \n" \
-            "END.                                  \n"
+        code = """
+            PROGRAM my_test_program( A1, A2, A3);    
+            LABEL 100, 200, 300, 400;                
+            CONST                                    
+            C1 = 0.5;  B = 1;                                
+            VAR V1, V3 : INTEGER;                        
+            V2 : BOOLEAN;                            
+            BEGIN                                    
+               REPEAT                                
+                 V1 := V1 + 1                      
+               UNTIL V1 + V3 > 10 + 1         
+            END.                                   
+        """
         return code
 
     @staticmethod
     def scenario_program_definition_2():
-        code = \
-            "program test;                        \n"\
-            " const                               \n"\
-            "   PI = 3.1415;                      \n"\
-            "                                     \n"\
-            " var                                 \n"\
-            "   a, b: real;                       \n"\
-            "   c : MEUTIPO;                      \n"\
-            " procedure hello(s: string; n: real);\n"\
-            " begin                               \n"\
-            "   writeln(s);                       \n"\
-            " end;                                \n"\
-            "                                     \n"\
-            " begin                               \n"\
-            "   a := PI;                          \n"\
-            "   b := a * 10;                      \n"\
-            "   hello('Hello World!', b);         \n"\
-            " end.                                \n"
+        code = """
+            program test;                          
+            const                                 
+              PI = 3.1415;                        
+                                                  
+            var                                   
+              a, b: real;                         
+              c : MEUTIPO;                        
+            procedure hello(s: string; n: real);  
+            begin                                 
+              writeln(s);                         
+            end;                                  
+                                                  
+            begin                                 
+              a := PI;                            
+              b := a * 10;                        
+              hello('Hello World!', b);           
+            end.                                 
+        """
         return code
+
+
 

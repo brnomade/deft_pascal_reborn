@@ -154,48 +154,39 @@ class DeftPascalCompiler:
             a_variable = None
         return a_variable
 
-    def _check_type_compatibility( self, action_number, action_name, symbol_a, symbol_b):
-        # check two symbols are of compatible types
+    def _check_type_compatibility(self, action_number, action_name, expression):
+        """
+        expression - is a list of tokens.
+        """
         compatible = False
-        if symbol_a and symbol_b:
-            #
-            type_a = symbol_a.type.upper()
-            type_b = symbol_b.type.upper()
-            #
-            real_type = ["REAL", "SIGNED_REAL", "UNSIGNED_REAL", "OPERATOR_MINUS"]
-            integer_type = ["SIGNED_DECIMAL", "UNSIGNED_DECIMAL", "NUMBER_BINARY", "NUMBER_OCTAL",
-                            "NUMBER_HEXADECIMAL", "INTEGER", "WORD", "BYTE", "OPERATOR_MINUS"]
-            boolean_type = ["CONSTANT_TRUE", "CONSTANT_FALSE", "BOOLEAN", "RESERVED_OPERATOR_AND",
-                            "RESERVED_OPERATOR_OR", "RESERVED_OPERATOR_NOT", "OPERATOR_GREATER_OR_EQUAL_TO",
-                            "OPERATOR_EQUAL_TO", "OPERATOR_NOT_EQUAL_TO"]
-            string_type = ["STRING", "TEXT"]
-            char_type = ["CHARACTER", "CHAR"]
-            neutral_symbols = ["OPERATOR_PLUS", "OPERATOR_MULTIPLY", "LEFT_PARENTHESES", "OPERATOR_DIVIDE",
-                               "RIGHT_PARENTHESES"]
-            #
-            if symbol_b.is_equal(symbol_a):
+        # collect the native types of all symbols in the expression
+        types = [i for i in expression if not i.is_operator()]
+        operators = [i for i in expression if i.is_operator()]
+
+        while True:
+            operator = operators.pop()
+            type_a = types.pop()
+
+            if operator.is_unary():
+                type_b = None
+            else:
+                type_b = types.pop()
+
+            if operator.is_compatible(type_a, type_b):
+                types.append(type_a)
+            else:
+                compatible = False
+                break
+
+            if not operators:
                 compatible = True
-            elif type_b in neutral_symbols:
-                compatible = True
-            elif "^" in type_a and type_b == "CONSTANT_NIL":
-                compatible = True
-            elif type_a in real_type:
-                compatible = type_b in real_type
-            elif type_a in integer_type:
-                compatible = type_b in integer_type
-            elif type_a in boolean_type:
-                compatible = type_b in boolean_type
-            elif type_a in string_type:
-                compatible = type_b in string_type
-            elif type_a in char_type:
-                compatible = type_b in char_type
+                break
         #
         if not compatible:
             msg = "[{0}] {1} - type violation in expression: {2} {3} "
-            self._log(ERROR, msg.format(action_number, action_name, symbol_a, symbol_b))
+            self._log(ERROR, msg.format(action_number, action_name, expression, expression))
         #
         return compatible
-
 
     def _action_0(self, action_number, action_name, token_list):
         """
@@ -290,7 +281,7 @@ class DeftPascalCompiler:
 
             # the TYPE is always at the end of the children list. pop it out and collect the value.
 
-            data_type = variable_declaration.children.pop().value
+            data_type = variable_declaration.children.pop().type
 
             # check if a pointer is being declared - if so, pop it out for emitter
 
@@ -378,6 +369,8 @@ class DeftPascalCompiler:
         # process the expression
 
         self._internal_compile(token_list[2])
+        # TODO: Here a list with all tokens from the expression need to be returned so that type check can be done.
+        # TODO: Must call _check_type_compatibility
 
         # emit everything
 
@@ -474,6 +467,8 @@ class DeftPascalCompiler:
                 self._internal_compile(token)
 
         # process expression after UNTIL
+        # TODO: Here a list with all tokens from the expression need to be returned so that type check can be done.
+        # TODO: Must call _check_type_compatibility
         self._internal_compile(token_list.pop())
         self._ic.flush()
 
@@ -537,6 +532,9 @@ class DeftPascalCompiler:
         # self._emiter.emit_action_10(token_list[0])
 
         # check control variable exists
+
+        # TODO: Here a list with all tokens from the expression need to be returned so that type check can be done.
+        # TODO: Must call _check_type_compatibility
 
         self._internal_compile(token_list[1])
         #token = token_list[1]
