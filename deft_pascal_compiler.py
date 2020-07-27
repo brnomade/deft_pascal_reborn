@@ -1,8 +1,8 @@
 from lark import Tree, Token, UnexpectedToken, UnexpectedCharacters
 from deft_pascal_parser_3 import DeftPascalParser
-from symbol_table import SymbolTable, BaseSymbol, Constant, Identifier, Operator, BooleanConstant
+from symbol_table import SymbolTable, BaseSymbol, Constant, Identifier, Operator, BooleanConstant, NilConstant
 from intermediate_code import IntermediateCode
-from abstract_emiter import CEmitter
+from compiler_utils import check_type_compatibility
 import logging
 from logging import ERROR, WARNING, INFO
 
@@ -22,6 +22,7 @@ class DeftPascalCompiler:
 
         self._context = 0
 
+        self._stack_expression = []
         self._stack_variables = []
         self._stack_scope = []
 
@@ -52,13 +53,18 @@ class DeftPascalCompiler:
             self._log(ERROR, '2 - {0}'.format(error))
         return tree
 
-    def compile(self, ast):
+    def compile(self, ast, intermediate=False, generate=False):
         self._error_list = []
+        #
         for i in ast.children:
             self._internal_compile(i)
-        # self._emiter.write_file()
-        logger.info(self._ic)
-        self._ic.generate()
+        #
+        if intermediate:
+            logger.info(self._ic)
+        #
+        if generate:
+            self._ic.generate()
+        #
         return self._error_list
 
     @staticmethod
@@ -158,31 +164,7 @@ class DeftPascalCompiler:
         """
         expression - is a list of tokens.
         """
-        # TODO: Needs adjustment to address the use of parenthesis
-        compatible = False
-        # collect the native types of all symbols in the expression
-        types = [i for i in expression if not i.is_operator()]
-        operators = [i for i in expression if i.is_operator()]
-
-        while True:
-            operator = operators.pop()
-            type_a = types.pop()
-
-            if operator.is_unary():
-                type_b = None
-            else:
-                type_b = types.pop()
-
-            if operator.is_compatible(type_a, type_b):
-                types.append(type_a)
-            else:
-                compatible = False
-                break
-
-            if not operators:
-                compatible = True
-                break
-        #
+        compatible = check_type_compatibility(expression)
         if not compatible:
             msg = "[{0}] {1} - type violation in expression: {2} {3} "
             self._log(ERROR, msg.format(action_number, action_name, expression, expression))
@@ -200,7 +182,7 @@ class DeftPascalCompiler:
 
         self._symbol_table.append(BooleanConstant.true(context_label, context_level))
         self._symbol_table.append(BooleanConstant.false(context_label, context_level))
-
+        self._symbol_table.append(NilConstant.nil((context_label, context_level)))
 
         # self._emiter = CEmitter(identifier)
         # self._emiter.emit_action_0()
@@ -355,31 +337,35 @@ class DeftPascalCompiler:
 
         # prepare stacks to process the expression
 
-        self._stack_variables = []
-        #self._stack_emiter = []
-        self._stack_variables.append(a_symbol)
-        #self._stack_emiter.append(a_symbol)
+        # self._stack_variables = []
+        #self._stack_variables.append(a_symbol)
 
-        # consume the operator
+        self._stack_expression = []
+        self._stack_expression.append(a_symbol)
+
+        # consume the operator :=
 
         token = token_list[1]
-        operator = BaseSymbol(token.value, context_label, context_level, token.type, token.value)
-        #self._stack_emiter.append(operator)
+        operator = Operator(token.value, context_label, context_level, token.type, token.value)
         self._ic.push(operator)
+
+        self._stack_expression.append(operator)
 
         # process the expression
 
         self._internal_compile(token_list[2])
-        # TODO: Here a list with all tokens from the expression need to be returned so that type check can be done.
-        # TODO: Must call _check_type_compatibility
+
+        # perform type checking
+
+        if not check_type_compatibility(self._stack_expression):
+            self._log(ERROR, "[{0}] {1} : incompatible types detected {2}".format(action_number, action_name, self._stack_expression))
+        else:
+            self._log(INFO, "[{0}] {1} : {2}".format(action_number, action_name, self._stack_expression))
 
         # emit everything
-
         # self._emiter.emit_action_6(self._stack_emiter)
         self._ic.flush()
-        self._stack_variables = []
-
-        self._log(INFO, "[{0}] {1} : {2}".format(action_number, action_name, self._stack_emiter))
+        #self._stack_variables = []
 
 
     def _action_7(self, action_number, action_name, token_list):
@@ -403,8 +389,7 @@ class DeftPascalCompiler:
                     a_symbol = self._retrieve_global_boolean_constant(action_number, action_name, token.value)
 
                 elif token.type in ["UNSIGNED_DECIMAL", "SIGNED_DECIMAL", "NUMBER_BINARY", "NUMBER_OCTAL",
-                                    "NUMBER_HEXADECIMAL", "CHARACTER", "STRING", "CONSTANT_TRUE", "CONSTANT_FALSE",
-                                    "UNSIGNED_REAL", "SIGNED_REAL"
+                                    "NUMBER_HEXADECIMAL", "CHARACTER", "STRING", "UNSIGNED_REAL", "SIGNED_REAL"
                                     ]:
 
                     a_symbol = Constant(token.value, context_label, context_level, token.type, token.value)
@@ -417,6 +402,8 @@ class DeftPascalCompiler:
                 else:
 
                     a_symbol = BaseSymbol(token.value, context_label, context_level, token.type, token.value)
+                    if a_symbol.is_operator():
+                        a_symbol = Operator(token.value, context_label, context_level, token.type, token.value)
 
                 # handling a boolean_expression used in repeat, while and if statements
                 #if len(self._stack_variables) == 0:
@@ -427,6 +414,7 @@ class DeftPascalCompiler:
                 #self._check_type_compatibility(action_number, action_name, start_symbol, a_symbol)
 
                 # self._stack_emiter.append(a_symbol)
+                self._stack_expression.append(a_symbol)
                 self._ic.push(a_symbol)
 
             else:

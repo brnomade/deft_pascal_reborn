@@ -178,8 +178,8 @@ class DeftPascalParser:
         _factor : _sign _factor
                 | _exponentiation
  
-        _sign : OPERATOR_PLUS
-              | OPERATOR_MINUS
+        _sign : OPERATOR_ARITHMETIC_NEUTRAL
+              | OPERATOR_ARITHMETIC_NEGATION
 
         _exponentiation : _primary
                         | _primary OPERATOR_STARSTAR _exponentiation
@@ -188,6 +188,7 @@ class DeftPascalParser:
                  | _unsigned_constant
                  | LEFT_PARENTHESES expression RIGHT_PARENTHESES
                  | OPERATOR_NOT _primary
+                 
 
         _unsigned_constant : _unsigned_number
                            | CHARACTER
@@ -275,11 +276,13 @@ class DeftPascalParser:
         OPERATOR_XOR : "xor"i
         
         // arithmetic operators
-        
+
+        OPERATOR_PLUS : "+"
+        OPERATOR_ARITHMETIC_NEUTRAL : "+"
+        OPERATOR_MINUS : "-"
+        OPERATOR_ARITHMETIC_NEGATION : "-"
         OPERATOR_MULTIPLY : "*"
         OPERATOR_STARSTAR : "**"
-        OPERATOR_PLUS : "+"
-        OPERATOR_MINUS : "-"
         OPERATOR_DIVIDE : "/"
         OPERATOR_MOD : "mod"i
         OPERATOR_DIV : "div"i
@@ -297,6 +300,8 @@ class DeftPascalParser:
         NUMBER_OCTAL : /\&[Oo][0-7]+/
         NUMBER_BINARY : /\&[Bb][0-1]+/
         //DIGSEQ : /\d+/
+
+        // SEPARATORS
         
         _SEMICOLON : ";"
         _DOT : "."

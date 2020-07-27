@@ -2,13 +2,18 @@
 class TestSuit:
 
     @staticmethod
+    def generator_tests_to_run():
+        return TestSuit.tests_to_run()
+
+
+    @staticmethod
     def parser_tests_to_run():
         return TestSuit.tests_to_run()
 
     @staticmethod
     def compiler_tests_to_run():
         return [
-            ["scenario_variable_declaration", LanguageTests().scenario_variable_declaration()],
+        ["scenario_variable_assignment_with_numeric_expression", LanguageTests().scenario_variable_assignment_with_numeric_expression()],
         ]
 
     @staticmethod
@@ -29,6 +34,7 @@ class TestSuit:
     ["scenario_variable_declaration", LanguageTests().scenario_variable_declaration()],
     ["scenario_variable_assignment_with_nil", LanguageTests.scenario_variable_assignment_with_nil()],
     ["scenario_variable_assignment_with_single_value", LanguageTests().scenario_variable_assignment_with_single_value()],
+    ["scenario_variable_assignment_with_constant", LanguageTests().scenario_variable_assignment_with_constant()],
     ["scenario_variable_assignment_with_variable", LanguageTests().scenario_variable_assignment_with_variable()],
     ["scenario_variable_assignment_with_numeric_expression", LanguageTests().scenario_variable_assignment_with_numeric_expression()],
     ["scenario_variable_assignment_with_logical_expression_same_types", LanguageTests().scenario_variable_assignment_with_logical_expression_same_types()],
@@ -258,8 +264,8 @@ class LanguageTests(TestSuit):
              V11 : ^WORD;                             
              V12 : REAL;                             
             BEGIN                                    
-             V1 := 2;                                
-             V2 := True;                             
+             V1 := -2;                                
+             V2 := False;                             
              V3 := 'C';                              
              V4 := 'STRING';                         
              V6 := -1;                               
@@ -273,6 +279,30 @@ class LanguageTests(TestSuit):
         """
         return code
 
+
+    @staticmethod
+    def scenario_variable_assignment_with_constant():
+        code = """
+            PROGRAM {{{0}}};                 
+            CONST C1 = NIL;
+                  C2 = 'C';                                
+                  C3 = 'C8C8C8C8';                         
+                  C4 = TRUE;
+                  C5 = 123;
+            VAR V1 : ^INTEGER;
+                V2 : CHAR;
+                V3 : STRING;
+                V4 : BOOLEAN;
+                V5 : INTEGER;                         
+            BEGIN                                     
+             V1 := C1;
+             V2 := C2;
+             V3 := C3;
+             V4 := C4;
+             V5 := C5;
+            END.                                      
+        """
+        return code
 
     @staticmethod
     def scenario_variable_assignment_with_variable():
@@ -295,7 +325,7 @@ class LanguageTests(TestSuit):
                 V2 : REAL;                         
             BEGIN                                     
              V1 := 2 + V1 * -3 + (&HFF / 2);              
-             V2 := -2.0 + V2 * 3.0 + (1.0 / -1.1E-23 * (V2 + 1.0 + 1.0)); 
+             V2 := -2.0 + V2 * 3.0 + (1.0 / -1.1E-23 * (V2 + 1.0 + -1.0)); 
             END.                                      
         """
         return code
