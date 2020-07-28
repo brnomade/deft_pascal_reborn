@@ -1,6 +1,6 @@
 from lark import Tree, Token, UnexpectedToken, UnexpectedCharacters
 from deft_pascal_parser_3 import DeftPascalParser
-from symbol_table import SymbolTable, BaseSymbol, Constant, Identifier, Operator, BooleanConstant, NilConstant
+from symbol_table import SymbolTable, BaseSymbol, Constant, Identifier, Operator, PointerIdentifier, BooleanConstant, NilConstant
 from intermediate_code import IntermediateCode
 from compiler_utils import check_type_compatibility
 import logging
@@ -264,20 +264,27 @@ class DeftPascalCompiler:
 
             # the TYPE is always at the end of the children list. pop it out and collect the value.
 
-            data_type = variable_declaration.children.pop().type
+            data_type = variable_declaration.children.pop().value
 
             # check if a pointer is being declared - if so, pop it out for emitter
 
+            identifier_class = Identifier
             if variable_declaration.children[-1].type == "UPARROW":
-                pointer = variable_declaration.children.pop().value
-                data_type = pointer + data_type
+
+                identifier_class = PointerIdentifier
+                variable_declaration.children.pop()
+
+            # check if the data_type is a type identifier
+            if data_type in []
+
+                # TODO: transforme type declaration to a compiler type
+                # TODO: check if the identifier that is not a compiler type is a declared type via TYPE declaration
 
             # process each identifier for the given data_type
 
             for token in variable_declaration.children:
 
-                identifier = token.value
-                a_symbol = Identifier(identifier, context_label, context_level, data_type, identifier)
+                a_symbol = identifier_class(token.value, context_label, context_level, data_type, token.value)
 
                 # scenarios:
                 # - identifier not declared

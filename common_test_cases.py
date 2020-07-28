@@ -13,8 +13,8 @@ class TestSuit:
     @staticmethod
     def compiler_tests_to_run():
         return [
-            ["scenario_variable_assignment_with_logical_expression_same_types", LanguageTests().scenario_variable_assignment_with_logical_expression_same_types()],
-            ["scenario_variable_assignment_with_numeric_expression", LanguageTests().scenario_variable_assignment_with_numeric_expression()],
+            ["scenario_variable_declaration", LanguageTests().scenario_variable_declaration()],
+
         ]
 
     @staticmethod
@@ -227,7 +227,9 @@ class LanguageTests(TestSuit):
                 _V3_f  : TEXT;                    
                 _V3h   : SET;      
                 V5     : ^V1;               
-                V6, V7 : ^V3;               
+                V6, V7 : ^V5;
+                V8     : ^INTEGER;
+                V9     : ^BANANAS;               
             BEGIN                                 
             END.                                  
         """
@@ -239,7 +241,7 @@ class LanguageTests(TestSuit):
         code = """
             PROGRAM {{{0}}};            
             VAR                                     
-            V1 : ^BYTE;                             
+            V1, v2, v3 : ^BYTE;  
             BEGIN                                   
             V1 := NIL                               
             END.                                    
@@ -309,7 +311,9 @@ class LanguageTests(TestSuit):
     def scenario_variable_assignment_with_variable():
         code = """
             PROGRAM {{{0}}};                 
-            VAR V1, V2 : INTEGER;                         
+            VAR V1, V2 : INTEGER;
+            V3 : ^INTEGER;
+            V4 : ^BANANAS;                        
             BEGIN                                     
              V1 := V1;
              V1 := V2;

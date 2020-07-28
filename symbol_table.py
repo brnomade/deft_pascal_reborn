@@ -66,13 +66,13 @@ class BaseSymbol:
         this maps the constant token names received from the parser to pascal language types
         it is needed so for the type checking process
         """
-        if a_type_name in ["CONSTANT_TRUE", "CONSTANT_FALSE"]:
+        if a_type_name in ["BOOLEAN", "CONSTANT_TRUE", "CONSTANT_FALSE"]:
             return "RESERVED_TYPE_BOOLEAN"
-        elif a_type_name in ["UNSIGNED_DECIMAL", "SIGNED_DECIMAL", "NUMBER_BINARY", "NUMBER_OCTAL", "NUMBER_HEXADECIMAL"]:
+        elif a_type_name in ["INTEGER", "UNSIGNED_DECIMAL", "SIGNED_DECIMAL", "NUMBER_BINARY", "NUMBER_OCTAL", "NUMBER_HEXADECIMAL"]:
             return "RESERVED_TYPE_INTEGER"
-        elif a_type_name in ["UNSIGNED_REAL", "SIGNED_REAL"]:
+        elif a_type_name in ["REAL", "UNSIGNED_REAL", "SIGNED_REAL"]:
             return "RESERVED_TYPE_REAL"
-        elif a_type_name in ["CHARACTER"]:
+        elif a_type_name in ["CHAR", "CHARACTER"]:
             return "RESERVED_TYPE_CHAR"
         elif a_type_name in ["STRING"]:
             return "RESERVED_TYPE_STRING"
@@ -178,7 +178,7 @@ class Operator(BaseSymbol):
                              "OPERATOR_PLUS": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL", "RESERVED_TYPE_SET", "RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING"],
                              "OPERATOR_DIVIDE": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL"],
                              "OPERATOR_DIV": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL"],
-                             "OPERATOR_ASSIGNMENT": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL",  "RESERVED_TYPE_SET", "RESERVED_TYPE_BOOLEAN", "RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING", "RESERVED_TYPE_POINTER"],
+                             "OPERATOR_ASSIGNMENT": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL", "RESERVED_TYPE_SET", "RESERVED_TYPE_BOOLEAN", "RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING", "RESERVED_TYPE_POINTER"],
                              "OPERATOR_EQUAL_TO": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL",  "RESERVED_TYPE_SET", "RESERVED_TYPE_BOOLEAN", "RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING", "RESERVED_TYPE_POINTER"],
                              "OPERATOR_NOT_EQUAL_TO": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL",  "RESERVED_TYPE_SET", "RESERVED_TYPE_BOOLEAN", "RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING", "RESERVED_TYPE_POINTER"],
                              "OPERATOR_STARSTAR": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL"],
@@ -436,7 +436,8 @@ class Operator(BaseSymbol):
                     return self._test_compatibility_operator_div(symbol_right, symbol_left)
                 else:
                     raise NotImplementedError(self)
-        return None
+            else:
+                raise NotImplementedError(symbol_left)
 
     def is_compatible_original(self, symbol_a, symbol_b=None):
         if self.is_unary():
@@ -496,6 +497,12 @@ class NilConstant(Constant):
 
 
 class Identifier(BaseSymbol):
+
+    def do_nothing(self):
+        pass
+
+
+class PointerIdentifier(Identifier):
 
     def do_nothing(self):
         pass
