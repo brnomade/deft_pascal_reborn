@@ -179,8 +179,14 @@ class Operator(BaseSymbol):
                              "OPERATOR_DIVIDE": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL"],
                              "OPERATOR_DIV": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL"],
                              "OPERATOR_ASSIGNMENT": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL",  "RESERVED_TYPE_SET", "RESERVED_TYPE_BOOLEAN", "RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING", "RESERVED_TYPE_POINTER"],
+                             "OPERATOR_EQUAL_TO": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL",  "RESERVED_TYPE_SET", "RESERVED_TYPE_BOOLEAN", "RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING", "RESERVED_TYPE_POINTER"],
+                             "OPERATOR_NOT_EQUAL_TO": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL",  "RESERVED_TYPE_SET", "RESERVED_TYPE_BOOLEAN", "RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING", "RESERVED_TYPE_POINTER"],
                              "OPERATOR_STARSTAR": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL"],
                              "OPERATOR_IN": ["RESERVED_TYPE_CHAR", "RESERVED_TYPE_INTEGER"],
+                             "OPERATOR_AND": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_BOOLEAN"],
+                             "OPERATOR_OR": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_BOOLEAN"],
+                             "OPERATOR_GREATER_THEN": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL", "RESERVED_TYPE_BOOLEAN", "RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING"],
+                             "OPERATOR_GREATER_OR_EQUAL_TO": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL", "RESERVED_TYPE_BOOLEAN", "RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING"],
                              }
 
     def is_unary(self):
@@ -206,7 +212,7 @@ class Operator(BaseSymbol):
 #                             "OPERATOR_STARSTAR",
 #                             "OPERATOR_DIV", "OPERATOR_MOD",
 #                             "OPERATOR_LSL", "OPERATOR_LSR", "OPERATOR_SHL", "OPERATOR_SHR",
-#                             "OPERATOR_AND", "OPERATOR_OR", "OPERATOR_XOR",
+#                             "", "OPERATOR_OR", "OPERATOR_XOR",
 #                             "OPERATOR_EQUAL_TO", "OPERATOR_NOT_EQUAL_TO", "OPERATOR_LESS_THEN",
 #                             "OPERATOR_GREATER_THEN",
 #                             "OPERATOR_LESS_OR_EQUAL_TO", "OPERATOR_GREATER_OR_EQUAL_TO"
@@ -223,7 +229,7 @@ class Operator(BaseSymbol):
 #
 #    def _test_type_boolean_compatibility(self):
 #        return self.type in ["",
-#                             "OPERATOR_NOT", "OPERATOR_AND", "OPERATOR_OR",
+#                             "OPERATOR_NOT", "", "OPERATOR_OR",
 #                             "OPERATOR_IN",
 #                             "OPERATOR_EQUAL_TO", "OPERATOR_NOT_EQUAL_TO", "OPERATOR_LESS_THEN",
 #                             "OPERATOR_GREATER_THEN",
@@ -238,14 +244,61 @@ class Operator(BaseSymbol):
 
     def _evaluate_type_unary(self, symbol):
         if self.is_unary():
-            if self.type == "OPERATOR_NOT":
-                return symbol.type if symbol.type == "RESERVED_TYPE_BOOLEAN" else None
-            if self.type == "OPERATOR_ARITHMETIC_NEGATION":
-                return symbol
+            if self.type == "OPERATOR_NOT" and symbol.type == "RESERVED_TYPE_BOOLEAN":
+                return BooleanConstant.true()
+            elif self.type in ["OPERATOR_ARITHMETIC_NEGATION", "OPERATOR_ARITHMETIC_NEUTRAL"] and symbol.type in ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL"]:
+                return Constant(None, None, None, symbol.type, None)
+
             else:
                 raise KeyError("Unexpected unary operator '{0}'".format(self))
         else:
             raise SystemError("Incorrect call to unary operation.")
+
+    @staticmethod
+    def _test_compatibility_operator_greater_or_equal_to(symbol_right, symbol_left):
+        """
+        checks involved:
+        2 - if the types of the operands (symbol_right and symbol_left) match
+        """
+        if symbol_right.type == symbol_left.type:
+            return BooleanConstant.true()
+        return None
+
+    @staticmethod
+    def _test_compatibility_operator_greater_then(symbol_right, symbol_left):
+        """
+        checks involved:
+        2 - if the types of the operands (symbol_right and symbol_left) match
+        """
+        if symbol_right.type == symbol_left.type:
+            return BooleanConstant.true()
+        return None
+
+    @staticmethod
+    def _test_compatibility_operator_or(symbol_right, symbol_left):
+        """
+        checks involved:
+        2 - if the types of the operands (symbol_right and symbol_left) match
+        """
+        if symbol_left.type == symbol_right.type:
+            if symbol_right.type == "RESERVED_TYPE_BOOLEAN":
+                return BooleanConstant.true()
+            elif symbol_right.type == "RESERVED_TYPE_INTEGER":
+                return Constant(None, None, None, symbol_right.type, None)
+        return None
+
+    @staticmethod
+    def _test_compatibility_operator_and(symbol_right, symbol_left):
+        """
+        checks involved:
+        2 - if the types of the operands (symbol_right and symbol_left) match
+        """
+        if symbol_left.type == symbol_right.type:
+            if symbol_right.type == "RESERVED_TYPE_BOOLEAN":
+                return BooleanConstant.true()
+            elif symbol_right.type == "RESERVED_TYPE_INTEGER":
+                return Constant(None, None, None, symbol_right.type, None)
+        return None
 
     @staticmethod
     def _test_compatibility_operator_in(symbol_right, symbol_left):
@@ -265,6 +318,26 @@ class Operator(BaseSymbol):
         """
         if symbol_right.type == "RESERVED_TYPE_INTEGER":
             return Constant(None, None, None, symbol_left.type, None)
+        return None
+
+    @staticmethod
+    def _test_compatibility_operator_not_equal_to(symbol_right, symbol_left):
+        """
+        checks involved:
+        2 - if the types of the operands (symbol_right and symbol_left) match
+        """
+        if symbol_left.type == symbol_right.type:
+            return BooleanConstant.true()
+        return None
+
+    @staticmethod
+    def _test_compatibility_operator_equal_to(symbol_right, symbol_left):
+        """
+        checks involved:
+        2 - if the types of the operands (symbol_right and symbol_left) match
+        """
+        if symbol_left.type == symbol_right.type:
+            return BooleanConstant.true()
         return None
 
     @staticmethod
@@ -337,8 +410,20 @@ class Operator(BaseSymbol):
             if symbol_left.type in Operator._compatibility_matrix[self.type]:
                 if self.type == "OPERATOR_IN":
                     return self._test_compatibility_operator_in(symbol_right, symbol_left)
+                if self.type == "OPERATOR_AND":
+                    return self._test_compatibility_operator_and(symbol_right, symbol_left)
+                if self.type == "OPERATOR_OR":
+                    return self._test_compatibility_operator_or(symbol_right, symbol_left)
+                if self.type == "OPERATOR_GREATER_THEN":
+                    return self._test_compatibility_operator_greater_then(symbol_right, symbol_left)
+                if self.type == "OPERATOR_GREATER_OR_EQUAL_TO":
+                    return self._test_compatibility_operator_greater_then(symbol_right, symbol_left)
                 elif self.type == "OPERATOR_STARSTAR":
                     return self._test_compatibility_operator_starstar(symbol_right, symbol_left)
+                elif self.type == "OPERATOR_EQUAL_TO":
+                    return self._test_compatibility_operator_equal_to(symbol_right, symbol_left)
+                elif self.type == "OPERATOR_NOT_EQUAL_TO":
+                    return self._test_compatibility_operator_equal_to(symbol_right, symbol_left)
                 elif self.type == "OPERATOR_ASSIGNMENT":
                     return self._test_compatibility_operator_assignment(symbol_right, symbol_left)
                 elif self.type == "OPERATOR_MULTIPLY":
@@ -350,7 +435,7 @@ class Operator(BaseSymbol):
                 elif self.type == "OPERATOR_DIV":
                     return self._test_compatibility_operator_div(symbol_right, symbol_left)
                 else:
-                    raise NotImplementedError
+                    raise NotImplementedError(self)
         return None
 
     def is_compatible_original(self, symbol_a, symbol_b=None):

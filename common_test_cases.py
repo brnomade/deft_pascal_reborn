@@ -13,7 +13,8 @@ class TestSuit:
     @staticmethod
     def compiler_tests_to_run():
         return [
-        ["scenario_variable_assignment_with_numeric_expression", LanguageTests().scenario_variable_assignment_with_numeric_expression()],
+            ["scenario_variable_assignment_with_logical_expression_same_types", LanguageTests().scenario_variable_assignment_with_logical_expression_same_types()],
+            ["scenario_variable_assignment_with_numeric_expression", LanguageTests().scenario_variable_assignment_with_numeric_expression()],
         ]
 
     @staticmethod
@@ -336,8 +337,10 @@ class LanguageTests(TestSuit):
         code = """
             PROGRAM {{{0}}};                  
             VAR V1 : BOOLEAN;   
+            V2 : INTEGER;
+            V3 : REAL;
             BEGIN           
-             V1 := V1 and True or V1 and (not ((V1 <> False) and (V1 = True)));              
+             V1 := V1 and True or (V2 > 1) and (not ((V1 <> False) and (V1 = True) and (-2.0 >= V3)));              
             END.                                      
         """
         return code
