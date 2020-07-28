@@ -324,8 +324,9 @@ class LanguageTests(TestSuit):
             VAR V1 : INTEGER;                         
                 V2 : REAL;                         
             BEGIN                                     
-             V1 := 2 + V1 * -3 + (&HFF / 2);              
-             V2 := -2.0 + V2 * 3.0 + (1.0 / -1.1E-23 * (V2 + 1.0 + -1.0)); 
+             V1 := 2 + V1 * -3 + (2.0 DIV &HFF);              
+             V2 := 2.0 + V2 * -3.0 + (255 / 2.0);
+             V2 := -2.0 + V2 * 3.0 + (1.0 / -1.1E-23 * (V2 + 1.0 + -1.0))
             END.                                      
         """
         return code

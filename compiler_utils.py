@@ -157,7 +157,8 @@ class Expression:
 
             elif token.is_operator():
 
-                while stack and self.precedence_rules[stack[0].type] >= self.precedence_rules[token.type]:
+                # while stack and self.precedence_rules[stack[0].type] >= self.precedence_rules[token.type]:
+                while stack and stack[0].precedence >= token.precedence:
                     self.postfix_tokens.append(stack.popleft())
                 stack.appendleft(token)
 
@@ -246,7 +247,7 @@ def check_type_compatibility(expression):
 
             symbol_right = stack.pop()
             symbol_left = None if token.is_unary() else stack.pop()
-            result = token.evaluate_type(symbol_right, symbol_left)
+            result = token.evaluate_to_type(symbol_right=symbol_right, symbol_left=symbol_left)
             if result:
                 stack.append(result)
             else:
