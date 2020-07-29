@@ -50,7 +50,7 @@ identifier_list : identifier_list comma identifier
 
 block : label_declaration_part [DONE]
  constant_definition_part [DONE]
- type_definition_part
+ type_definition_part [DONE]
  variable_declaration_part [DONE]
  procedure_and_function_declaration_part
  statement_part [DONE]
@@ -133,14 +133,17 @@ non_string : DIGSEQ
  | REALNUMBER
  ;
 
+[DONE]
 type_definition_part : TYPE type_definition_list
  |
  ;
 
+[DONE]
 type_definition_list : type_definition_list type_definition
  | type_definition
  ;
 
+[DONE]EQUAL
 type_definition : identifier EQUAL type_denoter semicolon
  ;
 

@@ -27,7 +27,7 @@ class DeftPascalParser:
         _identifier_list : _identifier_list _COMMA IDENTIFIER
                          | IDENTIFIER
                       
-        _block : label_declaration_part constant_definition_part variable_declaration_part _statement_part  
+        _block : label_declaration_part constant_definition_part type_definition_part variable_declaration_part _statement_part  
                       
         // LABEL DECLARATIONS
         
@@ -62,6 +62,15 @@ class DeftPascalParser:
                              | CONSTANT_FALSE
                              | CONSTANT_NIL
            
+        // TYPE DECLARATION
+       
+        type_definition_part : RESERVED_DECLARATION_TYPE _type_definition_list
+                              |   
+       
+        _type_definition_list : _type_definition_list type_definition
+                              | type_definition
+                              
+        type_definition : IDENTIFIER OPERATOR_EQUAL_TO _type_denoter _SEMICOLON
 
        // VARIABLE DECLARATION
        
@@ -82,6 +91,7 @@ class DeftPascalParser:
                      | RESERVED_TYPE_STRING
                      | RESERVED_TYPE_TEXT
                      | RESERVED_TYPE_SET
+                     | IDENTIFIER
                      | _new_type
 
         _new_type : _new_pointer_type
@@ -90,7 +100,14 @@ class DeftPascalParser:
 
         _new_pointer_type : UPARROW _domain_type
         UPARROW : "^"
-        _domain_type : IDENTIFIER 
+        _domain_type : RESERVED_TYPE_REAL
+                     | RESERVED_TYPE_BOOLEAN
+                     | RESERVED_TYPE_CHAR
+                     | RESERVED_TYPE_INTEGER
+                     | RESERVED_TYPE_STRING
+                     | RESERVED_TYPE_TEXT
+                     | RESERVED_TYPE_SET
+                     | IDENTIFIER 
 
         // STATEMENTS
 

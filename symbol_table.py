@@ -502,6 +502,39 @@ class Identifier(BaseSymbol):
         pass
 
 
+class TypeIdentifier(Identifier):
+
+    def do_nothing(self):
+        pass
+
+
+class BaseTypeIdentifier(Identifier):
+
+    @classmethod
+    def reserved_type_integer(cls, a_scope=None, a_level=None):
+        return cls('RESERVED_TYPE_INTEGER', a_scope, a_level, 'RESERVED_TYPE_INTEGER', 'RESERVED_TYPE_INTEGER')
+
+    @classmethod
+    def reserved_type_real(cls, a_scope=None, a_level=None):
+        return cls('RESERVED_TYPE_REAL', a_scope, a_level, 'RESERVED_TYPE_REAL', 'RESERVED_TYPE_REAL')
+
+    @classmethod
+    def reserved_type_boolean(cls, a_scope=None, a_level=None):
+        return cls('RESERVED_TYPE_BOOLEAN', a_scope, a_level, 'RESERVED_TYPE_BOOLEAN', 'RESERVED_TYPE_BOOLEAN')
+
+    @classmethod
+    def reserved_type_char(cls, a_scope=None, a_level=None):
+        return cls('RESERVED_TYPE_CHAR', a_scope, a_level, 'RESERVED_TYPE_CHAR', 'RESERVED_TYPE_CHAR')
+
+    @classmethod
+    def reserved_type_string(cls, a_scope=None, a_level=None):
+        return cls('RESERVED_TYPE_STRING', a_scope, a_level, 'RESERVED_TYPE_STRING', 'RESERVED_TYPE_STRING')
+
+    @classmethod
+    def reserved_type_text( cls, a_scope=None, a_level=None ):
+        return cls('RESERVED_TYPE_TEXT', a_scope, a_level, 'RESERVED_TYPE_TEXT', 'RESERVED_TYPE_TEXT')
+
+
 class PointerIdentifier(Identifier):
 
     def do_nothing(self):

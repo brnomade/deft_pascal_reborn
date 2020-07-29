@@ -1,6 +1,6 @@
 from lark import Tree, Token, UnexpectedToken, UnexpectedCharacters
 from deft_pascal_parser_3 import DeftPascalParser
-from symbol_table import SymbolTable, BaseSymbol, Constant, Identifier, Operator, PointerIdentifier, BooleanConstant, NilConstant
+from symbol_table import SymbolTable, BaseSymbol, Operator, Identifier, BaseTypeIdentifier, TypeIdentifier, PointerIdentifier, Constant, BooleanConstant, NilConstant
 from intermediate_code import IntermediateCode
 from compiler_utils import check_type_compatibility
 import logging
@@ -35,7 +35,8 @@ class DeftPascalCompiler:
                          "ASSIGNMENT_STATEMENT": self._action_6,
                          "EXPRESSION": self._action_7,
                          "REPEAT_STATEMENT": self._action_8,
-                         "CLOSED_FOR_STATEMENT" : self._action_10,
+                         "TYPE_DEFINITION_PART": self._action_11,
+                         "CLOSED_FOR_STATEMENT": self._action_10,
                          }
 # "BOOLEAN_EXPRESSION": self._action_9,
         #
@@ -131,7 +132,7 @@ class DeftPascalCompiler:
         # - symbol not declared
         # - symbol declared on same scope
         # - symbol declared on a lower scope
-        # returns None if seymbol not found
+        # returns None if symbol not found
 
         if self._symbol_table.has_equal(a_symbol, equal_class=False, equal_type=False, equal_level=True, equal_name=True):
             a_symbol = self._symbol_table.get(a_symbol)
@@ -153,7 +154,7 @@ class DeftPascalCompiler:
         if self._symbol_table.has_equal(a_variable, equal_class=True, equal_type=False, equal_level=True, equal_name=True):
             a_variable = self._symbol_table.get(a_variable)
         elif self._symbol_table.has_equal(a_variable, equal_class=True, equal_type=False, equal_level=False, equal_name=True):
-            a_symbol = self._symbol_table.get_from_lower_scope(a_variable)
+            a_variable = self._symbol_table.get_from_lower_scope(a_variable)
         else:
             msg = "[{0}] {1} - Reference to undeclared symbol {2}"
             self._log(ERROR, msg.format(action_number, action_name, a_variable))
@@ -180,9 +181,20 @@ class DeftPascalCompiler:
         context_label = self._stack_scope[-1][0]
         context_level = self._stack_scope[-1][1]
 
+        # add the system constants to the symbol table
+
         self._symbol_table.append(BooleanConstant.true(context_label, context_level))
         self._symbol_table.append(BooleanConstant.false(context_label, context_level))
-        self._symbol_table.append(NilConstant.nil((context_label, context_level)))
+        self._symbol_table.append(NilConstant.nil(context_label, context_level))
+
+        # add the base types to the symbol table
+
+        self._symbol_table.append(BaseTypeIdentifier.reserved_type_integer(context_label, context_level))
+        self._symbol_table.append(BaseTypeIdentifier.reserved_type_real(context_label, context_level))
+        self._symbol_table.append(BaseTypeIdentifier.reserved_type_boolean(context_label, context_level))
+        self._symbol_table.append(BaseTypeIdentifier.reserved_type_char(context_label, context_level))
+        self._symbol_table.append(BaseTypeIdentifier.reserved_type_string(context_label, context_level))
+        self._symbol_table.append(BaseTypeIdentifier.reserved_type_text(context_label, context_level))
 
         # self._emiter = CEmitter(identifier)
         # self._emiter.emit_action_0()
@@ -264,27 +276,38 @@ class DeftPascalCompiler:
 
             # the TYPE is always at the end of the children list. pop it out and collect the value.
 
-            data_type = variable_declaration.children.pop().value
+            type_identifier = variable_declaration.children.pop()
+
+            # type_identifier can be a base_type or the name of a new_type.
+            # setup the symbol to check in symbol table accordingly
+
+            if type_identifier.type == "IDENTIFIER":
+                type_identifier = BaseSymbol(type_identifier.value, context_label, context_level, type_identifier.type, type_identifier.value)
+            else:
+                type_identifier = BaseSymbol(type_identifier.type, context_label, context_level, type_identifier.type, type_identifier.value)
+
+            # retrieve the actual type from the symbol_table
+
+            if self._symbol_table.has_equal(type_identifier, equal_class=False, equal_type=False):
+                type_identifier = self._retrieve_from_symbol_table(action_number, action_name, type_identifier)
+            else:
+                msg = "[{0}] {1} :  Type '{2}' not declared in current scope."
+                self._log(ERROR, msg.format(action_number, action_name, type_identifier))
 
             # check if a pointer is being declared - if so, pop it out for emitter
 
             identifier_class = Identifier
             if variable_declaration.children[-1].type == "UPARROW":
-
                 identifier_class = PointerIdentifier
                 variable_declaration.children.pop()
-
-            # check if the data_type is a type identifier
-            if data_type in []
-
-                # TODO: transforme type declaration to a compiler type
-                # TODO: check if the identifier that is not a compiler type is a declared type via TYPE declaration
 
             # process each identifier for the given data_type
 
             for token in variable_declaration.children:
 
-                a_symbol = identifier_class(token.value, context_label, context_level, data_type, token.value)
+                # tokens being processed have: value = 'VARIABLE NAME' and type = 'IDENTIFIER'
+
+                a_symbol = identifier_class(token.value, context_label, context_level, type_identifier.type, token.value)
 
                 # scenarios:
                 # - identifier not declared
@@ -345,7 +368,7 @@ class DeftPascalCompiler:
         # prepare stacks to process the expression
 
         # self._stack_variables = []
-        #self._stack_variables.append(a_symbol)
+        # self._stack_variables.append(a_symbol)
 
         self._stack_expression = []
         self._stack_expression.append(a_symbol)
@@ -468,6 +491,7 @@ class DeftPascalCompiler:
         self._internal_compile(token_list.pop())
         self._ic.flush()
 
+
     def _action_9(self, action_number, action_name, token_list):
 
         context_label = self._stack_scope[-1][0]
@@ -533,11 +557,11 @@ class DeftPascalCompiler:
         # TODO: Must call _check_type_compatibility
 
         self._internal_compile(token_list[1])
-        #token = token_list[1]
-        #identifier = token.value if token.type == "IDENTIFIER" else self._exception_raiser(UnexpectedToken)
-        #a_variable = Identifier(identifier, context_label, context_level)
-        #a_variable = self._get_declared_variable(action_number, action_name, a_variable)
-        #if a_variable:
+        # token = token_list[1]
+        # identifier = token.value if token.type == "IDENTIFIER" else self._exception_raiser(UnexpectedToken)
+        # a_variable = Identifier(identifier, context_label, context_level)
+        # a_variable = self._get_declared_variable(action_number, action_name, a_variable)
+        # if a_variable:
         #    # self._emiter.emit_action_10(a_variable)
 
         # emit operator :=
@@ -564,10 +588,58 @@ class DeftPascalCompiler:
 
         self._internal_compile(token_list[5])
 
-        #for i in range(0, len(stack_expression) - 1):
+        # for i in range(0, len(stack_expression) - 1):
         #    self._check_type_compatibility(action_number, action_name, stack_expression[i], stack_expression[i+1])
 
         self._log(INFO, "[{0}] {1}".format(action_number, action_name))
 
+    def _action_11(self, action_number, action_name, input_list):
+        """
+        input_list -> TYPE
+                        T1
+                        =
+                        INTEGER
+                        T2
+                        =
+                        REAL
+                        T3
+                        =
+        """
 
+        context_label = self._stack_scope[-1][0]
+        context_level = self._stack_scope[-1][1]
+        self._ic.init(action_number, action_name)
 
+        # discard reserved word TYPE
+        input_list = input_list[1:]
+
+        for type_definition in input_list:
+
+            declaration = type_definition.children
+            # the type definition (declaration) has 3 parts: identifier, operator and a base type
+
+            identifier = TypeIdentifier(declaration[0].value, context_label, context_level, declaration[0].type, declaration[0].value)
+            operator = Operator(declaration[1].value, context_label, context_level, declaration[1].type, declaration[1].value)
+            type_identifier = BaseSymbol(declaration[2].type, context_label, context_level, declaration[2].type, declaration[2].value)
+
+            # data_type is of base_type
+            if type_identifier.type in ["RESERVED_TYPE_BOOLEAN", "RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL",
+                                        "RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING", "RESERVED_TYPE_TEXT"]:
+
+                type_identifier = self._retrieve_from_symbol_table(action_number, action_name, type_identifier)
+                identifier.type = type_identifier.type
+            else:
+                msg = "[{0}] {1} :  type  '{2}' declared in current scope not yet implemented"
+                self._log(ERROR, msg.format(action_number, action_name, identifier))
+
+            # check if identifier is new or already declared
+            if self._symbol_table.has_equal(identifier, equal_type=False):
+                msg = "[{0}] {1} :  Identifier '{2}' already declared in current scope"
+                self._log(ERROR, msg.format(action_number, action_name, identifier))
+            else:
+                self._symbol_table.append(identifier)
+                self._log(INFO, "[{0}] {1} : {2}".format(action_number, action_name, identifier))
+
+            # TODO: figure out which class of type is being declared: BASE_TYPES, RECORD, SET, ENUMERATED, SUB_RANGE, ARRAYS, POINTER
+            # TODO: transform type declaration to a compiler type
+            # TODO: check if the identifier that is not a compiler type is a declared type via TYPE declaration
