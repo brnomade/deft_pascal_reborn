@@ -175,8 +175,30 @@ class BaseSymbol:
 
 class Constant(BaseSymbol):
 
-    def do_nothing(self):
-        pass
+    def __init__(self, *args):
+        super().__init__(*args)
+        self._map_to_base_type(self.type)
+
+    @staticmethod
+    def _map_to_base_type(a_type_name):
+        """
+        this maps the constant token names received from the parser to pascal language types
+        it is needed so for the type checking process
+        """
+        if a_type_name in ["BOOLEAN", "CONSTANT_TRUE", "CONSTANT_FALSE"]:
+            return "RESERVED_TYPE_BOOLEAN"
+        elif a_type_name in ["INTEGER", "UNSIGNED_DECIMAL", "SIGNED_DECIMAL", "NUMBER_BINARY", "NUMBER_OCTAL", "NUMBER_HEXADECIMAL"]:
+            return "RESERVED_TYPE_INTEGER"
+        elif a_type_name in ["REAL", "UNSIGNED_REAL", "SIGNED_REAL"]:
+            return "RESERVED_TYPE_REAL"
+        elif a_type_name in ["CHAR", "CHARACTER"]:
+            return "RESERVED_TYPE_CHAR"
+        elif a_type_name in ["STRING"]:
+            return "RESERVED_TYPE_STRING"
+        elif a_type_name in ["CONSTANT_NIL"]:
+            return "RESERVED_TYPE_POINTER"
+        else:
+            return a_type_name
 
 
 class BooleanConstant(Constant):
@@ -376,8 +398,8 @@ class Operator(BaseSymbol):
         checks involved:
         2 - if the types of the operands (symbol_right and symbol_left) match
         """
-        if symbol_left.type == "RESERVED_TYPE_POINTER" or "^" in symbol_left.type:
-            if symbol_right.type == "RESERVED_TYPE_POINTER" or "^" in symbol_left.type:
+        if symbol_left.type == "RESERVED_TYPE_POINTER" or "^" in symbol_left.type or symbol_left.is_pointer:
+            if symbol_right.type == "RESERVED_TYPE_POINTER" or "^" in symbol_left.type or symbol_right.is_pointer:
                 return NilConstant.nil(None, None)
         elif symbol_left.type == symbol_right.type:
             return Constant(None, None, None, symbol_left.type, None)

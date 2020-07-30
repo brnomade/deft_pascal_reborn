@@ -175,11 +175,31 @@ class DeftPascalCompiler:
         #
         return compatible
 
+    def _increase_scope(self, scope_label=None):
+        # retrieve current scope details from the stack
+        context_label = self._stack_scope[-1][0]
+        context_level = self._stack_scope[-1][1]
+
+        # increase scope
+        context_level = context_level + 1
+        if scope_label:
+            context_label = scope_label
+
+        # push the new scope into the scope stack
+        self._stack_scope.append((context_label, context_level))
+
+
+    def _decrease_scope(self):
+        # remove current scope details from the stack
+        context_label = self._stack_scope.pop()[0]
+        context_level = self._stack_scope.pop()[1]
+
+
     def _action_0(self, action_number, action_name, token_list):
         """
         token_list : PROGRAM a_program_name
         """
-        # push the new scope into the scope stack
+        # initialise the scope stack
         identifier = token_list[1].value
         self._stack_scope.append((identifier, 0))
 
@@ -221,6 +241,8 @@ class DeftPascalCompiler:
         """
         process RESERVED_STRUCTURE_BEGIN
         """
+        self._increase_scope()
+
         self._ic.init(action_number, action_name)
         self._ic.push(input_token)
         self._ic.flush()
@@ -233,34 +255,47 @@ class DeftPascalCompiler:
 
     def _action_2(self, action_number, action_name, input_list):
         """
-        process CONSTANT_DEFINITION_PART
+        CONSTANT_DEFINITION_PART
+        input_list -> [CONST constant_definition C1 = VALUE constant_definition C2 = VALUE]
         """
+        # retrieve the scope details from the stack
         context_label = self._stack_scope[-1][0]
         context_level = self._stack_scope[-1][1]
+
+        # initialise the intermediate_code engine
         self._ic.init(action_number, action_name)
 
-        input_list = input_list[1:]
+        # discard reserved word CONST
+        input_list.pop(0)
+
+        # process declarations
         for constant_definition in input_list:
-
             declaration = constant_definition.children
+
             # the constant definition (declaration) has 3 parts: identifier, operator and constant
+            constant_identifier = declaration[0].value
+            constant_type = declaration[-1].type
+            constant_value = declaration[-1].value
 
-            identifier = Identifier(declaration[0].value, context_label, context_level, declaration[0].type, declaration[0].value)
-            operator = Operator(declaration[1].value, context_label, context_level, declaration[1].type, declaration[1].value)
-            constant = Constant(declaration[2].value, context_label, context_level, declaration[2].type, declaration[2].value)
-            identifier.type = constant.type
-            identifier.value = constant.value
+            # identifier - it must not exist in the symbol_table yet
+            if self._symbol_table.contains_name(constant_identifier, context_label, context_level, equal_level_only=False):
 
-            if self._symbol_table.has_equal(identifier, equal_class=False, equal_type=False, equal_level=True, equal_name=True):
-                self._log(ERROR, 'ERROR 6 - Identifier already declared in the current scope')
+                self._log(ERROR, 'Identifier already declared')
+
             else:
-                self._symbol_table.append(identifier)
-                # self._emiter.emit_action_2(identifier)
 
-                self._ic.push([identifier, operator, constant])
+                new_constant = Constant(constant_identifier, context_label, context_level, constant_type, constant_value)
 
-                self._log(INFO, "[{0}] {1} : {2}".format(action_number, action_name, identifier))
+                # push the new constant into the symbol_table
+                self._symbol_table.append(new_constant)
 
+                # push the new constant into the intermediate_code engine
+                self._ic.push(new_constant)
+
+                # log successful declaration
+                self._log(INFO, "[{0}] {1} : {2}".format(action_number, action_name, new_constant))
+
+        # generate the intermediate code
         self._ic.flush()
 
 
@@ -313,22 +348,23 @@ class DeftPascalCompiler:
 
                     else:
 
-                        new_variable_symbol = identifier_class(identifier, context_label, context_level, type_symbol.type, None)
+                        new_variable = identifier_class(identifier, context_label, context_level, type_symbol.type, None)
 
                         # push the new variable into the symbol_table
-                        self._symbol_table.append(new_variable_symbol)
+                        self._symbol_table.append(new_variable)
 
                         # push the new variable into the intermediate_code engine
-                        self._ic.push(new_variable_symbol)
+                        self._ic.push(new_variable)
 
                         # log successful declaration
-                        self._log(INFO, "[{0}] {1} : {2}".format(action_number, action_name, new_variable_symbol))
+                        self._log(INFO, "[{0}] {1} : {2}".format(action_number, action_name, new_variable))
 
             else:
 
                 msg = "[{0}] {1} :  Unknown type '{2}' reference in variable declaration."
                 self._log(ERROR, msg.format(action_number, action_name, type_identifier))
 
+        # generate the intermediate code
         self._ic.flush()
 
 
@@ -342,11 +378,12 @@ class DeftPascalCompiler:
         """
         process END
         """
-        # self._emiter.emit_action_5()
+        self._decrease_scope()
 
         self._ic.init(action_number, action_name)
         self._ic.push(input_token)
         self._ic.flush()
+
         self._log(INFO, "[{0}] {1} : {2}".format(action_number,
                                                  action_name,
                                                  self._symbol_table))
@@ -356,50 +393,47 @@ class DeftPascalCompiler:
         """
         token_list -> identifier := expression
         """
+        # retrieve the scope details from the stack
         context_label = self._stack_scope[-1][0]
         context_level = self._stack_scope[-1][1]
+
+        # initialise the intermediate_code engine
         self._ic.init(action_number, action_name)
 
-        # check identifier exists
+        # identifier - it must exist in the symbol table
+        identifier_name = token_list.pop(0).value
+        identifier_symbol = self._symbol_table.retrieve_by_name(identifier_name, context_label, context_level, equal_level_only=False)
+        if identifier_symbol:
+            self._ic.push(identifier_symbol)
 
-        token = token_list[0]
-        identifier = token.value if token.type == "IDENTIFIER" else self._exception_raiser(UnexpectedToken)
-        a_symbol = Identifier(identifier, context_label, context_level)
-        a_symbol = self._retrieve_from_symbol_table(action_number, action_name, a_symbol)
+            # consume the operator :=
+            token = token_list.pop(0)
+            operator = Operator(token.value, context_label, context_level, token.type, token.value)
+            self._ic.push(operator)
 
-        self._ic.push(a_symbol)
+            # prepare stacks to process the expression
+            self._stack_expression = []
+            self._stack_expression.append(identifier_symbol)
+            self._stack_expression.append(operator)
 
-        # prepare stacks to process the expression
+            # process the expression
+            expression = token_list.pop()
+            self._internal_compile(expression)
 
-        # self._stack_variables = []
-        # self._stack_variables.append(a_symbol)
+            # perform type checking
+            z = check_type_compatibility(self._stack_expression)
+            if not check_type_compatibility(self._stack_expression):
+                self._log(ERROR, "[{0}] {1} : incompatible types detected {2}".format(action_number, action_name, self._stack_expression))
+            else:
+                self._log(INFO, "[{0}] {1} : {2}".format(action_number, action_name, self._stack_expression))
 
-        self._stack_expression = []
-        self._stack_expression.append(a_symbol)
-
-        # consume the operator :=
-
-        token = token_list[1]
-        operator = Operator(token.value, context_label, context_level, token.type, token.value)
-        self._ic.push(operator)
-
-        self._stack_expression.append(operator)
-
-        # process the expression
-
-        self._internal_compile(token_list[2])
-
-        # perform type checking
-
-        if not check_type_compatibility(self._stack_expression):
-            self._log(ERROR, "[{0}] {1} : incompatible types detected {2}".format(action_number, action_name, self._stack_expression))
         else:
-            self._log(INFO, "[{0}] {1} : {2}".format(action_number, action_name, self._stack_expression))
 
-        # emit everything
-        # self._emiter.emit_action_6(self._stack_emiter)
+            msg = "[{0}] {1} :  Reference to undeclared variable '{2}'"
+            self._log(ERROR, msg.format(action_number, action_name, identifier_name))
+
+        # generate the intermediate code
         self._ic.flush()
-        # self._stack_variables = []
 
 
     def _action_7(self, action_number, action_name, token_list):
@@ -418,36 +452,29 @@ class DeftPascalCompiler:
 
             elif isinstance(token, Token):
 
-                if token.type in ["CONSTANT_TRUE", "CONSTANT_FALSE"]:
+                # assuming token is an identifier, attempt to retrieve from the symbol table at any level
+                a_symbol = self._symbol_table.retrieve_by_name(token.value, context_label, context_level, equal_level_only=False)
 
-                    a_symbol = self._retrieve_global_boolean_constant(action_number, action_name, token.value)
+                if not a_symbol:
 
-                elif token.type in ["UNSIGNED_DECIMAL", "SIGNED_DECIMAL", "NUMBER_BINARY", "NUMBER_OCTAL",
-                                    "NUMBER_HEXADECIMAL", "CHARACTER", "STRING", "UNSIGNED_REAL", "SIGNED_REAL"
-                                    ]:
+                    # attempt to retrieve from the symbol table at any current level but based on token type
+                    a_symbol = self._symbol_table.retrieve_by_name(token.type, context_label, context_level, equal_level_only=False)
 
-                    a_symbol = Constant(token.value, context_label, context_level, token.type, token.value)
+                    if not a_symbol:
 
-                elif token.type == "IDENTIFIER":
+                        #  if still not present in the symbol table, token might be a constant
+                        if token.type in ["UNSIGNED_DECIMAL", "SIGNED_DECIMAL", "NUMBER_BINARY", "NUMBER_OCTAL",
+                                          "NUMBER_HEXADECIMAL", "CHARACTER", "STRING", "UNSIGNED_REAL", "SIGNED_REAL"
+                                          ]:
 
-                    a_symbol = Identifier(token.value, context_label, context_level)
-                    a_symbol = self._get_declared_variable(action_number, action_name, a_symbol)
+                            a_symbol = Constant(token.value, context_label, context_level, token.type, token.value)
 
-                else:
+                        else:
 
-                    a_symbol = BaseSymbol(token.value, context_label, context_level, token.type, token.value)
-                    if a_symbol.is_operator:
-                        a_symbol = Operator(token.value, context_label, context_level, token.type, token.value)
+                            a_symbol = BaseSymbol(token.value, context_label, context_level, token.type, token.value)
+                            if a_symbol.is_operator:
+                                a_symbol = Operator(token.value, context_label, context_level, token.type, token.value)
 
-                # handling a boolean_expression used in repeat, while and if statements
-                # if len(self._stack_variables) == 0:
-                #    start_symbol = self._retrieve_global_boolean_constant(action_number, action_name, 'true')
-                # else:
-                #    start_symbol = self._stack_variables[-1]
-
-                # self._check_type_compatibility(action_number, action_name, start_symbol, a_symbol)
-
-                # self._stack_emiter.append(a_symbol)
                 self._stack_expression.append(a_symbol)
                 self._ic.push(a_symbol)
 
@@ -627,7 +654,7 @@ class DeftPascalCompiler:
             type_identifier, i.e. INTEGER
             """
             identifier = declaration[0].value
-            operator = Operator.from_token(declaration[1], context_label, context_level)
+            # operator = Operator.from_token(declaration[1], context_label, context_level)
             type_identifier = declaration[-1].value
 
             # identifier - it must not exist in the symbol_table yet
@@ -648,6 +675,8 @@ class DeftPascalCompiler:
                     # the name for the type being declared
                     # so let's create the new_type
 
+                    # if the type_symbol is itself a pointer, than the variable being declared must be a pointer too
+                    is_pointer = is_pointer or type_symbol.is_pointer
                     type_class = BasicType
                     if is_pointer:
                         type_class = PointerType

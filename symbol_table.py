@@ -55,7 +55,7 @@ class SymbolTable:
         elif equal_level_only:
             return None
         else:
-            self.get_from_lower_scope(a_symbol)
+            return self.get_from_lower_scope(a_symbol)
 
 
     def append(self, a_symbol):

@@ -13,8 +13,33 @@ class TestSuit:
     @staticmethod
     def compiler_tests_to_run():
         return [
-
+            ["scenario_program_definition_with_variables",
+             LanguageTests().scenario_program_definition_with_variables()],
+            ["scenario_program_definition_without_variables",
+             LanguageTests().scenario_program_definition_without_variables()],
+            ["scenario_label_declaration", LanguageTests().scenario_label_declaration()],
+            ["scenario_decimal_numbers", LanguageTests().scenario_decimal_numbers()],
+            ["scenario_binary_numbers", LanguageTests().scenario_binary_numbers()],
+            ["scenario_octal_numbers", LanguageTests().scenario_octal_numbers()],
+            ["scenario_hexadecimal_numbers", LanguageTests().scenario_hexadecimal_numbers()],
+            ["scenario_strings", LanguageTests().scenario_strings()],
+            ["scenario_booleans", LanguageTests().scenario_booleans()],
+            ["scenario_constant_declaration", LanguageTests().scenario_constant_declaration()],
+            ["scenario_type_declaration_with_base_types", LanguageTests().scenario_type_declaration_with_base_types()],
+            ["scenario_type_declaration_with_pointer_to_base_types", LanguageTests().scenario_type_declaration_with_pointer_to_base_types()],
+            ["scenario_type_declaration_with_declared_types", LanguageTests().scenario_type_declaration_with_declared_types()],
+            ["scenario_variable_declaration_with_base_types", LanguageTests().scenario_variable_declaration_with_base_types()],
+            ["scenario_variable_declaration_with_types_based_on_base_types", LanguageTests().scenario_variable_declaration_with_types_based_on_base_types()],
+            ["scenario_variable_declaration_with_pointers_to_base_types", LanguageTests().scenario_variable_declaration_with_pointers_to_base_types()],
+            ["scenario_variable_declaration_with_pointer_to_pointer_types", LanguageTests().scenario_variable_declaration_with_pointer_to_pointer_types()],
+            ["scenario_variable_declaration_with_pointer_types_based_on_base_types", LanguageTests().scenario_variable_declaration_with_pointer_types_based_on_base_types()],
             ["scenario_variable_assignment_with_nil", LanguageTests.scenario_variable_assignment_with_nil()],
+            ["scenario_variable_assignment_with_single_value", LanguageTests().scenario_variable_assignment_with_single_value()],
+            ["scenario_variable_assignment_with_constant", LanguageTests().scenario_variable_assignment_with_constant()],
+            ["scenario_variable_assignment_with_variable", LanguageTests().scenario_variable_assignment_with_variable()],
+            ["scenario_variable_assignment_with_numeric_expression", LanguageTests().scenario_variable_assignment_with_numeric_expression()],
+            ["scenario_variable_assignment_with_logical_expression_same_types", LanguageTests().scenario_variable_assignment_with_logical_expression_same_types()],
+            ["scenario_variable_assignment_with_logical_expression_mixed_types", LanguageTests().scenario_variable_assignment_with_logical_expression_mixed_types()],
         ]
 
     @staticmethod
@@ -32,9 +57,14 @@ class TestSuit:
     ["scenario_strings", LanguageTests().scenario_strings()],
     ["scenario_booleans", LanguageTests().scenario_booleans()],
     ["scenario_constant_declaration", LanguageTests().scenario_constant_declaration()],
-    ["scenario_type_declaration", LanguageTests().scenario_type_declaration()],
+    ["scenario_type_declaration_with_base_types", LanguageTests().scenario_type_declaration_with_base_types()],
+    ["scenario_type_declaration_with_pointer_to_base_types", LanguageTests().scenario_type_declaration_with_pointer_to_base_types()],
+    ["scenario_type_declaration_with_declared_types", LanguageTests().scenario_type_declaration_with_declared_types()],
     ["scenario_variable_declaration_with_base_types", LanguageTests().scenario_variable_declaration_with_base_types()],
     ["scenario_variable_declaration_with_types_based_on_base_types", LanguageTests().scenario_variable_declaration_with_types_based_on_base_types()],
+    ["scenario_variable_declaration_with_pointers_to_base_types", LanguageTests().scenario_variable_declaration_with_pointers_to_base_types()],
+    ["scenario_variable_declaration_with_pointer_to_pointer_types", LanguageTests().scenario_variable_declaration_with_pointer_to_pointer_types()],
+    ["scenario_variable_declaration_with_pointer_types_based_on_base_types", LanguageTests().scenario_variable_declaration_with_pointer_types_based_on_base_types()],
     ["scenario_variable_assignment_with_nil", LanguageTests.scenario_variable_assignment_with_nil()],
     ["scenario_variable_assignment_with_single_value", LanguageTests().scenario_variable_assignment_with_single_value()],
     ["scenario_variable_assignment_with_constant", LanguageTests().scenario_variable_assignment_with_constant()],
@@ -210,14 +240,14 @@ class LanguageTests(TestSuit):
             C6 = 'C8C8C8C8';                         
             C7 = True;                               
             C8 = False;                              
-            C9 = Nil;                              
+            C9 = Nil;                             
             BEGIN                                   
             END.                                  
         """
         return code
 
     @staticmethod
-    def scenario_type_declaration():
+    def scenario_type_declaration_with_base_types():
         code = """
             PROGRAM {{{0}}};          
             TYPE
@@ -231,6 +261,44 @@ class LanguageTests(TestSuit):
         """
         return code
 
+    @staticmethod
+    def scenario_type_declaration_with_pointer_to_base_types():
+        code = """
+            PROGRAM {{{0}}};          
+            TYPE
+                T6 = ^INTEGER;
+                T7 = ^REAL; 
+                T8 = ^CHAR;
+                T9 = ^STRING;
+                T10 = ^BOOLEAN;  
+            BEGIN                                 
+            END.                                  
+        """
+        return code
+
+    @staticmethod
+    def scenario_type_declaration_with_declared_types():
+        code = """
+            PROGRAM {{{0}}};          
+            TYPE
+                T1 = INTEGER;
+                T2 = REAL;
+                T3 = CHAR;
+                T4 = STRING;
+                T5 = BOOLEAN;
+                T6 = ^INTEGER;
+                T7 = ^REAL; 
+                T8 = ^CHAR;
+                T9 = ^STRING;
+                T10 = ^BOOLEAN;  
+                T11 = T1;
+                T12 = T6;
+                T13 = T12;
+                T14 = ^T12;     
+            BEGIN                                 
+            END.                                  
+        """
+        return code
 
     @staticmethod
     def scenario_variable_declaration_with_base_types():
@@ -242,6 +310,21 @@ class LanguageTests(TestSuit):
                 _V3_d  : CHAR;                    
                 _V3_e  : STRING;                 
                 _V3_f  : TEXT;                   
+            BEGIN                                 
+            END.                                  
+        """
+        return code
+
+    @staticmethod
+    def scenario_variable_declaration_with_pointers_to_base_types():
+        code = """
+            PROGRAM {{{0}}};   
+            VAR V1, V2 : ^INTEGER;
+                _V3    : ^REAL;                    
+                _V3_b  : ^BOOLEAN;                 
+                _V3_d  : ^CHAR;                    
+                _V3_e  : ^STRING;                 
+                _V3_f  : ^TEXT;                   
             BEGIN                                 
             END.                                  
         """
@@ -272,23 +355,64 @@ class LanguageTests(TestSuit):
         return code
 
     @staticmethod
+    def scenario_variable_declaration_with_pointer_types_based_on_base_types():
+        code = """
+            PROGRAM {{{0}}};          
+            TYPE
+                T1 = INTEGER;
+                T2 = REAL;
+                T3 = BOOLEAN;
+                T4 = CHAR;
+                T5 = STRING;
+                T6 = TEXT;
+            VAR V1, V2 : ^T1;                 
+                _V3    : ^T2;                    
+                _V3_b  : ^T3;                 
+                _V3_d  : ^T4;                    
+                _V3_e  : ^T5;                 
+                _V3_f  : ^T6;                         
+            BEGIN                                 
+            END.                                  
+        """
+        return code
+
+    @staticmethod
+    def scenario_variable_declaration_with_pointer_to_pointer_types():
+        code = """
+            PROGRAM {{{0}}};          
+            TYPE
+                T1 = ^INTEGER;
+                T2 = ^REAL;
+                T3 = ^BOOLEAN;
+                T4 = ^CHAR;
+                T5 = ^STRING;
+                T6 = ^TEXT;
+            VAR V1, V2 : ^T1;                 
+                _V3    : ^T2;                    
+                _V3_b  : ^T3;                 
+                _V3_d  : ^T4;                    
+                _V3_e  : ^T5;                 
+                _V3_f  : ^T6;                         
+            BEGIN                                 
+            END.                                  
+        """
+        return code
+
+    @staticmethod
     def scenario_variable_assignment_with_nil():
         code = """
             PROGRAM {{{0}}};  
             TYPE
                 T1 = ^INTEGER;
                 T2 = INTEGER;   
-                T3 = T2;
                 T4 = T1;
                 T5 = ^T1;
                 T6 = ^T2;     
             VAR                                     
             V1 : ^INTEGER;  
-            V2 : INTEGER;
             V3 : ^T1;
             V4 : T1;
             V5 : ^T2;
-            V6 : T2;
             V7 : T4;
             V8 : ^T4;
             V9 : T5;
@@ -297,7 +421,15 @@ class LanguageTests(TestSuit):
             V12: ^T6;
             BEGIN                                   
             V1 := NIL;
-            V2 := NIL;                               
+            V3 := NIL;                               
+            V4 := NIL;                               
+            V5 := NIL;                               
+            V7 := NIL;                               
+            V8 := NIL;
+            V9 := NIL;                               
+            V10 := NIL;                               
+            V11 := NIL;                               
+            V12 := NIL;        
             END.                                    
         """
         return code
@@ -317,8 +449,7 @@ class LanguageTests(TestSuit):
              V7 : REAL;                             
              V8 : INTEGER;                             
              V9 : INTEGER;                             
-             V10 : INTEGER;                            
-             V11 : ^WORD;                             
+             V10 : INTEGER;                           
              V12 : REAL;                             
             BEGIN                                    
              V1 := -2;                                
@@ -330,7 +461,6 @@ class LanguageTests(TestSuit):
              V8 := &HFF;                             
              V9 := &B10;                             
              V10 := &O11;                            
-             V11 := NIL;                             
              V12 := -1.1E-23;                        
             END.                                   
         """
