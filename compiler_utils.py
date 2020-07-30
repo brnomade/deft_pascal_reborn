@@ -1,36 +1,33 @@
-from io import StringIO
-from collections import deque
-from symbol_table import Operator, Constant, Identifier, BaseSymbol
+from symbols import Operator, Constant, Identifier, BaseSymbol
 
 import tokenize
 from io import StringIO
 from collections import deque
 
 import logging
-from logging import ERROR, WARNING, INFO
 logger = logging.getLogger(__name__)
 
 
-class ExpressionOriginal :
+class ExpressionOriginal:
 
     # Set the precedence level of the operators
-    precedence = {"^" : 4,
-                  "/" : 3,
-                  "*" : 3,
-                  "+" : 2,
-                  "-" : 2,
-                  "(" : 1 }
+    precedence = {"^": 4,
+                  "/": 3,
+                  "*": 3,
+                  "+": 2,
+                  "-": 2,
+                  "(": 1}
 
-    def __init__(self, exp_str) :
+    def __init__(self, exp_str):
         self.exp_str = exp_str.strip()
         self.infix_tokens = []
         self.postfix_tokens = []
 
-    def Evaluate(self) :
+    def Evaluate(self):
         self.Tokenize()
         self.InfixToPostfix()
         result = []
-        for token in self.postfix_tokens :
+        for token in self.postfix_tokens:
             try:
                 v = int(token)
             except ValueError:
@@ -40,53 +37,51 @@ class ExpressionOriginal :
         return result
 
 
-
-
-    def Tokenize(self) :
+    def Tokenize(self):
 
         tuplelist = tokenize.generate_tokens(StringIO(self.exp_str).readline)
 
-        for x in tuplelist :
-            if x.string :
+        for x in tuplelist:
+            if x.string:
                 self.infix_tokens.append(x.string)
 
         print("\noriginal algorithm - expression : " + self.exp_str)
 
-    def InfixToPostfix(self) :
+
+    def InfixToPostfix(self):
 
         stack = deque()
         stack.appendleft("(")
         self.infix_tokens.append(")")
 
-        while self.infix_tokens :
+        while self.infix_tokens:
 
-             token = self.infix_tokens.pop(0)
+            token = self.infix_tokens.pop(0)
 
-             if token == "(" :
-                 stack.appendleft(token)
+            if token == "(":
+                stack.appendleft(token)
 
-             elif token == ")" :
-                 # Pop out all the operators from the stack and append them to
-                 # postfix expression till an opening bracket "(" is found
+            elif token == ")":
+                # Pop out all the operators from the stack and append them to
+                # postfix expression till an opening bracket "(" is found
 
-                 while stack[0] != "(" : # peek at topmost item in the stack
-                     self.postfix_tokens.append(stack.popleft())
-                 stack.popleft()
+                while stack[0] != "(":     # peek at topmost item in the stack
+                    self.postfix_tokens.append(stack.popleft())
+                stack.popleft()
 
-             elif token == "*" or token == "/" or token == "+"\
-                 or token == "-" or token == "^" :
+            elif token == "*" or token == "/" or token == "+" or token == "-" or token == "^":
 
-                 # Pop out the operators with higher precedence from the top of the
-                 # stack and append them to the postfix expression before
-                 # pushing the current operator onto the stack.
-                 while ( stack and self.precedence[stack[0]] >= self.precedence[token] ) :
-                     self.postfix_tokens.append(stack.popleft())
-                 stack.appendleft(token)
+                # Pop out the operators with higher precedence from the top of the
+                # stack and append them to the postfix expression before
+                # pushing the current operator onto the stack.
+                while stack and self.precedence[stack[0]] >= self.precedence[token]:
+                    self.postfix_tokens.append(stack.popleft())
+                stack.appendleft(token)
 
-             else :
-                 # Positions of the operands do not change in the postfix
-                 # expression so append an operand as it is to the postfix expression
-                 self.postfix_tokens.append(token)
+            else:
+                # Positions of the operands do not change in the postfix
+                # expression so append an operand as it is to the postfix expression
+                self.postfix_tokens.append(token)
 
         return self.postfix_tokens
 
@@ -123,21 +118,21 @@ class Expression:
                                  "OPERATOR_GREATER_OR_EQUAL_TO": 5,
                                  "OPERATOR_ASSIGNMENT": 1,
                                  "LEFT_PARENTHESES": 0
-                                }
+                                 }
 
     def infix_to_postfix(self):
-        #logger.info("infix_to_postfix\n")
+        # logger.info("infix_to_postfix\n")
         stack = deque()
         stack.appendleft(BaseSymbol("(", None, None, "LEFT_PARENTHESES", "("))
         self.infix_tokens.append(BaseSymbol(")", None, None, "RIGHT_PARENTHESES", ")"))
 
-        #print("{0} ##\t {1} ##\t {2} ##\t {3}".format(" ",
+        # print("{0} ##\t {1} ##\t {2} ##\t {3}".format(" ",
         #                                              [i.value for i in self.infix_tokens],
         #                                              [i.value for i in self.postfix_tokens],
         #                                              [i.value for i in stack]
         #                                              ))
 
-        #logger.info("{0} ##\t {1} ##\t {2} ##\t {3}".format(" ",
+        # logger.info("{0} ##\t {1} ##\t {2} ##\t {3}".format(" ",
         #                                              [i.type for i in self.infix_tokens],
         #                                              [i.type for i in self.postfix_tokens],
         #                                              [i.type for i in stack]
@@ -155,7 +150,7 @@ class Expression:
                     self.postfix_tokens.append(stack.popleft())
                 stack.popleft()
 
-            elif token.is_operator():
+            elif token.is_operator:
 
                 # while stack and self.precedence_rules[stack[0].type] >= self.precedence_rules[token.type]:
                 while stack and stack[0].precedence >= token.precedence:
@@ -165,12 +160,12 @@ class Expression:
             else:
                 self.postfix_tokens.append(token)
 
-            #print("{0} ##\t {1} ##\t {2} ##\t {3}".format(token.value,
+            # print("{0} ##\t {1} ##\t {2} ##\t {3}".format(token.value,
             #                                              [i.value for i in self.infix_tokens],
             #                                              [i.value for i in self.postfix_tokens],
             #                                              [i.value for i in stack]
             #                                              ))
-            #logger.info("{0} ##\t {1} ##\t {2} ##\t {3}".format(token.type,
+            # logger.info("{0} ##\t {1} ##\t {2} ##\t {3}".format(token.type,
             #                                              [i.type for i in self.infix_tokens],
             #                                              [i.type for i in self.postfix_tokens],
             #                                              [i.type for i in stack]
@@ -240,10 +235,9 @@ def check_type_compatibility(expression):
     #
     compatible = True
     stack = []
-    z = convert_to_postfix(expression)
     for index, token in enumerate(convert_to_postfix(expression)):
 
-        if token.is_operator():
+        if token.is_operator:
 
             symbol_right = stack.pop()
             symbol_left = None if token.is_unary() else stack.pop()
@@ -257,5 +251,40 @@ def check_type_compatibility(expression):
         else:
             stack.append(token)
 
-        #logger.info("{0}".format([x for x in stack]))
+        # logger.info("{0}".format([x for x in stack]))
     return compatible
+
+
+# def type_from_token(parser_token, context_label, context_level):
+#   """
+#    return a BaseSymbol from a parser input_token
+#    """
+#    return BaseSymbol(parser_token.value, context_label, context_level, parser_token.type, parser_token.value)
+
+
+# def operator_from_token(parser_token, context_label, context_level):
+#    """
+#    return an Operator from a parser input_token
+#    """
+#    return Operator(parser_token.value, context_label, context_level, parser_token.type, parser_token.value)
+
+
+# def type_identifier_from_token(parser_token, context_label, context_level):
+#    """
+#    return an TypeIdentifier (i.e. an identifier for TYPEs) from a parser input_token
+#    """
+#    return TypeIdentifier(parser_token.value, context_label, context_level, parser_token.type, parser_token.value)
+
+
+# def pointer_type_identifier_from_token(parser_token, context_label, context_level):
+#    """
+#    return an TypeIdentifier (i.e. an identifier for TYPEs) from a parser input_token
+#    """
+#    return PointerTypeIdentifier(parser_token.value, context_label, context_level, parser_token.type, parser_token.value)
+
+
+def identifier_from_token(parser_token, context_label, context_level):
+    """
+    return an Identifier (i.e. an identifier for anything different than TYPEs) from a parser input_token
+    """
+    return Identifier(parser_token.value, context_label, context_level, parser_token.type, parser_token.value)

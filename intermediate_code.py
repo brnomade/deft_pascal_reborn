@@ -1,5 +1,5 @@
 from abstract_emiter import CEmitter
-from symbol_table import Identifier
+from symbols import Identifier
 
 _stack_size = 1000
 

@@ -13,37 +13,8 @@ class TestSuit:
     @staticmethod
     def compiler_tests_to_run():
         return [
-            ["scenario_program_definition_with_variables",
-             LanguageTests().scenario_program_definition_with_variables()],
-            ["scenario_program_definition_without_variables",
-             LanguageTests().scenario_program_definition_without_variables()],
-            ["scenario_label_declaration", LanguageTests().scenario_label_declaration()],
-            ["scenario_decimal_numbers", LanguageTests().scenario_decimal_numbers()],
-            ["scenario_binary_numbers", LanguageTests().scenario_binary_numbers()],
-            ["scenario_octal_numbers", LanguageTests().scenario_octal_numbers()],
-            ["scenario_hexadecimal_numbers", LanguageTests().scenario_hexadecimal_numbers()],
-            ["scenario_strings", LanguageTests().scenario_strings()],
-            ["scenario_booleans", LanguageTests().scenario_booleans()],
-            ["scenario_constant_declaration", LanguageTests().scenario_constant_declaration()],
-            ["scenario_type_declaration", LanguageTests().scenario_type_declaration()],
-            ["scenario_variable_declaration_with_base_types",
-             LanguageTests().scenario_variable_declaration_with_base_types()],
-            ["scenario_variable_declaration_with_types_based_on_base_types",
-             LanguageTests().scenario_variable_declaration_with_types_based_on_base_types()],
-            ["scenario_variable_assignment_with_nil", LanguageTests.scenario_variable_assignment_with_nil()],
-            ["scenario_variable_assignment_with_single_value",
-             LanguageTests().scenario_variable_assignment_with_single_value()],
-            ["scenario_variable_assignment_with_constant",
-             LanguageTests().scenario_variable_assignment_with_constant()],
-            ["scenario_variable_assignment_with_variable",
-             LanguageTests().scenario_variable_assignment_with_variable()],
-            ["scenario_variable_assignment_with_numeric_expression",
-             LanguageTests().scenario_variable_assignment_with_numeric_expression()],
-            ["scenario_variable_assignment_with_logical_expression_same_types",
-             LanguageTests().scenario_variable_assignment_with_logical_expression_same_types()],
-            ["scenario_variable_assignment_with_logical_expression_mixed_types",
-             LanguageTests().scenario_variable_assignment_with_logical_expression_mixed_types()],
 
+            ["scenario_variable_assignment_with_nil", LanguageTests.scenario_variable_assignment_with_nil()],
         ]
 
     @staticmethod
@@ -303,11 +274,30 @@ class LanguageTests(TestSuit):
     @staticmethod
     def scenario_variable_assignment_with_nil():
         code = """
-            PROGRAM {{{0}}};            
+            PROGRAM {{{0}}};  
+            TYPE
+                T1 = ^INTEGER;
+                T2 = INTEGER;   
+                T3 = T2;
+                T4 = T1;
+                T5 = ^T1;
+                T6 = ^T2;     
             VAR                                     
-            V1, v2, v3 : ^INTEGER;  
+            V1 : ^INTEGER;  
+            V2 : INTEGER;
+            V3 : ^T1;
+            V4 : T1;
+            V5 : ^T2;
+            V6 : T2;
+            V7 : T4;
+            V8 : ^T4;
+            V9 : T5;
+            V10: ^T5;
+            V11: T6;
+            V12: ^T6;
             BEGIN                                   
-            V1 := NIL                               
+            V1 := NIL;
+            V2 := NIL;                               
             END.                                    
         """
         return code
