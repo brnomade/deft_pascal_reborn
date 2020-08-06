@@ -1,5 +1,5 @@
 from abstract_emiter import CEmitter
-from symbols import Operator, Constant, Identifier, Keyword, PointerIdentifier, ProcedureIdentifier, BasicType, PointerType, GenericExpression
+from symbols import Operator, Constant, Identifier, Keyword, PointerIdentifier, ProcedureIdentifier, BasicType, PointerType
 import logging
 from logging import ERROR, WARNING, INFO
 
@@ -99,7 +99,6 @@ class IntermediateCode:
 
     @staticmethod
     def _translate_constant_token_to_c(token):
-        z = 1
         if token.type in ["RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING"]:
             token.type = "unsigned char"
             token.value = token.value.strip("'").strip('"')
@@ -131,7 +130,6 @@ class IntermediateCode:
             token.value = "NULL"
         else:
             print("Unknown type {0}".format(token))
-        z = 2
 
     def init(self, action_name):
         self._i_stack[self._top] = {"action_name": action_name,
@@ -401,7 +399,7 @@ class IntermediateCode:
         C syntax -> "printf"
         Pascal syntax -> write/writeln( A : B : C, ... ) :: A = value to print; B = field_width; C = decimal_field_width
         """
-        token = input_list.pop(0)
+        identifier = input_list.pop(0)
 
         self._emiter.emit('printf("')
 
@@ -409,11 +407,11 @@ class IntermediateCode:
             format_counter = 2 - token.value.count(None)
             #
             if format_counter == 2:
-                particle = "%*.*{0}\\t "
+                particle = "%*.*{0}\\t"
             elif format_counter == 1:
-                particle = "%*{0}\\t "
+                particle = "%*{0}\\t"
             else:
-                particle = "%{0}\\t "
+                particle = "%{0}\\t"
             #
             if token.type == "RESERVED_TYPE_INTEGER":
                 self._emiter.emit(particle.format("d"))
@@ -422,7 +420,7 @@ class IntermediateCode:
             else:
                 self._emiter.emit(particle.format("s"))
 
-        if token.name.upper() == "WRITELN":
+        if identifier.name.upper() == "WRITELN":
             self._emiter.emit('\\n", ')
         else:
             self._emiter.emit('", ')

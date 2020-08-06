@@ -714,24 +714,21 @@ class TDD(TestSuit):
     @staticmethod
     def scenario_fahrenheit_to_celsius_converter():
         code = """
-            program {{{0}}}(output) ;
+            program {{{0}}}(output);
             { Program to convert temperatures from
              Fahrenheit to Celsius. }
             const
-                MIN = 32 ;
-                MAX = 50 ;
+                MIN = 0;
+                MAX = 300;
             var
-                fahren: integer ;
-                celsius: real ;
+                fahren: integer;
+                celsius: real;
             begin
-                fahren := 0 + 1 + fahren;
-                fahren := 1;
-                writeln(MIN + MAX, MAX: 10 + 1 + 2 + 3, MIN:20:30 + 1 + 2 + 3);
-                writeln('Fahrenheit     Celsius', 'another') ;
-                writeln('----------     -------') ;
-                for fahren := MIN + 5 - 10 * 20 to MAX do begin
-                    celsius := 5 / 9 * (fahren - 32) ;
-                    writeln(fahren, celsius) ;
+                writeln('Fahrenheit     Celsius');
+                writeln('----------     -------');
+                for fahren := MIN to MAX do begin
+                    celsius := 5 * (fahren - 32) / 9;
+                    writeln(fahren:5, celsius) ;
                 end ;               
             end.
         """

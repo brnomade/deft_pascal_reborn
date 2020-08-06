@@ -2,7 +2,7 @@ import os
 
 
 class AbstractEmitter:
-    def __init__(self, file_name, dir_path="output"):
+    def __init__(self, file_name, dir_path="output\\sources"):
 
         path = os.getcwd()
         self.full_path = os.path.join(path, dir_path, file_name + ".c")

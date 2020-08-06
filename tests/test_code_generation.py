@@ -37,17 +37,20 @@ class TestCodeGenerator(TestCase):
     @staticmethod
     def compile_in_gcc(input_c):
 
-        mig_dir = "C:\\MinGW\\bin"
         home_dir = os.getcwd()
+        mig_dir = "C:\\MinGW\\bin"
 
-        dir_path = "output"
+        sources_path = "output\\sources"
+        bin_path = "output\\bin"
+        logs_path = "output\\logs"
 
-        input_c = os.path.join(home_dir, dir_path, input_c)
-        output_err = os.path.join(home_dir, dir_path, input_c.split(".")[0] + ".err")
-        output_out = os.path.join(home_dir, dir_path, input_c.split(".")[0] + ".out")
+        input_source = os.path.join(home_dir, sources_path, input_c)
+        output_err = os.path.join(home_dir, logs_path, input_c.split(".")[0] + ".err")
+        output_out = os.path.join(home_dir, logs_path, input_c.split(".")[0] + ".out")
+        output_exe = os.path.join(home_dir, bin_path, input_c.split(".")[0] + ".exe")
 
-        c_compiler = "gcc.exe -c "
-        c_env = "{0} {1} > {2} 2> {3}".format(c_compiler, input_c, output_out, output_err)
+        c_compiler = "gcc.exe -o {0}".format(output_exe)
+        c_env = "{0} {1} > {2} 2> {3}".format(c_compiler, input_source, output_out, output_err)
 
         logger.info(c_env)
         os.chdir(mig_dir)
@@ -80,6 +83,16 @@ class TestCodeGenerator(TestCase):
 
         return result_out + result_err
 
+    @staticmethod
+    def run_in_shell(input_c):
+        home_dir = os.getcwd()
+
+        bin_path = "output\\bin"
+        output_exe = os.path.join(home_dir, bin_path, input_c.split(".")[0] + ".exe")
+        c_env = "{0}".format(output_exe)
+        subprocess.run(c_env, shell=True)
+
+
     @parameterized.expand(LanguageTests.generator_tests_to_run())
     def test(self, name, source_code):
         compiler = DeftPascalCompiler()
@@ -96,3 +109,5 @@ class TestCodeGenerator(TestCase):
         print(output)
         self.assertNotIn("error", output)
         self.assertNotIn("warning", output)
+        self.run_in_shell("{0}.c".format(name))
+
