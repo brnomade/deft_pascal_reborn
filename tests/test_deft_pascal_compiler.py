@@ -31,7 +31,7 @@ class TestDeftPascalCompiler(TestCase):
                            'scenario_' in i[0]]
         selected_tests = [i[0] for i in TestSuit().compiler_tests_to_run() if 'scenario_' in i[0]]
         if not set(available_tests).issubset(set(selected_tests)):
-            msg = "\n\nWARNING!\nNot all test scenarios are being run. Review TestSuit class.\n\nDifferences:\n{0}\n\n\n"
+            msg = "\n\nNot all test scenarios are being run. Review TestSuit class.\n\nDifferences:\n{0}\n\n"
             logger.warning(msg.format(set(available_tests)-set(selected_tests)))
 
     @staticmethod

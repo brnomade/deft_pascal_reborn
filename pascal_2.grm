@@ -359,7 +359,7 @@ closed_statement : label COLON non_labeled_closed_statement
  ;
 
 non_labeled_closed_statement : assignment_statement [DONE]
- | procedure_statement
+ | procedure_statement [DONE]
  | goto_statement
  | compound_statement [DONE]
  | case_statement
@@ -433,12 +433,15 @@ index_expression : expression ;
 field_designator : variable_access DOT identifier
  ;
 
+[DONE]
 procedure_statement : identifier params
  | identifier
  ;
 
+[DONE]
 params : LPAREN actual_parameter_list RPAREN ;
 
+[DONE]
 actual_parameter_list : actual_parameter_list comma actual_parameter
  | actual_parameter
  ;
@@ -449,6 +452,7 @@ actual_parameter_list : actual_parameter_list comma actual_parameter
  * the grammar, especially since write and writeln aren't reserved
  */
 
+[DONE]
 actual_parameter : expression
  | expression COLON expression
  | expression COLON expression COLON expression

@@ -3,43 +3,23 @@ class TestSuit:
 
     @staticmethod
     def generator_tests_to_run():
-        return TestSuit.tests_to_run()
+        return [
+            ["scenario_fahrenheit_to_celsius_converter", TDD().scenario_fahrenheit_to_celsius_converter()],
 
+        ]
 
     @staticmethod
     def parser_tests_to_run():
-        return TestSuit.tests_to_run()
+        return [
+            ["scenario_fahrenheit_to_celsius_converter", TDD().scenario_fahrenheit_to_celsius_converter()],
+
+        ]
 
     @staticmethod
     def compiler_tests_to_run():
         return [
-            ["scenario_program_definition_with_variables",
-             LanguageTests().scenario_program_definition_with_variables()],
-            ["scenario_program_definition_without_variables",
-             LanguageTests().scenario_program_definition_without_variables()],
-            ["scenario_label_declaration", LanguageTests().scenario_label_declaration()],
-            ["scenario_decimal_numbers", LanguageTests().scenario_decimal_numbers()],
-            ["scenario_binary_numbers", LanguageTests().scenario_binary_numbers()],
-            ["scenario_octal_numbers", LanguageTests().scenario_octal_numbers()],
-            ["scenario_hexadecimal_numbers", LanguageTests().scenario_hexadecimal_numbers()],
-            ["scenario_strings", LanguageTests().scenario_strings()],
-            ["scenario_booleans", LanguageTests().scenario_booleans()],
-            ["scenario_constant_declaration", LanguageTests().scenario_constant_declaration()],
-            ["scenario_type_declaration_with_base_types", LanguageTests().scenario_type_declaration_with_base_types()],
-            ["scenario_type_declaration_with_pointer_to_base_types", LanguageTests().scenario_type_declaration_with_pointer_to_base_types()],
-            ["scenario_type_declaration_with_declared_types", LanguageTests().scenario_type_declaration_with_declared_types()],
-            ["scenario_variable_declaration_with_base_types", LanguageTests().scenario_variable_declaration_with_base_types()],
-            ["scenario_variable_declaration_with_types_based_on_base_types", LanguageTests().scenario_variable_declaration_with_types_based_on_base_types()],
-            ["scenario_variable_declaration_with_pointers_to_base_types", LanguageTests().scenario_variable_declaration_with_pointers_to_base_types()],
-            ["scenario_variable_declaration_with_pointer_to_pointer_types", LanguageTests().scenario_variable_declaration_with_pointer_to_pointer_types()],
-            ["scenario_variable_declaration_with_pointer_types_based_on_base_types", LanguageTests().scenario_variable_declaration_with_pointer_types_based_on_base_types()],
-            ["scenario_variable_assignment_with_nil", LanguageTests.scenario_variable_assignment_with_nil()],
-            ["scenario_variable_assignment_with_single_value", LanguageTests().scenario_variable_assignment_with_single_value()],
-            ["scenario_variable_assignment_with_constant", LanguageTests().scenario_variable_assignment_with_constant()],
-            ["scenario_variable_assignment_with_variable", LanguageTests().scenario_variable_assignment_with_variable()],
-            ["scenario_variable_assignment_with_numeric_expression", LanguageTests().scenario_variable_assignment_with_numeric_expression()],
-            ["scenario_variable_assignment_with_logical_expression_same_types", LanguageTests().scenario_variable_assignment_with_logical_expression_same_types()],
-            ["scenario_variable_assignment_with_logical_expression_mixed_types", LanguageTests().scenario_variable_assignment_with_logical_expression_mixed_types()],
+            ["scenario_fahrenheit_to_celsius_converter", TDD().scenario_fahrenheit_to_celsius_converter()],
+
         ]
 
     @staticmethod
@@ -47,6 +27,7 @@ class TestSuit:
         return [
     ["tdd_1", TDD().tdd_1()],
     ["tdd_2", TDD().tdd_2()],
+    ["scenario_fahrenheit_to_celsius_converter", TDD().scenario_fahrenheit_to_celsius_converter()],
     ["scenario_program_definition_with_variables", LanguageTests().scenario_program_definition_with_variables()],
     ["scenario_program_definition_without_variables", LanguageTests().scenario_program_definition_without_variables()],
     ["scenario_label_declaration", LanguageTests().scenario_label_declaration()],
@@ -306,10 +287,10 @@ class LanguageTests(TestSuit):
             PROGRAM {{{0}}};   
             VAR V1, V2 : INTEGER;
                 _V3    : REAL;                    
-                _V3_b  : BOOLEAN;                 
-                _V3_d  : CHAR;                    
-                _V3_e  : STRING;                 
-                _V3_f  : TEXT;                   
+                _V4  : BOOLEAN;                 
+                _V5  : CHAR;                    
+                _V6  : STRING;                 
+                _V7  : TEXT;                   
             BEGIN                                 
             END.                                  
         """
@@ -320,11 +301,11 @@ class LanguageTests(TestSuit):
         code = """
             PROGRAM {{{0}}};   
             VAR V1, V2 : ^INTEGER;
-                _V3    : ^REAL;                    
-                _V3_b  : ^BOOLEAN;                 
-                _V3_d  : ^CHAR;                    
-                _V3_e  : ^STRING;                 
-                _V3_f  : ^TEXT;                   
+                V3    : ^REAL;                    
+                V4  : ^BOOLEAN;                 
+                V5  : ^CHAR;                    
+                V6  : ^STRING;                 
+                V7  : ^TEXT;                   
             BEGIN                                 
             END.                                  
         """
@@ -341,14 +322,14 @@ class LanguageTests(TestSuit):
                 T4 = CHAR;
                 T5 = STRING;
                 T6 = TEXT;
-            VAR V1, V2 : T1;                 
-                _V3    : T2;                    
-                _V3_b  : T3;                 
-                _V3_d  : T4;                    
-                _V3_e  : T5;                 
-                _V3_f  : T6;                         
-                V5     : ^T1;               
-                V6, V7 : ^T2;
+            VAR V1, V2  : T1;                 
+                V3      : T2;                    
+                V4      : T3;                 
+                V5      : T4;                    
+                V6      : T5;                 
+                V7      : T6;                         
+                V8      : ^T1;               
+                V9, V10 : ^T2;
             BEGIN                                 
             END.                                  
         """
@@ -366,11 +347,11 @@ class LanguageTests(TestSuit):
                 T5 = STRING;
                 T6 = TEXT;
             VAR V1, V2 : ^T1;                 
-                _V3    : ^T2;                    
-                _V3_b  : ^T3;                 
-                _V3_d  : ^T4;                    
-                _V3_e  : ^T5;                 
-                _V3_f  : ^T6;                         
+                _V4    : ^T2;                    
+                _V5  : ^T3;                 
+                _V6  : ^T4;                    
+                _V7  : ^T5;                 
+                _V8  : ^T6;                         
             BEGIN                                 
             END.                                  
         """
@@ -389,10 +370,10 @@ class LanguageTests(TestSuit):
                 T6 = ^TEXT;
             VAR V1, V2 : ^T1;                 
                 _V3    : ^T2;                    
-                _V3_b  : ^T3;                 
-                _V3_d  : ^T4;                    
-                _V3_e  : ^T5;                 
-                _V3_f  : ^T6;                         
+                _V4  : ^T3;                 
+                _V5  : ^T4;                    
+                _V6  : ^T5;                 
+                _V7  : ^T6;                         
             BEGIN                                 
             END.                                  
         """
@@ -685,7 +666,7 @@ class TDD(TestSuit):
             VAR                                      
             V1 : INTEGER;                            
             BEGIN                                    
-            V1 := NIL                                    
+            V1 := 1;                                    
             END.                                   
         """
         return code
@@ -730,5 +711,28 @@ class TDD(TestSuit):
         """
         return code
 
-
-
+    @staticmethod
+    def scenario_fahrenheit_to_celsius_converter():
+        code = """
+            program {{{0}}}(output) ;
+            { Program to convert temperatures from
+             Fahrenheit to Celsius. }
+            const
+                MIN = 32 ;
+                MAX = 50 ;
+            var
+                fahren: integer ;
+                celsius: real ;
+            begin
+                fahren := 0 + 1 + fahren;
+                fahren := 1;
+                writeln(MIN + MAX, MAX: 10 + 1 + 2 + 3, MIN:20:30 + 1 + 2 + 3);
+                writeln('Fahrenheit     Celsius', 'another') ;
+                writeln('----------     -------') ;
+                for fahren := MIN + 5 - 10 * 20 to MAX do begin
+                    celsius := 5 / 9 * (fahren - 32) ;
+                    writeln(fahren, celsius) ;
+                end ;               
+            end.
+        """
+        return code

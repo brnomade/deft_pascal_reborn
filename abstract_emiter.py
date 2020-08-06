@@ -1,8 +1,11 @@
+import os
 
 
 class AbstractEmitter:
-    def __init__(self, full_path=""):
-        self.full_path = full_path + ".c"
+    def __init__(self, file_name, dir_path="output"):
+
+        path = os.getcwd()
+        self.full_path = os.path.join(path, dir_path, file_name + ".c")
         self.header = ""
         self.code = ""
 
@@ -70,7 +73,7 @@ class CEmitter(AbstractEmitter):
 
         return ctype
 
-    def emit_action_0(self):
+    def action_0(self):
         """
         PROGRAM_HEADING
         """

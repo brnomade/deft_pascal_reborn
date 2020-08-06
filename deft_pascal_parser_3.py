@@ -19,14 +19,16 @@ class DeftPascalParser:
              
         module : IDENTIFIER    
         
-       _program : program_heading _SEMICOLON _block _DOT 
+       _program : program_heading _SEMICOLON _program_block _DOT 
         
         program_heading : RESERVED_STRUCTURE_PROGRAM IDENTIFIER 
                         | RESERVED_STRUCTURE_PROGRAM IDENTIFIER LEFT_PARENTHESES _identifier_list RIGHT_PARENTHESES
                                 
-        _identifier_list : _identifier_list _COMMA IDENTIFIER
+        _identifier_list : _identifier_list COMMA IDENTIFIER
                          | IDENTIFIER
                       
+        _program_block : _block
+        
         _block : label_declaration_part constant_definition_part type_definition_part variable_declaration_part _statement_part  
                       
         // LABEL DECLARATIONS
@@ -34,7 +36,7 @@ class DeftPascalParser:
         label_declaration_part : RESERVED_DECLARATION_LABEL _label_list _SEMICOLON
                                |
 
-        _label_list : _label_list _COMMA _label
+        _label_list : _label_list COMMA _label
                     | _label
 
         _label : UNSIGNED_DECIMAL
@@ -57,7 +59,7 @@ class DeftPascalParser:
                              | NUMBER_OCTAL
                              | NUMBER_HEXADECIMAL
                              | CHARACTER
-                             | STRING
+                             | STRING_VALUE
                              | CONSTANT_TRUE
                              | CONSTANT_FALSE
                              | CONSTANT_NIL
@@ -111,9 +113,9 @@ class DeftPascalParser:
 
         // STATEMENTS
 
-        _statement_part : _compound_statement
+        _statement_part : compound_statement
         
-        _compound_statement : RESERVED_STRUCTURE_BEGIN _statement_sequence RESERVED_STRUCTURE_END
+        compound_statement : RESERVED_STRUCTURE_BEGIN _statement_sequence RESERVED_STRUCTURE_END
                  
         _statement_sequence : _statement_sequence _SEMICOLON _statement
                            | _statement
@@ -128,9 +130,10 @@ class DeftPascalParser:
                           | _non_labeled_closed_statement
 
         _non_labeled_closed_statement : assignment_statement
+                                      | procedure_call  
                                       | repeat_statement
                                       | closed_for_statement
-                                      | _compound_statement
+                                      | compound_statement
                                      
         // REPEAT UNTIL                             
                                      
@@ -138,11 +141,11 @@ class DeftPascalParser:
 
         // FOR
         
-        open_for_statement : RESERVED_STATEMENT_FOR _control_variable OPERATOR_ASSIGNMENT _initial_value _direction _final_value RESERVED_STATEMENT_DO _open_statement
+        open_for_statement : RESERVED_STATEMENT_FOR variable_access OPERATOR_ASSIGNMENT _initial_value _direction _final_value RESERVED_STATEMENT_DO _open_statement
 
-        closed_for_statement : RESERVED_STATEMENT_FOR _control_variable OPERATOR_ASSIGNMENT _initial_value _direction _final_value RESERVED_STATEMENT_DO _closed_statement
+        closed_for_statement : RESERVED_STATEMENT_FOR variable_access OPERATOR_ASSIGNMENT _initial_value _direction _final_value RESERVED_STATEMENT_DO _closed_statement
         
-        _control_variable : IDENTIFIER
+       // control_variable : IDENTIFIER
         
         _initial_value : expression
         
@@ -156,12 +159,32 @@ class DeftPascalParser:
         //
 
         _non_labeled_open_statement : |
+        
+        // PROCEDURE STATEMENT (PROCEDURE INVOCATION)
+        
+        procedure_call : IDENTIFIER _params
+                       | IDENTIFIER
 
+        _params : LEFT_PARENTHESES _actual_parameter_list RIGHT_PARENTHESES
+
+        _actual_parameter_list : _actual_parameter_list COMMA _actual_parameter
+                               | _actual_parameter
+
+        _actual_parameter : unary_parameter
+                          | binary_parameter
+                          | ternary_parameter
+
+        unary_parameter : expression
+        
+        binary_parameter : expression _COLON expression
+        
+        ternary_parameter : expression _COLON expression _COLON expression
+        
         // ASSIGNMENT STATEMENT
 
-        assignment_statement : _variable_access OPERATOR_ASSIGNMENT expression
+        assignment_statement : variable_access OPERATOR_ASSIGNMENT expression
 
-        _variable_access : IDENTIFIER
+        variable_access : IDENTIFIER
          
         _boolean_expression : expression 
 
@@ -201,7 +224,7 @@ class DeftPascalParser:
         _exponentiation : _primary
                         | _primary OPERATOR_STARSTAR _exponentiation
  
-        _primary : _variable_access
+        _primary : variable_access
                  | _unsigned_constant
                  | LEFT_PARENTHESES expression RIGHT_PARENTHESES
                  | OPERATOR_NOT _primary
@@ -212,7 +235,7 @@ class DeftPascalParser:
                            | CONSTANT_NIL
                            | CONSTANT_TRUE
                            | CONSTANT_FALSE
-                           | STRING
+                           | STRING_VALUE
                            
         _unsigned_number : _unsigned_integer | _unsigned_real
 
@@ -308,7 +331,7 @@ class DeftPascalParser:
              
         IDENTIFIER: /[_A-Za-z]+[A-Za-z0-9_]*/
         CHARACTER : /\'[\ A-Za-z0-9!\"#$%^&\'()*+,\-.\/:;<=>?@\[\]]\'/
-        STRING : /\'[\ A-Za-z0-9!\"#$%^&()*+,\-.\/:;<=>?@\[\]]{2,}\'/
+        STRING_VALUE : /\'[\ A-Za-z0-9!\"#$%^&()*+,\-.\/:;<=>?@\[\]]{2,}\'/
         SIGNED_DECIMAL : /[+-]\d+/
         UNSIGNED_DECIMAL : /\d+/
         SIGNED_REAL : /[+-]\d+[.]\d+([Ee][+-]?\d+)?/
@@ -324,9 +347,15 @@ class DeftPascalParser:
         _DOT : "."
         LEFT_PARENTHESES : "("
         RIGHT_PARENTHESES : ")"
-        _COMMA : ","
+        COMMA : ","
         _COLON : ":"
-        
+       
+        COMMENT : "{" /(.|\\n|\\r)+/ "}"    
+                | "(*" /(.|\\n|\\r)+/ "*)"  
+                | /[\t \f\\n]+/
+                
+        %ignore COMMENT      
+
         %ignore /[\t \f\\n]+/  
         """
         return specification

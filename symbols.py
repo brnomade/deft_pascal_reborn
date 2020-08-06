@@ -228,6 +228,7 @@ class Operator(BaseSymbol):
     # this is defined from the symbol_left perspective.
     _compatibility_matrix = {"OPERATOR_MULTIPLY": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL", "RESERVED_TYPE_SET"],
                              "OPERATOR_PLUS": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL", "RESERVED_TYPE_SET", "RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING"],
+                             "OPERATOR_MINUS": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL", "RESERVED_TYPE_SET", "RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING"],
                              "OPERATOR_DIVIDE": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL"],
                              "OPERATOR_DIV": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL"],
                              "OPERATOR_ASSIGNMENT": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL", "RESERVED_TYPE_SET", "RESERVED_TYPE_BOOLEAN", "RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING", "RESERVED_TYPE_POINTER"],
@@ -428,11 +429,23 @@ class Operator(BaseSymbol):
         return None
 
     @staticmethod
+    def _test_compatibility_operator_minus(symbol_right, symbol_left):
+        """
+        checks involved:
+        2 - if the types of the operands (symbol_right and symbol_left) match
+        """
+        # TODO -> Operator MINUS for SETS
+        if symbol_left.type == symbol_right.type:
+            return Constant(None, None, None, symbol_left.type, None)
+        return None
+
+    @staticmethod
     def _test_compatibility_operator_plus(symbol_right, symbol_left):
         """
         checks involved:
         2 - if the types of the operands (symbol_right and symbol_left) match
         """
+        # TODO -> Operator PLUS for SETS
         if symbol_left.type == symbol_right.type:
             return Constant(None, None, None, symbol_left.type, None)
         return None
@@ -445,6 +458,10 @@ class Operator(BaseSymbol):
         """
         if symbol_left.type == symbol_right.type:
             return Constant(None, None, None, symbol_left.type, None)
+        if symbol_left.type == "RESERVED_TYPE_REAL" and symbol_right.type == "RESERVED_TYPE_INTEGER":
+            return Constant(None, None, None, symbol_left.type, None)
+        if symbol_left.type == "RESERVED_TYPE_INTEGER" and symbol_right.type == "RESERVED_TYPE_REAL":
+            return Constant(None, None, None, symbol_right.type, None)
         return None
 
     def evaluate_to_type(self, symbol_right, symbol_left=None):
@@ -482,6 +499,8 @@ class Operator(BaseSymbol):
                     return self._test_compatibility_operator_multiply(symbol_right, symbol_left)
                 elif self.type == "OPERATOR_PLUS":
                     return self._test_compatibility_operator_plus(symbol_right, symbol_left)
+                elif self.type == "OPERATOR_MINUS":
+                    return self._test_compatibility_operator_plus(symbol_right, symbol_left)
                 elif self.type == "OPERATOR_DIVIDE":
                     return self._test_compatibility_operator_divide(symbol_right, symbol_left)
                 elif self.type == "OPERATOR_DIV":
@@ -492,39 +511,72 @@ class Operator(BaseSymbol):
                 raise NotImplementedError(symbol_left)
 
 
-class Identifier(BaseSymbol):
+class BaseIdentifier(BaseSymbol):
 
     def do_nothing(self):
         pass
 
 
-class PointerIdentifier(Identifier):
+class Identifier(BaseIdentifier):
+
+    def do_nothing(self):
+        pass
+
+
+class PointerIdentifier(BaseIdentifier):
 
     @property
     def is_pointer(self):
         return True
 
 
-class Type(BaseSymbol):
+class ProcedureIdentifier(BaseIdentifier):
+
+    @property
+    def parameter_counter(self):
+        return self._parameter_counter
+
+    @parameter_counter.setter
+    def parameter_counter(self, new_counter):
+        self._parameter_counter = new_counter
+
+    @classmethod
+    def unlimited_parameters_list_size(cls):
+        return None
+
+    @classmethod
+    def in_built_procedure_write(cls, a_scope=None, a_level=None):
+        write = cls('write', a_scope, a_level, 'RESERVED_TYPE_POINTER', None)
+        write.parameter_counter = cls.unlimited_parameters_list_size
+        return write
+
+    @classmethod
+    def in_built_procedure_writeln(cls, a_scope=None, a_level=None):
+        write = cls.in_built_procedure_write(a_scope, a_level)
+        write.name = "writeln"
+        return write
+
+
+class BaseType(BaseSymbol):
 
     def do_nothing(self):
         pass
 
 
-class PointerType(Type):
+class PointerType(BaseType):
 
     @property
     def is_pointer(self):
         return True
 
 
-class CustomType(Type):
+class CustomType(BaseType):
 
     def do_nothing(self):
         pass
 
 
-class BasicType(Type):
+class BasicType(BaseType):
 
     @classmethod
     def reserved_type_integer(cls, a_scope=None, a_level=None):
@@ -549,3 +601,16 @@ class BasicType(Type):
     @classmethod
     def reserved_type_text(cls, a_scope=None, a_level=None):
         return cls('TEXT', a_scope, a_level, 'RESERVED_TYPE_TEXT', 'TEXT')
+
+
+class Keyword(BaseSymbol):
+
+    def do_nothing(self):
+        pass
+
+
+class GenericExpression(BaseSymbol):
+
+    @classmethod
+    def from_list(cls, expression_list, a_scope=None, a_level=None):
+        return cls('GENERIC_EXPRESSION', a_scope, a_level, 'GENERIC_EXPRESSION', expression_list)

@@ -31,24 +31,27 @@ class TestCodeGenerator(TestCase):
                            'scenario_' in i[0]]
         selected_tests = [i[0] for i in TestSuit().generator_tests_to_run() if 'scenario_' in i[0]]
         if not set(available_tests).issubset(set(selected_tests)):
-            msg = "\n\nWARNING!\nNot all test scenarios are being run. Review TestSuit class.\n\nDifferences:\n{0}\n\n\n"
+            msg = "\n\nNot all test scenarios are being run. Review TestSuit class.\n\nDifferences:\n{0}\n\n"
             logger.warning(msg.format(set(available_tests)-set(selected_tests)))
 
     @staticmethod
-    def compile_in_gcc(output_c):
-        output_err = output_c.split(".")[0] + ".err"
-        output_out = output_c.split(".")[0] + ".out"
+    def compile_in_gcc(input_c):
 
-        home_dir = os.getcwd()
         mig_dir = "C:\\MinGW\\bin"
-        c_dir = home_dir
-        c_win = "gcc.exe -c "
-        c_env = "{0}\\{1} > {0}\\{2} 2> {0}\\{3}".format(c_dir, output_c, output_out, output_err)
+        home_dir = os.getcwd()
 
-        logger.info(c_dir + "\\" + c_win + c_env)
+        dir_path = "output"
 
+        input_c = os.path.join(home_dir, dir_path, input_c)
+        output_err = os.path.join(home_dir, dir_path, input_c.split(".")[0] + ".err")
+        output_out = os.path.join(home_dir, dir_path, input_c.split(".")[0] + ".out")
+
+        c_compiler = "gcc.exe -c "
+        c_env = "{0} {1} > {2} 2> {3}".format(c_compiler, input_c, output_out, output_err)
+
+        logger.info(c_env)
         os.chdir(mig_dir)
-        subprocess.run(c_win + c_env, shell=True)
+        subprocess.run(c_env, shell=True)
         os.chdir(home_dir)
 
         result_out = "error"
@@ -56,7 +59,10 @@ class TestCodeGenerator(TestCase):
             file = open(output_out)
             result_out = file.read()
             file.close()
-            logger.info(result_out)
+            if result_out:
+                logger.info(result_out)
+            else:
+                logger.info("no output from gcc")
             if param_remove_file_after_test:
                 os.remove(output_out)
 
@@ -65,13 +71,16 @@ class TestCodeGenerator(TestCase):
             file = open(output_err)
             result_err = file.read()
             file.close()
-            logger.info(result_err)
+            if result_err:
+                logger.info(result_err)
+            else:
+                logger.info("no errors from gcc")
             if param_remove_file_after_test:
                 os.remove(output_err)
 
         return result_out + result_err
 
-    @parameterized.expand(LanguageTests.compiler_tests_to_run())
+    @parameterized.expand(LanguageTests.generator_tests_to_run())
     def test(self, name, source_code):
         compiler = DeftPascalCompiler()
         #
@@ -86,3 +95,4 @@ class TestCodeGenerator(TestCase):
         output = self.compile_in_gcc("{0}.c".format(name))
         print(output)
         self.assertNotIn("error", output)
+        self.assertNotIn("warning", output)

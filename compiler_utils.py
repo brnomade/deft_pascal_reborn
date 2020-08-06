@@ -246,14 +246,15 @@ def check_type_compatibility(expression):
                 stack.append(result)
             else:
                 # logger.info("{0}".format([x for x in stack]))
-                compatible = False
-                break
+                # compatible = False
+                # break
+                return None
         else:
             stack.append(token)
 
         # logger.info("{0}".format([x for x in stack]))
-    return compatible
-
+    #return compatible
+    return stack[-1]
 
 # def type_from_token(parser_token, context_label, context_level):
 #   """
