@@ -14,10 +14,10 @@ from logging import ERROR, WARNING, INFO
 
 class IntermediateCode:
 
-    logging.basicConfig()
     _GLB_LOGGER = logging.getLogger("IntermediateCode")
 
     def __init__(self, cmoc=False, stack_size=1000):
+        self._emiter = None
         self._target = None
         if cmoc:
             self._target = "CMOC"
@@ -186,7 +186,7 @@ class IntermediateCode:
             else:
                 self._log(ERROR, "action {0} - '{0}' not yet implemented".format(action_name, token_list))
             #
-        return self._emiter.output_code()
+        return self._emiter.output_code
 
 
     def _program_heading(self, token_list):

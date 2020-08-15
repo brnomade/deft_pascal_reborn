@@ -34,6 +34,7 @@ class AbstractEmitter:
     def emit_header_line(self, input_source):
         self.header += input_source + '\n'
 
+    @property
     def output_code(self):
         return self.header + self.code
 

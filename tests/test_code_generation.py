@@ -63,7 +63,7 @@ class TestCodeGenerator(TestCase):
         c_compiler = "{0} -o {1}".format(gcc_name, output_exe)
         c_env = "{0} {1} > {2} 2> {3}".format(c_compiler, input_source, output_out, output_err)
 
-        GLB_LOGGER.debug(c_env)
+        print(c_env)
         #
         if platform.system() == "Windows":
             os.chdir(mig_dir)
@@ -106,31 +106,43 @@ class TestCodeGenerator(TestCase):
 
     @parameterized.expand(LanguageTests.generator_tests_to_run())
     def test_positive(self, name, source_code):
-        compiler = DeftPascalCompiler(cmoc=False)
         #
         if "{{{0}}}" in source_code:
             source_code = source_code.replace("{{{0}}}", name)
         #
+        compiler = DeftPascalCompiler(cmoc=False)
         error_log = compiler.check_syntax(source_code)
         if error_log:
-            GLB_LOGGER.debug(error_log)
+            GLB_LOGGER.error(error_log)
         self.assertIsNone(error_log)
         #
-        #
-        GLB_LOGGER.debug(compiler.ast.pretty())
+        GLB_LOGGER.error(compiler.ast.pretty())
         #
         error_log = compiler.compile()
         if error_log:
-            GLB_LOGGER.debug(error_log)
+            GLB_LOGGER.error(error_log)
         self.assertIsNone(error_log)
         #
         ic = compiler.intermediate_code
-        GLB_LOGGER.debug(ic)
+        GLB_LOGGER.error(ic)
         #
-        output = self.compile_in_gcc("{0}.c".format(name))
-        GLB_LOGGER.debug(output)
+        output_code = compiler.generate()
+        self.assertIsNotNone(output_code)
+
+        home_dir = os.getcwd()
+        filename = os.path.join(home_dir, "output", "sources", "{0}.c".format(name))
+
+        if output_code:
+            GLB_LOGGER.error(output_code)
+            GLB_LOGGER.error(filename)
+            file = open(filename, "w")
+            file.write(output_code)
+            file.close()
+        #
+        output = self.compile_in_gcc(filename)
         self.assertNotIn("error", output)
         self.assertNotIn("warning", output)
+        GLB_LOGGER.debug(output)
         #
-        output = self.run_in_shell("{0}.c".format(name))
+        output = self.run_in_shell(filename)
         self.assertEquals(0, output.returncode)
