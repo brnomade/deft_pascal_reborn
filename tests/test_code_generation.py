@@ -15,6 +15,7 @@ import logging
 import os
 import subprocess
 import sys
+import platform
 
 
 GLB_LOGGER = logging.getLogger(__name__)
@@ -52,9 +53,11 @@ class TestCodeGenerator(TestCase):
         c_env = "{0} {1} > {2} 2> {3}".format(c_compiler, input_source, output_out, output_err)
 
         GLB_LOGGER.debug(c_env)
-        os.chdir(mig_dir)
+        if platform.system() == "Windows":
+            os.chdir(mig_dir)
         subprocess.run(c_env, shell=True)
-        os.chdir(home_dir)
+        if platform.system() == "Windows":
+            os.chdir(home_dir)
 
         result_out = "error"
         if os.path.exists(os.path.join(home_dir, output_out)):
