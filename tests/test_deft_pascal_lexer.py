@@ -1,5 +1,5 @@
 from unittest import TestCase
-from deft_pascal_lexer import DeftPascalLexer
+from obsoletes.deft_pascal_lexer import DeftPascalLexer
 from ply.lex import LexToken
 
 _newline = "\n"

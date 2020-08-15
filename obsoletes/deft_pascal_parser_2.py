@@ -1,5 +1,5 @@
-from deft_pascal_lexer import DeftPascalLexer
-from symbol_table import SymbolTable, Constant, Variable
+from obsoletes.deft_pascal_lexer import DeftPascalLexer
+from components.symbol_table import SymbolTable, Constant
 import ply.yacc as yacc
 
 

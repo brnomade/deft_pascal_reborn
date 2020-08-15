@@ -1,3 +1,11 @@
+"""
+PROJECT.......: Deft Pascal Reborn
+COPYRIGHT.....: Copyright (C) 2020- Andre L Ballista
+VERSION.......: 0.1
+DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original Deft Pascal compiler
+HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
+"""
+
 USED IN DEFT_PASCAL_PARSER_3.PY -> CLASS DEFTPASCALPARSER
 
 from: http://www.moorecad.com/standardpascal/pascal.y
@@ -50,10 +58,10 @@ identifier_list : identifier_list comma identifier
 
 block : label_declaration_part [DONE]
  constant_definition_part [DONE]
- type_definition_part
+ type_definition_part [DONE]
  variable_declaration_part [DONE]
  procedure_and_function_declaration_part
- statement_part
+ statement_part [DONE]
  ;
 
 module : constant_definition_part
@@ -123,6 +131,7 @@ constant : non_string
  | CHARACTER_STRING
  ;
 
+[DONE]
 sign : PLUS
  | MINUS
  ;
@@ -132,17 +141,21 @@ non_string : DIGSEQ
  | REALNUMBER
  ;
 
+[DONE]
 type_definition_part : TYPE type_definition_list
  |
  ;
 
+[DONE]
 type_definition_list : type_definition_list type_definition
  | type_definition
  ;
 
+[DONE]EQUAL
 type_definition : identifier EQUAL type_denoter semicolon
  ;
 
+[DONE]
 type_denoter : identifier
  | new_type
  ;
@@ -238,9 +251,11 @@ base_type : ordinal_type ;
 file_type : PFILE OF component_type
  ;
 
+[DONE]
 new_pointer_type : UPARROW domain_type
  ;
 
+[DONE]
 domain_type : identifier ;
 
 [DONE]
@@ -351,16 +366,16 @@ closed_statement : label COLON non_labeled_closed_statement
  | non_labeled_closed_statement
  ;
 
-non_labeled_closed_statement : assignment_statement
- | procedure_statement
+non_labeled_closed_statement : assignment_statement [DONE]
+ | procedure_statement [DONE]
  | goto_statement
- | compound_statement
+ | compound_statement [DONE]
  | case_statement
- | repeat_statement
+ | repeat_statement [DONE]
  | closed_with_statement
- | closed_if_statement
- | closed_while_statement
- | closed_for_statement
+ | closed_if_statement [DONE]
+ | closed_while_statement [DONE]
+ | closed_for_statement [DONE]
  |
  ;
 
@@ -370,19 +385,23 @@ non_labeled_open_statement : open_with_statement
  | open_for_statement
  ;
 
+[DONE]
 repeat_statement : REPEAT statement_sequence UNTIL boolean_expression
  ;
 
 open_while_statement : WHILE boolean_expression DO open_statement
  ;
 
+[DONE]
 closed_while_statement : WHILE boolean_expression DO closed_statement
  ;
 
+[DONE]
 open_for_statement : FOR control_variable ASSIGNMENT initial_value direction
    final_value DO open_statement
  ;
 
+[DONE]
 closed_for_statement : FOR control_variable ASSIGNMENT initial_value direction
    final_value DO closed_statement
  ;
@@ -397,6 +416,7 @@ open_if_statement : IF boolean_expression THEN statement
  | IF boolean_expression THEN closed_statement ELSE open_statement
  ;
 
+[DONE]
 closed_if_statement : IF boolean_expression THEN closed_statement
    ELSE closed_statement
  ;
@@ -423,12 +443,15 @@ index_expression : expression ;
 field_designator : variable_access DOT identifier
  ;
 
+[DONE]
 procedure_statement : identifier params
  | identifier
  ;
 
+[DONE]
 params : LPAREN actual_parameter_list RPAREN ;
 
+[DONE]
 actual_parameter_list : actual_parameter_list comma actual_parameter
  | actual_parameter
  ;
@@ -438,6 +461,8 @@ actual_parameter_list : actual_parameter_list comma actual_parameter
  * writeln use the 2nd and 3rd forms, you really can't do it easily in
  * the grammar, especially since write and writeln aren't reserved
  */
+
+[DONE]
 actual_parameter : expression
  | expression COLON expression
  | expression COLON expression COLON expression
@@ -467,38 +492,48 @@ otherwisepart : OTHERWISE
  | OTHERWISE COLON
  ;
 
+[DONE]
 control_variable : identifier ;
 
+[DONE]
 initial_value : expression ;
 
+[DONE]
 direction : TO
  | DOWNTO
  ;
 
+[DONE]
 final_value : expression ;
 
 record_variable_list : record_variable_list comma variable_access
  | variable_access
  ;
 
+[DONE]
 boolean_expression : expression ;
 
+[DONE]
 expression : simple_expression
  | simple_expression relop simple_expression
  ;
 
+[DONE]
 simple_expression : term
  | simple_expression addop term
  ;
 
+[DONE]
 term : factor
  | term mulop factor
  ;
 
+[DONE]
 factor : sign factor
  | exponentiation
  ;
 
+[DONE]
 exponentiation : primary
  | primary STARSTAR exponentiation
  ;
@@ -511,16 +546,20 @@ primary : variable_access
  | NOT primary
  ;
 
+[DONE]
 unsigned_constant : unsigned_number
  | CHARACTER_STRING
  | NIL
  ;
 
+[DONE]
 unsigned_number : unsigned_integer | unsigned_real ;
 
+[DONE]
 unsigned_integer : DIGSEQ
  ;
 
+[DONE]
 unsigned_real : REALNUMBER
  ;
 
