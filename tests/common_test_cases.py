@@ -774,7 +774,7 @@ class TDD(TestSuit):
         code = """
             PROGRAM X; 
             BEGIN 
-                WRITELN("HELLO WORLD"); 
+                WRITELN('HELLO WORLD'); 
             END.
         """
         return code
