@@ -48,17 +48,25 @@ class TestCodeGenerator(TestCase):
         output_err = os.path.join(home_dir, logs_path, input_c.split(".")[0] + ".err")
         output_out = os.path.join(home_dir, logs_path, input_c.split(".")[0] + ".out")
         output_exe = os.path.join(home_dir, bin_path, input_c.split(".")[0] + ".exe")
-
-        c_compiler = "gcc.exe -o {0}".format(output_exe)
+        #
+        if platform.system() == "Windows":
+            gcc_name = "gcc.exe"
+        else:
+            gcc_name = "gcc"
+        #
+        c_compiler = "{0} -o {1}".format(gcc_name, output_exe)
         c_env = "{0} {1} > {2} 2> {3}".format(c_compiler, input_source, output_out, output_err)
 
         GLB_LOGGER.debug(c_env)
+        #
         if platform.system() == "Windows":
             os.chdir(mig_dir)
+        #
         subprocess.run(c_env, shell=True)
+        #
         if platform.system() == "Windows":
             os.chdir(home_dir)
-
+        #
         result_out = "error"
         if os.path.exists(os.path.join(home_dir, output_out)):
             file = open(output_out)
