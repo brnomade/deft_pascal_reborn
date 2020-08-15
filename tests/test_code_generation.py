@@ -38,11 +38,17 @@ class TestCodeGenerator(TestCase):
     def compile_in_gcc(input_c):
 
         home_dir = os.getcwd()
+
         mig_dir = "C:\\MinGW\\bin"
 
-        sources_path = "output\\sources"
-        bin_path = "output\\bin"
-        logs_path = "output\\logs"
+        if platform.system() == "Windows":
+            sources_path = "output\\sources"
+            bin_path = "output\\bin"
+            logs_path = "output\\logs"
+        else:
+            sources_path = ""
+            bin_path = ""
+            logs_path = ""
 
         input_source = os.path.join(home_dir, sources_path, input_c)
         output_err = os.path.join(home_dir, logs_path, input_c.split(".")[0] + ".err")
