@@ -1,3 +1,11 @@
+"""
+PROJECT.......: Deft Pascal Reborn
+COPYRIGHT.....: Copyright (C) 2020- Andre L Ballista
+VERSION.......: 0.1
+DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original Deft Pascal compiler
+HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
+"""
+
 from unittest import TestCase
 from obsoletes.deft_pascal_lexer import DeftPascalLexer
 from ply.lex import LexToken

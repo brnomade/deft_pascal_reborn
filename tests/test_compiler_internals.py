@@ -1,3 +1,11 @@
+"""
+PROJECT.......: Deft Pascal Reborn
+COPYRIGHT.....: Copyright (C) 2020- Andre L Ballista
+VERSION.......: 0.1
+DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original Deft Pascal compiler
+HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
+"""
+
 from unittest import TestCase
 from utils.compiler_utils import check_type_compatibility, convert_to_postfix, convert_to_tokens, ExpressionOriginal
 from components.symbols import BooleanConstant, Constant, Operator

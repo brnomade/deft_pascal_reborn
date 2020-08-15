@@ -1,3 +1,11 @@
+"""
+PROJECT.......: Deft Pascal Reborn
+COPYRIGHT.....: Copyright (C) 2020- Andre L Ballista
+VERSION.......: 0.1
+DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original Deft Pascal compiler
+HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
+"""
+
 from unittest import TestCase
 from components.deft_pascal_compiler import DeftPascalCompiler
 from parameterized import parameterized
@@ -6,7 +14,6 @@ import inspect
 from logging import getLogger
 
 GLB_LOGGER = getLogger(__name__)
-GLB_LOGGER.setLevel(10000)
 
 
 class TestDeftPascalCompiler(TestCase):

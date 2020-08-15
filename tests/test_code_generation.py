@@ -17,22 +17,10 @@ import subprocess
 import sys
 
 
-logging.basicConfig()
 GLB_LOGGER = logging.getLogger(__name__)
-GLB_LOGGER.setLevel(logging.DEBUG)
 
 glb_output_filename = "my_scenario_program.c"
 param_remove_file_after_test = True
-
-
-def safe_path(in_str):
-    # function to handle windows path names with empty spaces
-    # in linux or ios this function is neutral
-    if sys.platform.startswith('win'):
-        out_str = '"' + in_str + '"'
-    else:
-        out_str = in_str
-    return out_str
 
 
 class TestCodeGenerator(TestCase):
@@ -105,15 +93,21 @@ class TestCodeGenerator(TestCase):
         #
         if "{{{0}}}" in source_code:
             source_code = source_code.replace("{{{0}}}", name)
-        ast = compiler.check_syntax(source_code)
-        GLB_LOGGER.debug(ast.pretty())
-        self.assertIsNotNone(ast)
         #
-        error_log = compiler.compile(ast)
-        GLB_LOGGER.debug(error_log)
-        self.assertEqual(error_log, [])
+        error_log = compiler.check_syntax(source_code)
+        if error_log:
+            GLB_LOGGER.debug(error_log)
+        self.assertIsNone(error_log)
         #
-        ic = compiler.intermediate_code()
+        #
+        GLB_LOGGER.debug(compiler.ast.pretty())
+        #
+        error_log = compiler.compile()
+        if error_log:
+            GLB_LOGGER.debug(error_log)
+        self.assertIsNone(error_log)
+        #
+        ic = compiler.intermediate_code
         GLB_LOGGER.debug(ic)
         #
         output = self.compile_in_gcc("{0}.c".format(name))

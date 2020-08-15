@@ -1,3 +1,11 @@
+"""
+PROJECT.......: Deft Pascal Reborn
+COPYRIGHT.....: Copyright (C) 2020- Andre L Ballista
+VERSION.......: 0.1
+DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original Deft Pascal compiler
+HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
+"""
+
 from unittest import TestCase
 from components.deft_pascal_parser_3 import DeftPascalParser
 from parameterized import parameterized
@@ -5,9 +13,7 @@ from tests.common_test_cases import LanguageTests, TestSuit
 import inspect
 import logging
 
-logging.basicConfig()
 GLB_LOGGER = logging.getLogger(__name__)
-GLB_LOGGER.setLevel(logging.DEBUG)
 
 
 class TestDeftPascalParser(TestCase):
@@ -19,7 +25,6 @@ class TestDeftPascalParser(TestCase):
         if not set(available_tests).issubset(set(selected_tests)):
             msg = "\n\nNot all test scenarios are being run. Review TestSuit class.\n\nDifferences:\n{0}\n\n"
             GLB_LOGGER.warning(msg.format(set(available_tests)-set(selected_tests)))
-            # print("\n\nWARNING!\nNot all test scenarios are being run. Review TestSuit class\n\n")
 
 
     @parameterized.expand(LanguageTests.parser_tests_to_run())
