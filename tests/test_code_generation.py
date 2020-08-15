@@ -130,7 +130,10 @@ class TestCodeGenerator(TestCase):
         self.assertIsNotNone(output_code)
 
         home_dir = os.getcwd()
-        filename = os.path.join(home_dir, "output", "sources", "{0}.c".format(name))
+        filepath = os.path.join(home_dir, "output", "sources")
+        if not os.path.isdir(filepath):
+            filepath = home_dir
+        filename = os.path.join(filepath, "{0}.c".format(name))
 
         if output_code:
             GLB_LOGGER.error(output_code)
