@@ -2,3 +2,6 @@ ply
 lark-parser
 mc6809
 parameterized
+coverage
+PyYAML
+coveralls
