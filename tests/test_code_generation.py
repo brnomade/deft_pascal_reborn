@@ -155,4 +155,4 @@ class TestCodeGenerator(TestCase):
         GLB_LOGGER.debug(output)
         #
         output = self.run_in_shell(filename)
-        self.assertEquals(0, output.returncode)
+        self.assertEqual(0, output.returncode)
