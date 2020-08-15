@@ -16,5 +16,5 @@ script:
   - python -m unittest tests/test_deft_pascal_compiler.py
   - python -m unittest tests/test_code_generation.py
 after_success:
-  - coveralls
+  - coveralls -v
   - coverage report
