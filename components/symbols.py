@@ -240,6 +240,8 @@ class Operator(BaseSymbol):
                              "OPERATOR_OR": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_BOOLEAN"],
                              "OPERATOR_GREATER_THEN": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL", "RESERVED_TYPE_BOOLEAN", "RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING"],
                              "OPERATOR_GREATER_OR_EQUAL_TO": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL", "RESERVED_TYPE_BOOLEAN", "RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING"],
+                             "OPERATOR_LESS_THEN": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL", "RESERVED_TYPE_BOOLEAN", "RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING"],
+                             "OPERATOR_LESS_OR_EQUAL_TO": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL", "RESERVED_TYPE_BOOLEAN", "RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING"],
                              }
 
     def is_unary(self):
@@ -319,6 +321,16 @@ class Operator(BaseSymbol):
 
     @staticmethod
     def _test_compatibility_operator_greater_then(symbol_right, symbol_left):
+        """
+        checks involved:
+        2 - if the types of the operands (symbol_right and symbol_left) match
+        """
+        if symbol_right.type == symbol_left.type:
+            return BooleanConstant.true()
+        return None
+
+    @staticmethod
+    def _test_compatibility_operator_less_then(symbol_right, symbol_left):
         """
         checks involved:
         2 - if the types of the operands (symbol_right and symbol_left) match
@@ -485,8 +497,12 @@ class Operator(BaseSymbol):
                     return self._test_compatibility_operator_or(symbol_right, symbol_left)
                 if self.type == "OPERATOR_GREATER_THEN":
                     return self._test_compatibility_operator_greater_then(symbol_right, symbol_left)
+                if self.type == "OPERATOR_LESS_THEN":
+                    return self._test_compatibility_operator_less_then(symbol_right, symbol_left)
                 if self.type == "OPERATOR_GREATER_OR_EQUAL_TO":
                     return self._test_compatibility_operator_greater_then(symbol_right, symbol_left)
+                if self.type == "OPERATOR_LESS_OR_EQUAL_TO":
+                    return self._test_compatibility_operator_less_then(symbol_right, symbol_left)
                 elif self.type == "OPERATOR_STARSTAR":
                     return self._test_compatibility_operator_starstar(symbol_right, symbol_left)
                 elif self.type == "OPERATOR_EQUAL_TO":

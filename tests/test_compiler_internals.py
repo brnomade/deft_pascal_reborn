@@ -1,6 +1,6 @@
 from unittest import TestCase
-from compiler_utils import check_type_compatibility, convert_to_postfix, convert_to_tokens, ExpressionOriginal
-from symbols import BooleanConstant, Constant, Identifier, Operator
+from utils.compiler_utils import check_type_compatibility, convert_to_postfix, convert_to_tokens, ExpressionOriginal
+from components.symbols import BooleanConstant, Constant, Operator
 import logging
 
 logger = logging.getLogger(__name__)

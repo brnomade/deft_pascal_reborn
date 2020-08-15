@@ -1,4 +1,4 @@
-from symbols import BaseSymbol
+from components.symbols import BaseSymbol
 
 
 class SymbolTable:

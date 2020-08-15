@@ -1,3 +1,11 @@
+"""
+PROJECT.......: Deft Pascal Reborn
+COPYRIGHT.....: Copyright (C) 2020- Andre L Ballista
+VERSION.......: 0.1
+DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original Deft Pascal compiler
+HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
+"""
+
 USED IN DEFT_PASCAL_PARSER_3.PY -> CLASS DEFTPASCALPARSER
 
 from: http://www.moorecad.com/standardpascal/pascal.y
@@ -365,8 +373,8 @@ non_labeled_closed_statement : assignment_statement [DONE]
  | case_statement
  | repeat_statement [DONE]
  | closed_with_statement
- | closed_if_statement
- | closed_while_statement
+ | closed_if_statement [DONE]
+ | closed_while_statement [DONE]
  | closed_for_statement [DONE]
  |
  ;
@@ -384,6 +392,7 @@ repeat_statement : REPEAT statement_sequence UNTIL boolean_expression
 open_while_statement : WHILE boolean_expression DO open_statement
  ;
 
+[DONE]
 closed_while_statement : WHILE boolean_expression DO closed_statement
  ;
 
@@ -407,6 +416,7 @@ open_if_statement : IF boolean_expression THEN statement
  | IF boolean_expression THEN closed_statement ELSE open_statement
  ;
 
+[DONE]
 closed_if_statement : IF boolean_expression THEN closed_statement
    ELSE closed_statement
  ;

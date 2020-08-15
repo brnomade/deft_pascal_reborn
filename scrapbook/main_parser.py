@@ -1,4 +1,4 @@
-from deft_pascal_parser_3 import DeftPascalParser
+from components.deft_pascal_parser_3 import DeftPascalParser
 
 
 def _run_parser(input_string):

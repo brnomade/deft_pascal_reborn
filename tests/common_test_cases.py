@@ -1,3 +1,11 @@
+"""
+PROJECT.......: Deft Pascal Reborn
+COPYRIGHT.....: Copyright (C) 2020- Andre L Ballista
+VERSION.......: 0.1
+DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original Deft Pascal compiler
+HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
+"""
+
 
 class TestSuit:
 
@@ -9,15 +17,17 @@ class TestSuit:
         ]
 
     @staticmethod
-    def parser_tests_to_run():
+    def compiler_tests_to_run():
         return [
+            ["scenario_hello_world", TDD().scenario_hello_world()],
             ["scenario_fahrenheit_to_celsius_converter", TDD().scenario_fahrenheit_to_celsius_converter()],
 
         ]
 
     @staticmethod
-    def compiler_tests_to_run():
+    def parser_tests_to_run():
         return [
+            ["scenario_hello_world", TDD().scenario_hello_world()],
             ["scenario_fahrenheit_to_celsius_converter", TDD().scenario_fahrenheit_to_celsius_converter()],
 
         ]
@@ -720,16 +730,51 @@ class TDD(TestSuit):
             const
                 MIN = 0;
                 MAX = 300;
+                LOOP = 3;
             var
                 fahren: integer;
                 celsius: real;
+                counter: integer;
+                looper: integer;
             begin
-                writeln('Fahrenheit     Celsius');
-                writeln('----------     -------');
-                for fahren := MIN to MAX do begin
-                    celsius := 5 * (fahren - 32) / 9;
-                    writeln(fahren:5, celsius) ;
-                end ;               
+                looper := LOOP;
+                while looper < 10 DO begin
+                    writeln('while loop');
+                    looper := looper + 1;
+                end;
+                if LOOP > 10 then begin
+                    writeln('if loop > 10');
+                end
+                else begin
+                    writeln('loop <= 10');
+                    if MAX > MIN then begin
+                      writeln('if max is bigger than min');
+                    end
+                    else begin
+                      writeln('not needed');
+                    end;
+                    writeln('loop is acceptable');
+                end;
+                counter := 0;
+                repeat
+                    writeln('Fahrenheit     Celsius');
+                    writeln('----------     -------');
+                    for fahren := MIN to MAX do begin
+                        celsius := 5 * (fahren - 32) / 9;
+                        writeln(fahren:5, celsius) ;
+                    end ;
+                    counter := counter + 1
+                until counter > LOOP;               
             end.
+        """
+        return code
+
+    @staticmethod
+    def scenario_hello_world():
+        code = """
+            PROGRAM X; 
+            BEGIN 
+                WRITELN("HELLO WORLD"); 
+            END.
         """
         return code

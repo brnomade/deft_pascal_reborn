@@ -1,4 +1,4 @@
-from symbols import Operator, Constant, Identifier, BaseSymbol
+from components.symbols import Operator, Constant, Identifier, BaseSymbol
 
 import tokenize
 from io import StringIO

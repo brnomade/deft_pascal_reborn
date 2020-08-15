@@ -1,7 +1,15 @@
-from lark import Lark, UnexpectedToken, UnexpectedCharacters
+"""
+PROJECT.......: Deft Pascal Reborn
+COPYRIGHT.....: Copyright (C) 2020- Andre L Ballista
+VERSION.......: 0.1
+DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original Deft Pascal compiler
+HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
+"""
 
+from lark import Lark, UnexpectedCharacters
 import logging
-logging.basicConfig(level=logging.DEBUG)
+
+_MODULE_LOGGER = logging.getLogger(__name__)
 
 
 class DeftPascalParser:
@@ -131,10 +139,17 @@ class DeftPascalParser:
 
         _non_labeled_closed_statement : assignment_statement
                                       | procedure_call  
-                                      | repeat_statement
-                                      | closed_for_statement
                                       | compound_statement
-                                     
+                                      | repeat_statement
+                                      | closed_if_statement
+                                      | closed_while_statement
+                                      | closed_for_statement
+                                      
+                                      
+        // WHILE
+        
+        closed_while_statement : RESERVED_STATEMENT_WHILE _boolean_expression RESERVED_STATEMENT_DO _closed_statement
+        
         // REPEAT UNTIL                             
                                      
         repeat_statement : RESERVED_STATEMENT_REPEAT _statement_sequence RESERVED_STATEMENT_UNTIL _boolean_expression
@@ -145,6 +160,12 @@ class DeftPascalParser:
 
         closed_for_statement : RESERVED_STATEMENT_FOR variable_access OPERATOR_ASSIGNMENT _initial_value _direction _final_value RESERVED_STATEMENT_DO _closed_statement
         
+       // IF
+       
+       closed_if_statement : RESERVED_STATEMENT_IF _boolean_expression RESERVED_STATEMENT_THEN _closed_statement RESERVED_STATEMENT_ELSE _closed_statement
+
+
+       
        // control_variable : IDENTIFIER
         
         _initial_value : expression
@@ -285,11 +306,15 @@ class DeftPascalParser:
         RESERVED_STATEMENT_UNTIL : "until"i
         RESERVED_STATEMENT_FOR : "for"i
         RESERVED_STATEMENT_TO : "to"i
-        RESERVED_STATEMENT_DO : "do"i
         RESERVED_STATEMENT_DOWNTO : "downto"i
+        RESERVED_STATEMENT_DO : "do"i
+        RESERVED_STATEMENT_WHILE : "while"i
         RESERVED_STATEMENT_BYTE : "byte"i
         RESERVED_STATEMENT_WORD : "word"i
         RESERVED_STATEMENT_ABS : "abs"i
+        RESERVED_STATEMENT_IF : "if"i
+        RESERVED_STATEMENT_THEN : "then"i  
+        RESERVED_STATEMENT_ELSE : "else"i
 
         // logical operators 
         
@@ -361,10 +386,27 @@ class DeftPascalParser:
         return specification
 
     def __init__(self):
-        parser = Lark(self._grammar(), parser='lalr', debug=True)
+        parser = Lark(self._grammar(), parser='lalr', debug=False)
         self._parser = parser.parse
+        self._ast = None
 
     def parse(self, a_program):
-        return self._parser(a_program)
+        _MODULE_LOGGER.debug("start")
+        error_list = None
+        try:
+            self._ast = self._parser(a_program)
+        except UnexpectedCharacters as error:
+            msg = "syntax error at line {0} column {1}. \n\n {2}"
+            error_list = [msg.format(error.line, error.column, error.args[0])]
+            _MODULE_LOGGER.error(msg.format(error.line, error.column, error.args[0]))
+        except Exception as error:
+            error_list = [error]
+            _MODULE_LOGGER.error(error)
+        return error_list
 
-
+    @property
+    def ast(self):
+        if self._ast:
+            return self._ast
+        else:
+            raise ValueError("AST is not yet defined")
