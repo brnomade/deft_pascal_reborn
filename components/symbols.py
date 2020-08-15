@@ -1,3 +1,13 @@
+"""
+PROJECT.......: Deft Pascal Reborn
+COPYRIGHT.....: Copyright (C) 2020- Andre L Ballista
+VERSION.......: 0.1
+DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original Deft Pascal compiler
+HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
+"""
+
+from lark import Token
+
 class BaseSymbol:
 
     _precedence_rules = {"OPERATOR_ARITHMETIC_NEGATION": 70,
@@ -60,41 +70,27 @@ class BaseSymbol:
 
     @classmethod
     def from_token(cls, parser_token, context_label, context_level):
-        return cls(parser_token.value, context_label, context_level, parser_token.type, parser_token.value)
+        if isinstance(parser_token, Token):
+            return cls(parser_token.value, context_label, context_level, parser_token.type, parser_token.value)
+        else:
+            raise ValueError("An instance of Token is requierd as parameter")
 
     @staticmethod
     def _map_to_base_type(a_type_name):
         """
         this maps the constant token names received from the parser to pascal language types
-        it is needed so for the type checking process
+        it is needed for the type checking process
+        applicable to all Symbols but only specialised for Constants
         """
         return a_type_name
-        # if a_type_name in ["BOOLEAN", "CONSTANT_TRUE", "CONSTANT_FALSE"]:
-        #     return "RESERVED_TYPE_BOOLEAN"
-        # elif a_type_name in ["INTEGER", "UNSIGNED_DECIMAL", "SIGNED_DECIMAL", "NUMBER_BINARY", "NUMBER_OCTAL", "NUMBER_HEXADECIMAL"]:
-        #     return "RESERVED_TYPE_INTEGER"
-        # elif a_type_name in ["REAL", "UNSIGNED_REAL", "SIGNED_REAL"]:
-        #     return "RESERVED_TYPE_REAL"
-        # elif a_type_name in ["CHAR", "CHARACTER"]:
-        #     return "RESERVED_TYPE_CHAR"
-        # elif a_type_name in ["STRING"]:
-        #     return "RESERVED_TYPE_STRING"
-        # elif a_type_name in ["CONSTANT_NIL"]:
-        #     return "RESERVED_TYPE_POINTER"
-        # else:
-        #     return a_type_name
 
     @property
     def precedence(self):
         return BaseSymbol._precedence_rules[self.type] if self.type in BaseSymbol._precedence_rules else 0
 
     @property
-    def category(self):
-        return type(self).__name__
-
-    @property
-    def type(self):
-        return self._type
+    def name(self):
+        return self._name
 
     @property
     def scope(self):
@@ -105,12 +101,16 @@ class BaseSymbol:
         return self._level
 
     @property
-    def name(self):
-        return self._name
+    def type(self):
+        return self._type
 
     @property
     def value(self):
         return self._value
+
+    @property
+    def category(self):
+        return type(self).__name__
 
     @property
     def references(self):
@@ -166,7 +166,7 @@ class BaseSymbol:
 
     @property
     def is_operator(self):
-        return "OPERATOR_" in self.type
+        return "OPERATOR_" in self.type if self.type else False
 
     @property
     def is_pointer(self):
