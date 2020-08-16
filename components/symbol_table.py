@@ -1,3 +1,11 @@
+"""
+PROJECT.......: Deft Pascal Reborn
+COPYRIGHT.....: Copyright (C) 2020- Andre L Ballista
+VERSION.......: 0.1
+DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original Deft Pascal compiler
+HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
+"""
+
 from components.symbols import BaseSymbol
 
 
@@ -7,12 +15,10 @@ class SymbolTable:
         self._symbol_table = {}
 
     def __str__(self):
-        return "{0}({1})".format(self.__class__.__name__,
-                                 self._symbol_table)
+        return "{0}({1})".format(self.__class__.__name__, self._symbol_table)
 
     def __repr__(self):
-        return "{0}({1})".format(self.__class__.__name__,
-                                 self._symbol_table)
+        return "{0}({1})".format(self.__class__.__name__, self._symbol_table)
 
     def has_equal(self, a_symbol, equal_class=True, equal_type=True, equal_level=True, equal_name=True):
         if a_symbol.level in self._symbol_table:
@@ -63,7 +69,7 @@ class SymbolTable:
             self._symbol_table[a_symbol.level] = {}
         #
         if a_symbol.name in self._symbol_table[a_symbol.level]:
-            raise KeyError
+            raise KeyError("symbol '{0}' already present".format(a_symbol))
         #
         element_to_append = {a_symbol.name: a_symbol}
         self._symbol_table[a_symbol.level].update(element_to_append)
@@ -71,20 +77,20 @@ class SymbolTable:
 
     def remove(self, a_symbol):
         if a_symbol.level not in self._symbol_table:
-            raise KeyError
+            raise KeyError("no symbols present at level '{0}'".format(a_symbol.level))
         #
         if a_symbol.name not in self._symbol_table[a_symbol.level]:
-            raise KeyError
+            raise KeyError("symbol '{0}' not present in table".format(a_symbol))
         #
         return self._symbol_table[a_symbol.level].pop(a_symbol.name)
 
 
     def get(self, a_symbol):
         if a_symbol.level not in self._symbol_table:
-            return None
+            raise KeyError("no symbols present at level '{0}'".format(a_symbol.level))
         #
         if a_symbol.name not in self._symbol_table[a_symbol.level]:
-            return None
+            raise KeyError("symbol '{0}' not present in table".format(a_symbol))
         #
         return self._symbol_table[a_symbol.level][a_symbol.name]
 

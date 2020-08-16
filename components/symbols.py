@@ -1,3 +1,14 @@
+"""
+PROJECT.......: Deft Pascal Reborn
+COPYRIGHT.....: Copyright (C) 2020- Andre L Ballista
+VERSION.......: 0.1
+DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original Deft Pascal compiler
+HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
+"""
+
+from lark import Token
+
+
 class BaseSymbol:
 
     _precedence_rules = {"OPERATOR_ARITHMETIC_NEGATION": 70,
@@ -60,41 +71,27 @@ class BaseSymbol:
 
     @classmethod
     def from_token(cls, parser_token, context_label, context_level):
-        return cls(parser_token.value, context_label, context_level, parser_token.type, parser_token.value)
+        if isinstance(parser_token, Token):
+            return cls(parser_token.value, context_label, context_level, parser_token.type, parser_token.value)
+        else:
+            raise ValueError("An instance of Token is required as parameter")
 
     @staticmethod
     def _map_to_base_type(a_type_name):
         """
         this maps the constant token names received from the parser to pascal language types
-        it is needed so for the type checking process
+        it is needed for the type checking process
+        applicable to all Symbols but only specialised for Constants
         """
         return a_type_name
-        # if a_type_name in ["BOOLEAN", "CONSTANT_TRUE", "CONSTANT_FALSE"]:
-        #     return "RESERVED_TYPE_BOOLEAN"
-        # elif a_type_name in ["INTEGER", "UNSIGNED_DECIMAL", "SIGNED_DECIMAL", "NUMBER_BINARY", "NUMBER_OCTAL", "NUMBER_HEXADECIMAL"]:
-        #     return "RESERVED_TYPE_INTEGER"
-        # elif a_type_name in ["REAL", "UNSIGNED_REAL", "SIGNED_REAL"]:
-        #     return "RESERVED_TYPE_REAL"
-        # elif a_type_name in ["CHAR", "CHARACTER"]:
-        #     return "RESERVED_TYPE_CHAR"
-        # elif a_type_name in ["STRING"]:
-        #     return "RESERVED_TYPE_STRING"
-        # elif a_type_name in ["CONSTANT_NIL"]:
-        #     return "RESERVED_TYPE_POINTER"
-        # else:
-        #     return a_type_name
 
     @property
     def precedence(self):
         return BaseSymbol._precedence_rules[self.type] if self.type in BaseSymbol._precedence_rules else 0
 
     @property
-    def category(self):
-        return type(self).__name__
-
-    @property
-    def type(self):
-        return self._type
+    def name(self):
+        return self._name
 
     @property
     def scope(self):
@@ -105,12 +102,16 @@ class BaseSymbol:
         return self._level
 
     @property
-    def name(self):
-        return self._name
+    def type(self):
+        return self._type
 
     @property
     def value(self):
         return self._value
+
+    @property
+    def category(self):
+        return type(self).__name__
 
     @property
     def references(self):
@@ -137,7 +138,7 @@ class BaseSymbol:
 
     @type.setter
     def type(self, new_type):
-        self._type = new_type
+        self._type = self._map_to_base_type(new_type)
 
     @value.setter
     def value(self, new_value):
@@ -162,11 +163,11 @@ class BaseSymbol:
                 result = result and (self.name == a_base_symbol.name)
             return result
         else:
-            raise NotImplementedError
+            raise ValueError("instance of BaseSymbol or its sub-classes expected")
 
     @property
     def is_operator(self):
-        return "OPERATOR_" in self.type
+        return "OPERATOR_" in self.type if self.type else False
 
     @property
     def is_pointer(self):
@@ -175,9 +176,9 @@ class BaseSymbol:
 
 class Constant(BaseSymbol):
 
-    def __init__(self, *args):
-        super().__init__(*args)
-        self._map_to_base_type(self.type)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # self._map_to_base_type(self.type)
 
     @staticmethod
     def _map_to_base_type(a_type_name):
@@ -213,7 +214,7 @@ class BooleanConstant(Constant):
 
     @classmethod
     def from_value(cls, value, a_scope=None, a_level=None):
-        return cls.true(a_scope, a_level) if (not value or value.upper() == 'TRUE') else cls.false(a_scope, a_level)
+        return cls.true(a_scope, a_level) if str(value).upper() == 'TRUE' else cls.false(a_scope, a_level)
 
 
 class NilConstant(Constant):
@@ -248,66 +249,16 @@ class Operator(BaseSymbol):
         return self.type in ["OPERATOR_NOT", "OPERATOR_ABS", "OPERATOR_ARITHMETIC_NEGATION",
                              "OPERATOR_ARITHMETIC_NEUTRAL"]
 
-#    def _test_unary_compatibility(self, symbol):
-#        if self.is_unary():
-#            return symbol.type == "RESERVED_TYPE_BOOLEAN"
-#        else:
-#            return False
-#
-#    def _test_type_real_compatibility(self):
-#        return self.type in ["",
-#                             "", "OPERATOR_MINUS", "OPERATOR_MULTIPLY", "OPERATOR_DIVIDE",
-#                             "OPERATOR_EQUAL_TO", "OPERATOR_NOT_EQUAL_TO", "OPERATOR_LESS_THEN",
-#                             "OPERATOR_GREATER_THEN", "OPERATOR_LESS_OR_EQUAL_TO", "OPERATOR_GREATER_OR_EQUAL_TO"
-#                             ]
-#
-#    def _test_type_integer_compatibility(self):
-#        return self.type in ["",
-#                             "", "OPERATOR_MINUS", "OPERATOR_MULTIPLY", "OPERATOR_DIVIDE",
-#                             "OPERATOR_STARSTAR",
-#                             "OPERATOR_DIV", "OPERATOR_MOD",
-#                             "OPERATOR_LSL", "OPERATOR_LSR", "OPERATOR_SHL", "OPERATOR_SHR",
-#                             "", "OPERATOR_OR", "OPERATOR_XOR",
-#                             "OPERATOR_EQUAL_TO", "OPERATOR_NOT_EQUAL_TO", "OPERATOR_LESS_THEN",
-#                             "OPERATOR_GREATER_THEN",
-#                             "OPERATOR_LESS_OR_EQUAL_TO", "OPERATOR_GREATER_OR_EQUAL_TO"
-#                             ]
-#
-#    def _test_type_set_compatibility(self):
-#        return self.type in ["",
-#                             "", "OPERATOR_MINUS", "OPERATOR_MULTIPLY",
-#                             ,
-#                             "OPERATOR_EQUAL_TO", "OPERATOR_NOT_EQUAL_TO", "OPERATOR_LESS_THEN",
-#                             "OPERATOR_GREATER_THEN",
-#                             "OPERATOR_LESS_OR_EQUAL_TO", "OPERATOR_GREATER_OR_EQUAL_TO"
-#                             ]
-#
-#    def _test_type_boolean_compatibility(self):
-#        return self.type in ["",
-#                             "OPERATOR_NOT", "", "OPERATOR_OR",
-#                             "OPERATOR_IN",
-#                             "OPERATOR_EQUAL_TO", "OPERATOR_NOT_EQUAL_TO", "OPERATOR_LESS_THEN",
-#                             "OPERATOR_GREATER_THEN",
-#                             "OPERATOR_LESS_OR_EQUAL_TO", "OPERATOR_GREATER_OR_EQUAL_TO"
-#                             ]
-#
-#    def _test_type_string_compatibility(self):
-#        return self.type in ["", "OPERATOR_PLUS", "OPERATOR_IN", "OPERATOR_EQUAL_TO"]
-#
-#    def _test_type_char_compatibility(self):
-#        return self.type in ["", "OPERATOR_PLUS", "OPERATOR_IN", "OPERATOR_EQUAL_TO"]
-
     def _evaluate_type_unary(self, symbol):
         if self.is_unary():
             if self.type == "OPERATOR_NOT" and symbol.type == "RESERVED_TYPE_BOOLEAN":
                 return BooleanConstant.true()
             elif self.type in ["OPERATOR_ARITHMETIC_NEGATION", "OPERATOR_ARITHMETIC_NEUTRAL"] and symbol.type in ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL"]:
                 return Constant(None, None, None, symbol.type, None)
-
             else:
-                raise KeyError("Unexpected unary operator '{0}'".format(self))
+                raise NotImplementedError("Not yet implemented '{0}' '{1}'".format(self, symbol))
         else:
-            raise SystemError("Incorrect call to unary operation.")
+            raise TypeError("Symbol '{0}' is not an unary operator.".format(self))
 
     @staticmethod
     def _test_compatibility_operator_greater_or_equal_to(symbol_right, symbol_left):
@@ -548,22 +499,28 @@ class PointerIdentifier(BaseIdentifier):
 
 class ProcedureIdentifier(BaseIdentifier):
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._parameter_counter = 0
+
     @property
     def parameter_counter(self):
         return self._parameter_counter
 
     @parameter_counter.setter
     def parameter_counter(self, new_counter):
+        if not isinstance(new_counter, int):
+            raise ValueError("parameter_counter expects an integer value")
         self._parameter_counter = new_counter
 
     @classmethod
     def unlimited_parameters_list_size(cls):
-        return None
+        return -1
 
     @classmethod
     def in_built_procedure_write(cls, a_scope=None, a_level=None):
         write = cls('write', a_scope, a_level, 'RESERVED_TYPE_POINTER', None)
-        write.parameter_counter = cls.unlimited_parameters_list_size
+        write.parameter_counter = cls.unlimited_parameters_list_size()
         return write
 
     @classmethod

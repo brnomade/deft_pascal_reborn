@@ -252,8 +252,6 @@ def check_type_compatibility(expression):
         else:
             stack.append(token)
 
-        # logger.info("{0}".format([x for x in stack]))
-    #return compatible
     return stack[-1]
 
 # def type_from_token(parser_token, context_label, context_level):
