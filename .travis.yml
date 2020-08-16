@@ -9,7 +9,7 @@ install:
   - pip install python-coveralls
   - pip install -r requirements.txt
 script:
-  - coverage run --omit */Lib/* -m unittest discover tests
+  - coverage run --omit */lib/* -m unittest discover tests
   - python -m unittest tests/test_compiler_internals.py
   - python -m unittest tests/test_symbols.py
   - python -m unittest tests/test_symbol_table.py
