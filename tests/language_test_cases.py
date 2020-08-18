@@ -529,10 +529,10 @@ class PositiveLanguageTests:
     def scenario_for_to_loop_with_constants():
         code = """
             PROGRAM {{{0}}};                 
-            VAR X : INTEGER;                             
+            VAR V1, V2 : INTEGER;                             
             BEGIN                                        
-               FOR X := 1 TO 10 DO                       
-                  V1 := X;                               
+               FOR V1 := 1 TO 10 DO                       
+                  V2 := V1;                               
             END.                                       
         """
         return code
@@ -541,25 +541,23 @@ class PositiveLanguageTests:
     def scenario_for_to_loop_with_expressions():
         code = """
             PROGRAM {{{0}}};                   
-            VAR V1 : INTEGER;                              
+            VAR V1, V2 : INTEGER;                              
             BEGIN                                          
-               FOR X := (1 + 2 * 3) TO (10 + 1 * 2) DO     
-                  V1 := X;                                 
+               FOR V2 := (1 + (2 * 3) + V1) DOWNTO (10 + (1 * 2) + V1) DO     
+                  V1 := V2;                                 
             END.                                         
         """
         return code
 
 
     @staticmethod
-    def scenario_for_to_loop_with_begin_end():
+    def scenario_for_to_loop_without_begin_end():
         code = """
             PROGRAM {{{0}}};                 
             VAR V1 : INTEGER;                            
             BEGIN                                        
-               FOR X := 1 TO 10 DO                       
-                  BEGIN                                  
-                     V1 := X;                            
-                  END;                                   
+               FOR V1 := 1 TO 10 DO                       
+                  WRITELN(V1);                                   
             END.                                       
         """
         return code
@@ -569,10 +567,10 @@ class PositiveLanguageTests:
     def scenario_for_downto_loop_with_constants():
         code = """
             PROGRAM {{{0}}};                 
-            VAR V1 : INTEGER;                            
+            VAR V1, V2 : INTEGER;                             
             BEGIN                                        
-               FOR X := 10 DOWNTO 1 DO                   
-                  V1 := X;                               
+               FOR V1 := 10 DOWNTO 1 DO                       
+                  V2 := V1;                               
             END.                                       
         """
         return code
@@ -581,25 +579,23 @@ class PositiveLanguageTests:
     def scenario_for_downto_loop_with_expressions():
         code = """
             PROGRAM {{{0}}};                   
-            VAR V1 : INTEGER;                              
+            VAR V1, V2 : INTEGER;                              
             BEGIN                                          
-               FOR X := (1 + 2 * 3) DOWNTO (10 + 1 * 2) DO     
-                  V1 := X;                                 
+               FOR V2 := (1 + (2 * 3) + V1) DOWNTO (10 + (1 * 2) + V1) DO     
+                  V1 := V2;                                 
             END.                                         
         """
         return code
 
     @staticmethod
-    def scenario_for_downto_loop_with_begin_end():
+    def scenario_for_downto_loop_without_begin_end():
         code = """
             PROGRAM {{{0}}};                 
             VAR V1 : INTEGER;                            
             BEGIN                                        
-               FOR X := 10 DOWNTO 1 DO                   
-                  BEGIN                                  
-                     V1 := X;                            
-                  END;                                   
-            END.                                       
+               FOR V1 := 1 TO 10 DO                       
+                  WRITELN(V1);                                   
+            END.             
         """
         return code
 

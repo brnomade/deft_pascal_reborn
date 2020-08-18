@@ -194,7 +194,7 @@ class Constant(BaseSymbol):
             return "RESERVED_TYPE_REAL"
         elif a_type_name in ["CHAR", "CHARACTER"]:
             return "RESERVED_TYPE_CHAR"
-        elif a_type_name in ["STRING"]:
+        elif a_type_name in ["STRING_VALUE"]:
             return "RESERVED_TYPE_STRING"
         elif a_type_name in ["CONSTANT_NIL"]:
             return "RESERVED_TYPE_POINTER"

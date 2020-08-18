@@ -502,7 +502,7 @@ class DeftPascalCompiler:
         return working_stack
 
 
-    def _label_declaration_part(self, action_name, input_list):
+    def _label_declaration_part(self, action_name, input_list, working_stack):
         """
         process LABEL_DECLARATION_PART
         """
