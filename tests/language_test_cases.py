@@ -175,7 +175,7 @@ class PositiveLanguageTests:
         return code
 
     @staticmethod
-    def scenario_type_declaration_with_base_types():
+    def scenario_type_definition_with_base_types():
         code = """
             PROGRAM {{{0}}};          
             TYPE
@@ -190,7 +190,7 @@ class PositiveLanguageTests:
         return code
 
     @staticmethod
-    def scenario_type_declaration_with_pointer_to_base_types():
+    def scenario_type_definition_with_pointer_to_base_types():
         code = """
             PROGRAM {{{0}}};          
             TYPE
@@ -205,7 +205,7 @@ class PositiveLanguageTests:
         return code
 
     @staticmethod
-    def scenario_type_declaration_with_declared_types():
+    def scenario_type_definition_with_declared_types():
         code = """
             PROGRAM {{{0}}};          
             TYPE
@@ -229,15 +229,25 @@ class PositiveLanguageTests:
         return code
 
     @staticmethod
+    def scenario_variable_declaration_multiple_variables_declared():
+        code = """
+            PROGRAM {{{0}}};   
+            VAR V1, V2, V3, V4, V5 : INTEGER;
+            BEGIN                                 
+            END.                                  
+        """
+        return code
+
+    @staticmethod
     def scenario_variable_declaration_with_base_types():
         code = """
             PROGRAM {{{0}}};   
-            VAR V1, V2 : INTEGER;
-                _V3    : REAL;                    
-                _V4  : BOOLEAN;                 
-                _V5  : CHAR;                    
-                _V6  : STRING;                 
-                _V7  : TEXT;                   
+            VAR V1  : INTEGER;
+                V3  : REAL;                    
+                V4  : BOOLEAN;                 
+                V5  : CHAR;                    
+                V6  : STRING;                 
+                V7  : TEXT;                   
             BEGIN                                 
             END.                                  
         """
@@ -247,8 +257,8 @@ class PositiveLanguageTests:
     def scenario_variable_declaration_with_pointers_to_base_types():
         code = """
             PROGRAM {{{0}}};   
-            VAR V1, V2 : ^INTEGER;
-                V3    : ^REAL;                    
+            VAR V1  : ^INTEGER;
+                V3  : ^REAL;                    
                 V4  : ^BOOLEAN;                 
                 V5  : ^CHAR;                    
                 V6  : ^STRING;                 
@@ -269,14 +279,14 @@ class PositiveLanguageTests:
                 T4 = CHAR;
                 T5 = STRING;
                 T6 = TEXT;
-            VAR V1, V2  : T1;                 
-                V3      : T2;                    
-                V4      : T3;                 
-                V5      : T4;                    
-                V6      : T5;                 
-                V7      : T6;                         
-                V8      : ^T1;               
-                V9, V10 : ^T2;
+            VAR V1   : T1;                 
+                V3   : T2;                    
+                V4   : T3;                 
+                V5   : T4;                    
+                V6   : T5;                 
+                V7   : T6;                         
+                V8   : ^T1;               
+                V9   : ^T2;
             BEGIN                                 
             END.                                  
         """
@@ -293,12 +303,12 @@ class PositiveLanguageTests:
                 T4 = CHAR;
                 T5 = STRING;
                 T6 = TEXT;
-            VAR V1, V2 : ^T1;                 
-                _V4    : ^T2;                    
-                _V5  : ^T3;                 
-                _V6  : ^T4;                    
-                _V7  : ^T5;                 
-                _V8  : ^T6;                         
+            VAR V1  : ^T1;                 
+                _V4 : ^T2;                    
+                _V5 : ^T3;                 
+                _V6 : ^T4;                    
+                _V7 : ^T5;                 
+                _V8 : ^T6;                         
             BEGIN                                 
             END.                                  
         """
@@ -315,12 +325,12 @@ class PositiveLanguageTests:
                 T4 = ^CHAR;
                 T5 = ^STRING;
                 T6 = ^TEXT;
-            VAR V1, V2 : ^T1;                 
-                _V3    : ^T2;                    
-                _V4  : ^T3;                 
-                _V5  : ^T4;                    
-                _V6  : ^T5;                 
-                _V7  : ^T6;                         
+            VAR V1  : ^T1;                 
+                V3  : ^T2;                    
+                V4  : ^T3;                 
+                V5  : ^T4;                    
+                V6  : ^T5;                 
+                V7  : ^T6;                         
             BEGIN                                 
             END.                                  
         """
