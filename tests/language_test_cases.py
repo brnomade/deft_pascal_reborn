@@ -6,77 +6,14 @@ DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original D
 HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
-
-class TestSuit:
-
-    @staticmethod
-    def generator_tests_to_run():
-        return [
-            ["scenario_fahrenheit_to_celsius_converter", TDD().scenario_fahrenheit_to_celsius_converter()],
-
-        ]
-
-    @staticmethod
-    def compiler_tests_to_run():
-        return [
-            ["scenario_hello_world", TDD().scenario_hello_world()],
-            ["scenario_fahrenheit_to_celsius_converter", TDD().scenario_fahrenheit_to_celsius_converter()],
-
-        ]
-
-    @staticmethod
-    def parser_tests_to_run():
-        return [
-            ["scenario_hello_world", TDD().scenario_hello_world()],
-            ["scenario_fahrenheit_to_celsius_converter", TDD().scenario_fahrenheit_to_celsius_converter()],
-
-        ]
-
-    @staticmethod
-    def tests_to_run():
-        return [
-    ["tdd_1", TDD().tdd_1()],
-    ["tdd_2", TDD().tdd_2()],
-    ["scenario_fahrenheit_to_celsius_converter", TDD().scenario_fahrenheit_to_celsius_converter()],
-    ["scenario_program_definition_with_variables", LanguageTests().scenario_program_definition_with_variables()],
-    ["scenario_program_definition_without_variables", LanguageTests().scenario_program_definition_without_variables()],
-    ["scenario_label_declaration", LanguageTests().scenario_label_declaration()],
-    ["scenario_decimal_numbers", LanguageTests().scenario_decimal_numbers()],
-    ["scenario_binary_numbers", LanguageTests().scenario_binary_numbers()],
-    ["scenario_octal_numbers", LanguageTests().scenario_octal_numbers()],
-    ["scenario_hexadecimal_numbers", LanguageTests().scenario_hexadecimal_numbers()],
-    ["scenario_strings", LanguageTests().scenario_strings()],
-    ["scenario_booleans", LanguageTests().scenario_booleans()],
-    ["scenario_constant_declaration", LanguageTests().scenario_constant_declaration()],
-    ["scenario_type_declaration_with_base_types", LanguageTests().scenario_type_declaration_with_base_types()],
-    ["scenario_type_declaration_with_pointer_to_base_types", LanguageTests().scenario_type_declaration_with_pointer_to_base_types()],
-    ["scenario_type_declaration_with_declared_types", LanguageTests().scenario_type_declaration_with_declared_types()],
-    ["scenario_variable_declaration_with_base_types", LanguageTests().scenario_variable_declaration_with_base_types()],
-    ["scenario_variable_declaration_with_types_based_on_base_types", LanguageTests().scenario_variable_declaration_with_types_based_on_base_types()],
-    ["scenario_variable_declaration_with_pointers_to_base_types", LanguageTests().scenario_variable_declaration_with_pointers_to_base_types()],
-    ["scenario_variable_declaration_with_pointer_to_pointer_types", LanguageTests().scenario_variable_declaration_with_pointer_to_pointer_types()],
-    ["scenario_variable_declaration_with_pointer_types_based_on_base_types", LanguageTests().scenario_variable_declaration_with_pointer_types_based_on_base_types()],
-    ["scenario_variable_assignment_with_nil", LanguageTests.scenario_variable_assignment_with_nil()],
-    ["scenario_variable_assignment_with_single_value", LanguageTests().scenario_variable_assignment_with_single_value()],
-    ["scenario_variable_assignment_with_constant", LanguageTests().scenario_variable_assignment_with_constant()],
-    ["scenario_variable_assignment_with_variable", LanguageTests().scenario_variable_assignment_with_variable()],
-    ["scenario_variable_assignment_with_numeric_expression", LanguageTests().scenario_variable_assignment_with_numeric_expression()],
-    ["scenario_variable_assignment_with_logical_expression_same_types", LanguageTests().scenario_variable_assignment_with_logical_expression_same_types()],
-    ["scenario_variable_assignment_with_logical_expression_mixed_types", LanguageTests().scenario_variable_assignment_with_logical_expression_mixed_types()],
-    ["scenario_repeat_loop_with_boolean_constant", LanguageTests().scenario_repeat_loop_with_boolean_constant()],
-    ["scenario_repeat_loop_with_boolean_expression", LanguageTests().scenario_repeat_loop_with_boolean_expression()],
-    ["scenario_repeat_loop_with_variable", LanguageTests().scenario_repeat_loop_with_variable()],
-    ["scenario_repeat_loop_with_expression", LanguageTests().scenario_repeat_loop_with_expression()],
-    ["scenario_for_to_loop_with_constants", LanguageTests.scenario_for_to_loop_with_constants()],
-    ["scenario_for_to_loop_with_expressions", LanguageTests.scenario_for_to_loop_with_expressions()],
-    ["scenario_for_to_loop_with_begin_end", LanguageTests.scenario_for_to_loop_with_begin_end()],
-    ["scenario_for_downto_loop_with_constants", LanguageTests.scenario_for_downto_loop_with_constants()],
-    ["scenario_for_downto_loop_with_expressions", LanguageTests.scenario_for_downto_loop_with_expressions()],
-    ["scenario_for_downto_loop_with_begin_end", LanguageTests.scenario_for_downto_loop_with_begin_end()],
-        ]
+import inspect
 
 
-class LanguageTests(TestSuit):
+class PositiveLanguageTests:
+
+    @classmethod
+    def available_tests(cls):
+        return [i for i in inspect.getmembers(cls, predicate=inspect.isfunction) if 'scenario_' in i[0]]
 
     @staticmethod
     def scenario_program_definition_without_variables():
@@ -666,115 +603,60 @@ class LanguageTests(TestSuit):
         """
         return code
 
-
-class TDD(TestSuit):
-
     @staticmethod
-    def tdd_1():
+    def scenario_while_do_loop_with_variable():
         code = """
-            PROGRAM {{{0}}};                 
-            VAR                                      
-            V1 : INTEGER;                            
-            BEGIN                                    
-            V1 := 1;                                    
-            END.                                   
+            PROGRAM {{{0}}};            
+            VAR V1, V2 : INTEGER;                            
+            BEGIN        
+               V1 := 1;                                
+               V2 := 10;
+               WHILE V1 < V2 DO                   
+                  BEGIN                                  
+                     V1 := V1 + 1;                            
+                  END;                                   
+            END.                                       
         """
         return code
 
     @staticmethod
-    def tdd_2():
+    def scenario_while_do_loop_with_constant():
         code = """
-            PROGRAM my_test_program( A1, A2, A3);    
-            LABEL 100, 200, 300, 400;                
-            CONST                                    
-            C1 = 0.5;  B = 1;                                
-            VAR V1, V3 : INTEGER;                        
-            V2 : BOOLEAN;                            
-            BEGIN                                    
-               REPEAT                                
-                 V1 := V1 + 1                      
-               UNTIL V1 + V3 > 10 + 1         
-            END.                                   
+            PROGRAM {{{0}}};                
+            CONST X = 10; 
+            VAR V1 : INTEGER;                            
+            BEGIN      
+               V1 := 1;                                  
+               WHILE V1 < X DO                   
+                  V1 := V1 + 1;                               
+            END.                                       
         """
         return code
 
     @staticmethod
-    def scenario_program_definition_2():
+    def scenario_while_do_loop_with_number():
         code = """
-            program test;                          
-            const                                 
-              PI = 3.1415;                        
-                                                  
-            var                                   
-              a, b: real;                         
-              c : MEUTIPO;                        
-            procedure hello(s: string; n: real);  
-            begin                                 
-              writeln(s);                         
-            end;                                  
-                                                  
-            begin                                 
-              a := PI;                            
-              b := a * 10;                        
-              hello('Hello World!', b);           
-            end.                                 
+            PROGRAM {{{0}}};                
+            VAR V1 : INTEGER;                            
+            BEGIN      
+               V1 := 1;                                  
+               WHILE V1 < 10 DO                   
+                  V1 := V1 + 1;                               
+            END.                                       
         """
         return code
 
     @staticmethod
-    def scenario_fahrenheit_to_celsius_converter():
+    def scenario_while_do_loop_with_expression():
         code = """
-            program {{{0}}}(output);
-            { Program to convert temperatures from
-             Fahrenheit to Celsius. }
-            const
-                MIN = 0;
-                MAX = 300;
-                LOOP = 3;
-            var
-                fahren: integer;
-                celsius: real;
-                counter: integer;
-                looper: integer;
-            begin
-                looper := LOOP;
-                while looper < 10 DO begin
-                    writeln('while loop');
-                    looper := looper + 1;
-                end;
-                if LOOP > 10 then begin
-                    writeln('if loop > 10');
-                end
-                else begin
-                    writeln('loop <= 10');
-                    if MAX > MIN then begin
-                      writeln('if max is bigger than min');
-                    end
-                    else begin
-                      writeln('not needed');
-                    end;
-                    writeln('loop is acceptable');
-                end;
-                counter := 0;
-                repeat
-                    writeln('Fahrenheit     Celsius');
-                    writeln('----------     -------');
-                    for fahren := MIN to MAX do begin
-                        celsius := 5 * (fahren - 32) / 9;
-                        writeln(fahren:5, celsius) ;
-                    end ;
-                    counter := counter + 1
-                until counter > LOOP;               
-            end.
+            PROGRAM {{{0}}};                   
+            VAR V1 : INTEGER;                              
+            BEGIN             
+               V1 := 1;                             
+               WHILE V1 < (1 + 2 * 3) DO     
+                  V1 := V1 + 1;                                 
+            END.                                         
         """
         return code
 
-    @staticmethod
-    def scenario_hello_world():
-        code = """
-            PROGRAM X; 
-            BEGIN 
-                WRITELN('HELLO WORLD'); 
-            END.
-        """
-        return code
+
