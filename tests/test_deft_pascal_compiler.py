@@ -11,6 +11,7 @@ from unittest import TestCase
 from components.deft_pascal_compiler import DeftPascalCompiler
 from parameterized import parameterized
 from tests.declarations_test_suit import TestSuit
+from tests.negative_language_test_cases import NegativeLanguageTests
 
 GLB_LOGGER = getLogger(__name__)
 GLB_LOGGER.level = DEBUG
@@ -43,11 +44,22 @@ class TestDeftPascalCompiler(TestCase):
         error_log = compiler.check_syntax(source_code)
         if error_log:
             print(error_log)
-        self.assertIsNone(error_log)
+        self.assertEqual(error_log, [])
         #
         GLB_LOGGER.debug(compiler.ast.pretty())
         #
         error_log = compiler.compile()
         if error_log:
             print(error_log)
-        self.assertIsNone(error_log)
+        self.assertEqual(error_log, [])
+
+    def test_negative(self):
+        source_code = NegativeLanguageTests.scenario_syntax_error()
+        if "{{{0}}}" in source_code:
+            source_code = source_code.replace("{{{0}}}", "scenario_syntax_error")
+        #
+        compiler = DeftPascalCompiler()
+        error_log = compiler.check_syntax(source_code)
+        if error_log:
+            print(error_log)
+        #

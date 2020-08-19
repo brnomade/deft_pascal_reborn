@@ -87,8 +87,6 @@ class DeftPascalCompiler:
         for i in ast.children:
             self._internal_compile(i)
         #
-        if not self._error_list:
-            self._error_list = None
         return self._error_list
 
     @property

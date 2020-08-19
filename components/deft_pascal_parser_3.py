@@ -5,7 +5,7 @@ DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original D
 HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
-from lark import Lark, UnexpectedCharacters
+from lark import Lark, UnexpectedCharacters, UnexpectedToken
 import logging
 
 _MODULE_LOGGER = logging.getLogger(__name__)
@@ -391,16 +391,13 @@ class DeftPascalParser:
 
     def parse(self, a_program):
         _MODULE_LOGGER.debug("start")
-        error_list = None
+        error_list = []
         try:
             self._ast = self._parser(a_program)
-        except UnexpectedCharacters as error:
-            msg = "syntax error at line {0} column {1}. \n\n {2}"
-            error_list = [msg.format(error.line, error.column, error.args[0])]
-            _MODULE_LOGGER.error(msg.format(error.line, error.column, error.args[0]))
-        except Exception as error:
-            error_list = [error]
-            _MODULE_LOGGER.error(error)
+        except (UnexpectedCharacters, UnexpectedToken) as error:
+            msg = "syntax error at line {0} column {1}: expected {2}".format(error.line, error.column, error.expected)
+            error_list.append(msg)
+            _MODULE_LOGGER.error(msg)
         return error_list
 
     @property
