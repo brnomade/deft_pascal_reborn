@@ -5,7 +5,7 @@ DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original D
 HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
-from logging import getLogger
+from logging import getLogger, DEBUG
 
 from unittest import TestCase
 from components.deft_pascal_compiler import DeftPascalCompiler
@@ -13,6 +13,7 @@ from parameterized import parameterized
 from tests.declarations_test_suit import TestSuit
 
 GLB_LOGGER = getLogger(__name__)
+GLB_LOGGER.level = DEBUG
 
 
 class ConfigurationForTestDeftPascalCompiler:

@@ -13,7 +13,7 @@ before_script:
   - chmod +x ./cc-test-reporter
   - ./cc-test-reporter before-build
 script:
-  - coverage run -m unittest 
+  - coverage run -m unittest
 after_script:
   - coverage xml
   - ./cc-test-reporter after-build -r 17b6f0d248c948db0156cad289d5b8e989e26dcb5d5a341c876484719e4247fd --exit-code $TRAVIS_TEST_RESULT

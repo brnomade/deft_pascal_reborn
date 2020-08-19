@@ -64,8 +64,6 @@ class DeftPascalCompiler:
                          "CLOSED_IF_STATEMENT"
                          }
 
-        #                "BOOLEAN_EXPRESSION": self._action_9,
-
 
     def check_syntax(self, input_program):
         error_list = self._parser.parse(input_program)
@@ -106,10 +104,6 @@ class DeftPascalCompiler:
 
     def generate(self):
         return self._ic.generate()
-
-    @staticmethod
-    def _exception_raiser(exception):
-        raise exception
 
     def _log(self, log_type=INFO, log_info=""):
         # retrieve current scope details from the stack
@@ -156,39 +150,6 @@ class DeftPascalCompiler:
             raise TypeError
 
 
-    def _retrieve_global_boolean_constant(self, action_number, action_name, value):
-        a_symbol = BooleanConstant.from_value(value)
-        a_symbol.scope = self._stack_scope[-1][0]
-        a_symbol.level = self._stack_scope[-1][1]
-        if self._symbol_table.has_equal(a_symbol, equal_type=True, equal_level=False, equal_name=True):
-            a_symbol = self._symbol_table.get(a_symbol)
-        elif self._symbol_table.has_equal(a_symbol, equal_type=True, equal_level=False, equal_name=True):
-            a_symbol = self._symbol_table.get_from_lower_scope(a_symbol)
-        else:
-            msg = "[{0}] {1} - undeclared boolean system constant {2}"
-            self._log(ERROR, msg.format(action_number, action_name, a_symbol))
-            a_symbol = None
-        return a_symbol
-
-
-    def _get_declared_variable(self, action_number, action_name, a_variable):
-        # check variable exists
-        # scenarios:
-        # - identifier not declared
-        # - identifier declared on same scope
-        # - identifier declared on a lower scope
-
-        if self._symbol_table.has_equal(a_variable, equal_class=True, equal_type=False, equal_level=True, equal_name=True):
-            a_variable = self._symbol_table.get(a_variable)
-        elif self._symbol_table.has_equal(a_variable, equal_class=True, equal_type=False, equal_level=False, equal_name=True):
-            a_variable = self._symbol_table.get_from_lower_scope(a_variable)
-        else:
-            msg = "[{0}] {1} - Reference to undeclared symbol {2}"
-            self._log(ERROR, msg.format(action_number, action_name, a_variable))
-            a_variable = None
-        return a_variable
-
-
     def _perform_type_check(self, action_name, expression):
         """
         expression - is a list of tokens.
@@ -221,26 +182,6 @@ class DeftPascalCompiler:
         # remove current scope details from the stack
         context_label = self._stack_scope.pop()[0]
         context_level = self._stack_scope.pop()[1]
-
-
-    def _token_action_0(self, action_number, action_name, token):
-        """
-        token -> IDENTIFIER
-        """
-        # retrieve the scope details from the stack
-        context_label = self._stack_scope[-1][0]
-        context_level = self._stack_scope[-1][1]
-
-        # retrieve the actual identifier from the symbol_table
-        identifier = self._symbol_table.retrieve_by_name(token.value, context_label, context_level, equal_level_only=False)
-        if identifier:
-
-            pass
-
-        else:
-
-            msg = "[{0}] {1} :  Unknown identifier '{2}' reference."
-            self._log(ERROR, msg.format(action_number, action_name, identifier))
 
 
     def _program_heading(self, action_name, token_list, working_stack):
@@ -601,7 +542,7 @@ class DeftPascalCompiler:
 
             else:
 
-                self._exception_raiser(KeyError)
+                raise NotImplementedError("expected a Token or a Tree but received '{0}'".format(token))
 
         return working_stack
 
@@ -664,50 +605,6 @@ class DeftPascalCompiler:
         self._log(DEBUG, "[{0}] {1}".format(action_name, working_stack))
 
         return working_stack
-
-
-    def _action_9(self, action_number, action_name, token_list):
-
-        context_label = self._stack_scope[-1][0]
-        context_level = self._stack_scope[-1][1]
-
-        stack_expression = []
-
-        token_list = token_list.children
-        for token in token_list:
-            # print(token.type, token.value)
-
-            if token.type in ["CONSTANT_TRUE", "CONSTANT_FALSE"]:
-
-                a_symbol = self._retrieve_global_boolean_constant(action_number, action_name, token.value)
-                stack_expression.append(a_symbol)
-
-            elif token.type == "IDENTIFIER":
-
-                a_symbol = Identifier(token.value, context_label, context_level)
-                a_symbol = self._get_declared_variable(action_number, action_name, a_symbol)
-                stack_expression.append(a_symbol)
-
-            elif token.type in ["UNSIGNED_DECIMAL", "SIGNED_DECIMAL", "NUMBER_BINARY", "NUMBER_OCTAL",
-                                "NUMBER_HEXADECIMAL", "CHARACTER", "STRING", "CONSTANT_TRUE", "CONSTANT_FALSE",
-                                "UNSIGNED_REAL", "SIGNED_REAL"
-                                ]:
-
-                a_symbol = Constant(token.value, context_label, context_level, token.type, token.value)
-                stack_expression.append(a_symbol)
-
-            else:
-
-                a_symbol = BaseSymbol(token.value, context_label, context_level, token.type, token.value)
-
-            if a_symbol:
-                # self._emiter.emit_action_9(a_symbol)
-                pass
-
-        for i in range(0, len(stack_expression) - 1):
-            self._perform_type_check(action_name, stack_expression[i], stack_expression[i+1])
-
-        self._log(DEBUG, "[{0}] {1} : {2}".format(action_number, action_name, stack_expression))
 
 
     def _closed_for_statement(self, action_name, input_list, working_stack):
