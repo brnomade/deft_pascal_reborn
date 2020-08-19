@@ -24,7 +24,7 @@ script:
   - python -m unittest tests/test_deft_pascal_compiler.py
   - python -m unittest tests/test_code_generation.py
 after_script:
-  - ./cc-test-reporter after-build --exit-code
+  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
 after_success:
   - coveralls -v
   - coverage report
