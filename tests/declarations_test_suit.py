@@ -7,7 +7,7 @@ HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 
 import logging
 
-from tests.positive_language_test_cases import PositiveLanguageTests
+from tests.positive_test_cases import PositiveLanguageTests
 from tests.example_test_cases import PascalExamples
 from tests.tdd_test_cases import TDD
 

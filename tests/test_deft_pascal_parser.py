@@ -9,7 +9,7 @@ from unittest import TestCase
 from components.deft_pascal_parser_3 import DeftPascalParser
 from parameterized import parameterized
 from tests.declarations_test_suit import TestSuit
-from tests.negative_language_test_cases import NegativeLanguageTests
+from tests.negative_test_cases import NegativeLanguageTests
 
 # from tests.language_test_cases import PositiveLanguageTests
 
@@ -54,7 +54,7 @@ class TestDeftPascalParser(TestCase):
             print(error_log)
         self.assertNotEqual([], error_log)
 
-    def test_extra_ast(self):
+    def test_negative_ast_not_defined_raises_exception(self):
         deft_pascal_parser = DeftPascalParser()
         with self.assertRaises(ValueError) as cm:
             deft_pascal_parser.ast()
