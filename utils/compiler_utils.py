@@ -1,4 +1,14 @@
-from components.symbols import Operator, Constant, Identifier, BaseSymbol
+"""
+PROJECT.......: Deft Pascal Reborn
+COPYRIGHT.....: Copyright (C) 2020- Andre L Ballista
+DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original Deft Pascal compiler
+HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
+"""
+
+from components.symbols.base_symbols import BaseSymbol
+from components.symbols.operator_symbols import Operator
+from components.symbols.identifier_symbols import Identifier
+from components.symbols.constant_symbols import Constant
 
 import tokenize
 from io import StringIO

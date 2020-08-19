@@ -1,7 +1,6 @@
 """
 PROJECT.......: Deft Pascal Reborn
 COPYRIGHT.....: Copyright (C) 2020- Andre L Ballista
-VERSION.......: 0.1
 DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original Deft Pascal compiler
 HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
@@ -9,8 +8,11 @@ HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 from lark import Tree, Token
 from components.deft_pascal_parser_3 import DeftPascalParser
 from components.symbol_table import SymbolTable
-from components.symbols import BaseSymbol, Operator, Constant, Identifier, Keyword, GenericExpression
-from components.symbols import BasicType, PointerType, PointerIdentifier, ProcedureIdentifier, BooleanConstant, NilConstant
+from components.symbols.base_symbols import BaseSymbol, Keyword, GenericExpression
+from components.symbols.operator_symbols import Operator
+from components.symbols.identifier_symbols import Identifier, PointerIdentifier, ProcedureIdentifier
+from components.symbols.constant_symbols import Constant, BooleanConstant, NilConstant
+from components.symbols.type_symbols import PointerType, BasicType
 from components.intermediate_code import IntermediateCode
 from utils.compiler_utils import check_type_compatibility
 import logging

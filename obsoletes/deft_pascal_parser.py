@@ -1,7 +1,13 @@
+"""
+PROJECT.......: Deft Pascal Reborn
+COPYRIGHT.....: Copyright (C) 2020- Andre L Ballista
+DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original Deft Pascal compiler
+HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
+"""
+
 from obsoletes.deft_pascal_lexer import DeftPascalLexer
 from components.symbol_table import SymbolTable, Constant, Variable
 import ply.yacc as yacc
-
 
 
 class DeftPascalParser:

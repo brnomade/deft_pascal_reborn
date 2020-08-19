@@ -1,13 +1,16 @@
 """
 PROJECT.......: Deft Pascal Reborn
 COPYRIGHT.....: Copyright (C) 2020- Andre L Ballista
-VERSION.......: 0.1
 DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original Deft Pascal compiler
 HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
 from components.abstract_emiter import CEmitter, CMOCEmitter
-from components.symbols import BaseSymbol, Operator, Constant, Identifier, Keyword, PointerIdentifier, BasicType, PointerType
+from components.symbols.base_symbols import BaseSymbol, Keyword
+from components.symbols.operator_symbols import Operator
+from components.symbols.type_symbols import PointerType, BasicType
+from components.symbols.identifier_symbols import Identifier, PointerIdentifier
+from components.symbols.constant_symbols import Constant
 import logging
 from logging import ERROR, WARNING, INFO
 

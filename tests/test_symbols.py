@@ -1,16 +1,16 @@
 """
 PROJECT.......: Deft Pascal Reborn
 COPYRIGHT.....: Copyright (C) 2020- Andre L Ballista
-VERSION.......: 0.1
 DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original Deft Pascal compiler
 HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
 from unittest import TestCase
-from components.symbols import BaseSymbol, Constant, BooleanConstant, NilConstant, \
-                               BaseIdentifier, Identifier,  PointerIdentifier, ProcedureIdentifier, \
-                               BaseType, PointerType, CustomType, BasicType, \
-                               Keyword, GenericExpression, Operator
+from components.symbols.base_symbols import BaseSymbol, BaseIdentifier, BaseType, Keyword, GenericExpression
+from components.symbols.operator_symbols import Operator
+from components.symbols.type_symbols import PointerType, CustomType, BasicType
+from components.symbols.identifier_symbols import Identifier, PointerIdentifier, ProcedureIdentifier
+from components.symbols.constant_symbols import Constant, BooleanConstant, NilConstant
 from lark import Token
 
 import logging
