@@ -1,4 +1,6 @@
 dist: xenial
+global:
+    - CC_TEST_REPORTER_ID=17b6f0d248c948db0156cad289d5b8e989e26dcb5d5a341c876484719e4247fd
 language: python
 python:
   - "3.8"
@@ -22,8 +24,7 @@ script:
   - python -m unittest tests/test_deft_pascal_compiler.py
   - python -m unittest tests/test_code_generation.py
 after_script:
-  - coverage xml
-  - if [[ "$TRAVIS_PULL_REQUEST" == "false" && "$TRAVIS_PYTHON_VERSION" == "3.8" ]]; then ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT; fi
+  - ./cc-test-reporter after-build --exit-code
 after_success:
   - coveralls -v
   - coverage report
