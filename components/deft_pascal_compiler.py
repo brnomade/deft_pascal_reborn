@@ -62,7 +62,6 @@ class DeftPascalCompiler:
                          "CLOSED_IF_STATEMENT"
                          }
 
-        #                : self._action_11,
         #                "BOOLEAN_EXPRESSION": self._action_9,
 
 
