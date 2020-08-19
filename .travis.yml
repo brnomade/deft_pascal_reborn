@@ -9,7 +9,6 @@ install:
   - pip install python-coveralls
   - pip install -r requirements.txt
 before_script:
-  - CC_TEST_REPORTER_ID=17b6f0d248c948db0156cad289d5b8e989e26dcb5d5a341c876484719e4247fd
   - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
   - chmod +x ./cc-test-reporter
   - ./cc-test-reporter before-build
@@ -24,7 +23,7 @@ script:
   - python -m unittest tests/test_code_generation.py
 after_script:
   - coverage xml
-  - ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT
+  - ./cc-test-reporter after-build --exit-code -r 17b6f0d248c948db0156cad289d5b8e989e26dcb5d5a341c876484719e4247fd $TRAVIS_TEST_RESULT
 after_success:
   - coveralls -v
   - coverage report
