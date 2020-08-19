@@ -1,6 +1,4 @@
 dist: xenial
-global:
-    - CC_TEST_REPORTER_ID=17b6f0d248c948db0156cad289d5b8e989e26dcb5d5a341c876484719e4247fd
 language: python
 python:
   - "3.8"
@@ -11,6 +9,7 @@ install:
   - pip install python-coveralls
   - pip install -r requirements.txt
 before_script:
+  - CC_TEST_REPORTER_ID=17b6f0d248c948db0156cad289d5b8e989e26dcb5d5a341c876484719e4247fd
   - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
   - chmod +x ./cc-test-reporter
   - ./cc-test-reporter before-build
