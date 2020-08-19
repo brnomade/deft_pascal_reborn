@@ -9,32 +9,40 @@ HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 from unittest import TestCase
 from components.deft_pascal_parser_3 import DeftPascalParser
 from parameterized import parameterized
-from tests.common_test_cases import LanguageTests, TestSuit
-import inspect
-import logging
+from tests.declarations_test_suit import TestSuit
 
-GLB_LOGGER = logging.getLogger(__name__)
+# from tests.language_test_cases import PositiveLanguageTests
+
+
+class ConfigurationForTestDeftPascalParser:
+
+    @classmethod
+    def tests_to_run(cls):
+        return TestSuit.tests_to_run()
 
 
 class TestDeftPascalParser(TestCase):
 
     def setUp(self):
-        available_tests = [i[0] for i in inspect.getmembers(LanguageTests, predicate=inspect.isfunction) if
-                           'scenario_' in i[0]]
-        selected_tests = [i[0] for i in TestSuit().parser_tests_to_run() if 'scenario_' in i[0]]
+        available_tests = TestSuit.available_tests()
+        selected_tests = ConfigurationForTestDeftPascalParser.tests_to_run()
         if not set(available_tests).issubset(set(selected_tests)):
             msg = "\n\nNot all test scenarios are being run. Review TestSuit class.\n\nDifferences:\n{0}\n\n"
             GLB_LOGGER.warning(msg.format(set(available_tests)-set(selected_tests)))
 
-
-    @parameterized.expand(LanguageTests.parser_tests_to_run())
-    def test_positive(self, name, source_code):
+    @parameterized.expand(ConfigurationForTestDeftPascalParser.tests_to_run())
+    def test_positive(self, name, function_callable):
+        source_code = function_callable()
         if "{{{0}}}" in source_code:
             source_code = source_code.replace("{{{0}}}", name)
 
         deft_pascal_parser = DeftPascalParser()
         error_list = deft_pascal_parser.parse(source_code)
         self.assertIsNone(error_list)
-        GLB_LOGGER.debug(deft_pascal_parser.ast.pretty())
+        print(deft_pascal_parser.ast.pretty())
 
-
+    def test_extra_ast(self):
+        deft_pascal_parser = DeftPascalParser()
+        with self.assertRaises(ValueError) as cm:
+            deft_pascal_parser.ast()
+        self.assertIsInstance(cm.exception, ValueError)
