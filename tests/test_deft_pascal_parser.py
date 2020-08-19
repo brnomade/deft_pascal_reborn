@@ -9,6 +9,7 @@ from unittest import TestCase
 from components.deft_pascal_parser_3 import DeftPascalParser
 from parameterized import parameterized
 from tests.declarations_test_suit import TestSuit
+from tests.negative_language_test_cases import NegativeLanguageTests
 
 # from tests.language_test_cases import PositiveLanguageTests
 
@@ -34,11 +35,24 @@ class TestDeftPascalParser(TestCase):
         source_code = function_callable()
         if "{{{0}}}" in source_code:
             source_code = source_code.replace("{{{0}}}", name)
+        #
+        parser = DeftPascalParser()
+        error_log = parser.parse(source_code)
+        if error_log:
+            print(error_log)
+        self.assertEqual([], error_log)
+        print(parser.ast.pretty())
 
-        deft_pascal_parser = DeftPascalParser()
-        error_list = deft_pascal_parser.parse(source_code)
-        self.assertIsNone(error_list)
-        print(deft_pascal_parser.ast.pretty())
+    def test_negative_scenario_syntax_error(self):
+        source_code = NegativeLanguageTests.scenario_syntax_error_detected_by_parser()
+        if "{{{0}}}" in source_code:
+            source_code = source_code.replace("{{{0}}}", "scenario_syntax_error_detected_by_parser")
+        #
+        parser = DeftPascalParser()
+        error_log = parser.parse(source_code)
+        if error_log:
+            print(error_log)
+        self.assertNotEqual([], error_log)
 
     def test_extra_ast(self):
         deft_pascal_parser = DeftPascalParser()

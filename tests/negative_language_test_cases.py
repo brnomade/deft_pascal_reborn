@@ -13,10 +13,27 @@ class NegativeLanguageTests:
         return [i for i in inspect.getmembers(cls, predicate=inspect.isfunction) if 'scenario_' in i[0]]
 
     @staticmethod
-    def scenario_syntax_error():
+    def scenario_syntax_error_detected_by_parser():
         code = """
             PROGRAM {{{0}}}        
             BEGIN                               
             END.                                
+        """
+        return code
+
+    @staticmethod
+    def scenario_syntax_error_missing_dot():
+        code = """
+            PROGRAM {{{0}}};        
+            BEGIN                               
+            END                                
+        """
+        return code
+
+    @staticmethod
+    def scenario_syntax_error_missing_end():
+        code = """
+            PROGRAM {{{0}}};        
+            BEGIN                                                               
         """
         return code
