@@ -13,11 +13,10 @@ before_script:
   - chmod +x ./cc-test-reporter
   - ./cc-test-reporter before-build
 script:
-  - coverage run --omit */lib/* -m unittest discover tests
-  - python -m unittest tests/test_compiler_internals.py
+  - coverage run --omit */lib/* --omit /obsoletes/* -m unittest discover tests
+- python -m unittest tests/test_compiler_internals.py
   - python -m unittest tests/test_symbols.py
   - python -m unittest tests/test_symbol_table.py
-  - python -m unittest tests/test_deft_pascal_lexer.py
   - python -m unittest tests/test_deft_pascal_parser.py
   - python -m unittest tests/test_deft_pascal_compiler.py
   - python -m unittest tests/test_code_generation.py
