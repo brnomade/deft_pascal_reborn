@@ -8,6 +8,10 @@ install:
   - pip install coverage
   - pip install python-coveralls
   - pip install -r requirements.txt
+before_script:
+  - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
+  - chmod +x ./cc-test-reporter
+  - ./cc-test-reporter before-build
 script:
   - coverage run --omit */lib/* -m unittest discover tests
   - python -m unittest tests/test_compiler_internals.py
@@ -17,6 +21,9 @@ script:
   - python -m unittest tests/test_deft_pascal_parser.py
   - python -m unittest tests/test_deft_pascal_compiler.py
   - python -m unittest tests/test_code_generation.py
+after_script:
+  - coverage xml
+  - if [[ "$TRAVIS_PULL_REQUEST" == "false" && "$TRAVIS_PYTHON_VERSION" == "3.8" ]]; then ./cc-test-reporter after-build --exit-code $TRAVIS_TEST_RESULT; fi
 after_success:
   - coveralls -v
   - coverage report
