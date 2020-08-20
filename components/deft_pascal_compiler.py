@@ -76,9 +76,7 @@ class DeftPascalCompiler:
     def compile(self, ast=None):
         _MODULE_LOGGER.debug("start compile")
         if not ast and not self._ast:
-            self._error_list = ["empty AST provided as input"]
-            _MODULE_LOGGER.error(self._error_list[0])
-            return self._error_list
+            raise ValueError("AST is not yet defined")
         #
         if not ast and self._ast:
             ast = self._ast
@@ -465,32 +463,37 @@ class DeftPascalCompiler:
 
         # process the identifier
         working_stack = self._internal_compile(input_list.pop(0), [])
-        identifier = working_stack[-1]
 
-        # check the identifier receiving the assignment is variable.
-        if isinstance(identifier, Constant):
-            self._log(ERROR, "[{0}] : Invalid assignment to constant '{1}'".format(action_name, working_stack))
+        if working_stack:
 
-        # consume the operator :=
-        token = input_list.pop(0)
-        operator = Operator(token.value, context_label, context_level, token.type, token.value)
-        working_stack.append(operator)
+            identifier = working_stack[-1]
 
-        # process the expression
-        expression_stack = self._internal_compile(input_list.pop(), [])
+            # check the identifier receiving the assignment is variable.
+            if isinstance(identifier, Constant):
+                self._log(ERROR, "[{0}] : Invalid assignment to constant '{1}'".format(action_name, working_stack))
 
-        # check type compatibility
-        self._perform_type_check(action_name, working_stack + expression_stack)
+            # consume the operator :=
+            token = input_list.pop(0)
+            operator = Operator(token.value, context_label, context_level, token.type, token.value)
+            working_stack.append(operator)
 
-        # push the expression to the working stack
-        working_stack.append(GenericExpression.from_list(expression_stack))
+            # process the expression
+            expression_stack = self._internal_compile(input_list.pop(), [])
 
-        # generate the intermediate code
-        self._ic.init(action_name)
-        self._ic.push(working_stack)
-        self._ic.flush()
+            if expression_stack:
 
-        self._log(DEBUG, "[{0}] : {1}".format(action_name, working_stack))
+                # check type compatibility
+                self._perform_type_check(action_name, working_stack + expression_stack)
+
+                # push the expression to the working stack
+                working_stack.append(GenericExpression.from_list(expression_stack))
+
+                # generate the intermediate code
+                self._ic.init(action_name)
+                self._ic.push(working_stack)
+                self._ic.flush()
+
+                self._log(DEBUG, "[{0}] : {1}".format(action_name, working_stack))
 
         return working_stack
 
@@ -593,7 +596,7 @@ class DeftPascalCompiler:
         # check type compatibility of the expression and ensure it returns a boolean type
         generic_expression_type = self._perform_type_check(action_name, expression_stack)
         if not generic_expression_type == "RESERVED_TYPE_BOOLEAN":
-            msg = "[{0}] expected BOOLEAN expression but found: {1}"
+            msg = "[{0}] expected boolean expression but found: {1}"
             self._log(ERROR, msg.format(action_name, generic_expression_type))
 
         # generate the intermediate code
@@ -688,7 +691,7 @@ class DeftPascalCompiler:
         # check type compatibility of the expression and ensure it returns a boolean type
         generic_expression_type = self._perform_type_check(action_name, expression_stack)
         if not generic_expression_type == "RESERVED_TYPE_BOOLEAN":
-            msg = "[{0}] expected BOOLEAN expression but found: {1}"
+            msg = "[{0}] expected boolean expression but found: {1}"
             self._log(ERROR, msg.format(action_name, generic_expression_type))
 
         # emit reserved word do
@@ -754,7 +757,7 @@ class DeftPascalCompiler:
         # identifier - it must NOT exist in the symbol_table yet
         if self._symbol_table.contains_name(identifier, context_label, context_level, equal_level_only=False):
 
-            msg = "[{0}] {1} :  Identifier '{2}' already declared in current scope"
+            msg = "[{0}] identifier '{1}' already declared in current scope"
             self._log(ERROR, msg.format(action_name, identifier))
 
         else:
@@ -917,7 +920,7 @@ class DeftPascalCompiler:
         # check type compatibility of the expression and ensure it returns a boolean type
         generic_expression_type = self._perform_type_check(action_name, expression_stack)
         if not generic_expression_type == "RESERVED_TYPE_BOOLEAN":
-            msg = "[{0}] expected BOOLEAN expression but found: {1}"
+            msg = "[{0}] expected boolean expression but found: {1}"
             self._log(ERROR, msg.format(action_name, generic_expression_type))
 
         # process reserved word THEN

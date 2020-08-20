@@ -43,10 +43,10 @@ class TestDeftPascalParser(TestCase):
         self.assertEqual([], error_log)
         print(parser.ast.pretty())
 
-    def test_negative_scenario_syntax_error(self):
-        source_code = NegativeLanguageTests.scenario_syntax_error_detected_by_parser()
+    def test_negative_scenario_any_syntax_error_raises_parser_error(self):
+        source_code = NegativeLanguageTests.scenario_any_syntax_error_raises_parser_error()
         if "{{{0}}}" in source_code:
-            source_code = source_code.replace("{{{0}}}", "scenario_syntax_error_detected_by_parser")
+            source_code = source_code.replace("{{{0}}}", "scenario_any_syntax_error_raises_parser_error")
         #
         parser = DeftPascalParser()
         error_log = parser.parse(source_code)
