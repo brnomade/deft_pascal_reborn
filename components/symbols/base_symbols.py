@@ -28,11 +28,12 @@ class BaseSymbol:
                          "OPERATOR_NOT": 10,
                          "OPERATOR_AND": 10,
                          "OPERATOR_OR": 10,
+                         "OPERATOR_UPARROW": 10,
                          "OPERATOR_IN": 5,
                          "OPERATOR_EQUAL_TO": 5,
                          "OPERATOR_NOT_EQUAL_TO": 5,
-                         "OPERATOR_LESS_THEN": 5,
-                         "OPERATOR_GREATER_THEN": 5,
+                         "OPERATOR_LESS_THAN": 5,
+                         "OPERATOR_GREATER_THAN": 5,
                          "OPERATOR_LESS_OR_EQUAL_TO": 5,
                          "OPERATOR_GREATER_OR_EQUAL_TO": 5,
                          "OPERATOR_ASSIGNMENT": 1,
@@ -40,49 +41,30 @@ class BaseSymbol:
                          }
 
 
-    def __init__(self, a_name, a_scope=None, a_level=None, a_type=None, a_value=None):
+    def __init__(self, a_name, a_type=None, a_value=None):
         self._name = a_name
-        self._scope = a_scope
-        self._level = a_level
-        self._type = self._map_to_base_type(a_type)
+        self._type = a_type
         self._value = a_value
         self._reference_stack = []
 
 
     def __str__(self):
-        return "{0}('{1}'|{2}|{3}|{4}|{5}|{6})".format(self.category,
-                                                       self.name,
-                                                       self.type,
-                                                       self.value,
-                                                       self.scope,
-                                                       self.level,
-                                                       self.references)
+        return "{0}('{1}'|{2}|{3}|{4})".format(self.category, self.name, self.type, self.value, self.references)
 
     def __repr__(self):
-        return "{0}('{1}'|{2}|{3}|{4}|{5}|{6})".format(self.category,
-                                                       self.name,
-                                                       self.type,
-                                                       self.value,
-                                                       self.scope,
-                                                       self.level,
-                                                       self.references)
+        return "{0}('{1}'|{2}|{3}|{4})".format(self.category, self.name, self.type, self.value, self.references)
 
 
     @classmethod
-    def from_token(cls, parser_token, context_label, context_level):
+    def from_token(cls, parser_token):
         if isinstance(parser_token, Token):
-            return cls(parser_token.value, context_label, context_level, parser_token.type, parser_token.value)
+            return cls.from_value(parser_token.value, parser_token.type)
         else:
             raise ValueError("An instance of Token is required as parameter")
 
-    @staticmethod
-    def _map_to_base_type(a_type_name):
-        """
-        this maps the constant token names received from the parser to pascal language types
-        it is needed for the type checking process
-        applicable to all Symbols but only specialised for Constants
-        """
-        return a_type_name
+    @classmethod
+    def from_value(cls, a_value, a_type_name=None):
+        return cls(str(a_value), a_type_name, a_value)
 
     @property
     def precedence(self):
@@ -91,14 +73,6 @@ class BaseSymbol:
     @property
     def name(self):
         return self._name
-
-    @property
-    def scope(self):
-        return self._scope
-
-    @property
-    def level(self):
-        return self._level
 
     @property
     def type(self):
@@ -127,17 +101,9 @@ class BaseSymbol:
     def name(self, new_name):
         self._name = new_name
 
-    @scope.setter
-    def scope(self, new_scope):
-        self._scope = new_scope
-
-    @level.setter
-    def level(self, new_level):
-        self._level = new_level
-
     @type.setter
     def type(self, new_type):
-        self._type = self._map_to_base_type(new_type)
+        self._type = new_type
 
     @value.setter
     def value(self, new_value):
@@ -149,29 +115,6 @@ class BaseSymbol:
     def pop_reference(self):
         return self._reference_stack.pop()
 
-    def is_equal(self, a_base_symbol, equal_class=True, equal_type=True, equal_level=True, equal_name=True):
-        if isinstance(a_base_symbol, BaseSymbol):
-            result = True
-            if equal_class:
-                result = result and (type(self) == type(a_base_symbol))
-            if equal_type:
-                result = result and (self._type == a_base_symbol._type)
-            if equal_level:
-                result = result and (self.scope == a_base_symbol.scope and self.level == a_base_symbol.level)
-            if equal_name:
-                result = result and (self.name == a_base_symbol.name)
-            return result
-        else:
-            raise ValueError("instance of BaseSymbol or its sub-classes expected")
-
-    @property
-    def is_operator(self):
-        return "OPERATOR_" in self.type if self.type else False
-
-    @property
-    def is_pointer(self):
-        return False
-
 
 class BaseIdentifier(BaseSymbol):
 
@@ -181,8 +124,33 @@ class BaseIdentifier(BaseSymbol):
 
 class BaseType(BaseSymbol):
 
-    def do_nothing(self):
-        pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._index = None
+
+    def __str__(self):
+        return "{0}({1})".format(self.category, self.type)
+
+    def __repr__(self):
+        return "{0}({1})".format(self.category, self.type)
+
+    def __eq__(self, other):
+        if not isinstance(other, BaseType):
+            return False
+        else:
+            return self.name == other.name and self.type == other.type and self.value == other.value
+
+
+    @property
+    def index(self):
+        return self._index
+
+    @index.setter
+    def index(self, new_index):
+        self._index = new_index
+
+    #def __eq__(self, other):
+    #    return (self._name == other._name) and (self._type == other._type)
 
 
 class Keyword(BaseSymbol):
@@ -194,5 +162,5 @@ class Keyword(BaseSymbol):
 class GenericExpression(BaseSymbol):
 
     @classmethod
-    def from_list(cls, expression_list, a_scope=None, a_level=None):
-        return cls('GENERIC_EXPRESSION', a_scope, a_level, 'GENERIC_EXPRESSION', expression_list)
+    def from_list(cls, expression_list):
+        return cls('GENERIC_EXPRESSION', 'GENERIC_EXPRESSION', expression_list)

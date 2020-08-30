@@ -5,259 +5,522 @@ DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original D
 HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
-from components.symbols.base_symbols import BaseSymbol
-from components.symbols.constant_symbols import BooleanConstant, Constant, NilConstant
+from components.symbols.literals_symbols import *
+from components.symbols.type_symbols import *
+import logging
+
+
+_MODULE_LOGGER = logging.getLogger(__name__)
 
 
 class Operator(BaseSymbol):
 
-    # this is defined from the symbol_left perspective.
-    _compatibility_matrix = {"OPERATOR_MULTIPLY": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL", "RESERVED_TYPE_SET"],
-                             "OPERATOR_PLUS": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL", "RESERVED_TYPE_SET", "RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING"],
-                             "OPERATOR_MINUS": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL", "RESERVED_TYPE_SET", "RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING"],
-                             "OPERATOR_DIVIDE": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL"],
-                             "OPERATOR_DIV": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL"],
-                             "OPERATOR_ASSIGNMENT": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL", "RESERVED_TYPE_SET", "RESERVED_TYPE_BOOLEAN", "RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING", "RESERVED_TYPE_POINTER"],
-                             "OPERATOR_EQUAL_TO": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL",  "RESERVED_TYPE_SET", "RESERVED_TYPE_BOOLEAN", "RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING", "RESERVED_TYPE_POINTER"],
-                             "OPERATOR_NOT_EQUAL_TO": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL",  "RESERVED_TYPE_SET", "RESERVED_TYPE_BOOLEAN", "RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING", "RESERVED_TYPE_POINTER"],
-                             "OPERATOR_STARSTAR": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL"],
-                             "OPERATOR_IN": ["RESERVED_TYPE_CHAR", "RESERVED_TYPE_INTEGER"],
-                             "OPERATOR_AND": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_BOOLEAN"],
-                             "OPERATOR_OR": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_BOOLEAN"],
-                             "OPERATOR_GREATER_THEN": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL", "RESERVED_TYPE_BOOLEAN", "RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING"],
-                             "OPERATOR_GREATER_OR_EQUAL_TO": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL", "RESERVED_TYPE_BOOLEAN", "RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING"],
-                             "OPERATOR_LESS_THEN": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL", "RESERVED_TYPE_BOOLEAN", "RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING"],
-                             "OPERATOR_LESS_OR_EQUAL_TO": ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL", "RESERVED_TYPE_BOOLEAN", "RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING"],
-                             }
+    def __init__(self, *args, **kwargs):
+        #
+        super().__init__(*args, **kwargs)
+        self._compatible = None
 
-    def is_unary(self):
-        return self.type in ["OPERATOR_NOT", "OPERATOR_ABS", "OPERATOR_ARITHMETIC_NEGATION",
-                             "OPERATOR_ARITHMETIC_NEUTRAL"]
+    def __str__(self):
+        return "{0}({1})".format(self.category, self.type)
 
-    def _evaluate_type_unary(self, symbol):
-        if self.is_unary():
-            if self.type == "OPERATOR_NOT" and symbol.type == "RESERVED_TYPE_BOOLEAN":
-                return BooleanConstant.true()
-            elif self.type in ["OPERATOR_ARITHMETIC_NEGATION", "OPERATOR_ARITHMETIC_NEUTRAL"] and symbol.type in ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL"]:
-                return Constant(None, None, None, symbol.type, None)
-            else:
-                raise NotImplementedError("Not yet implemented '{0}' '{1}'".format(self, symbol))
-        else:
-            raise TypeError("Symbol '{0}' is not an unary operator.".format(self))
+    def __repr__(self):
+        return "{0}({1})".format(self.category, self.type)
 
-    @staticmethod
-    def _test_compatibility_operator_greater_or_equal_to(symbol_right, symbol_left):
-        """
-        checks involved:
-        2 - if the types of the operands (symbol_right and symbol_left) match
-        """
-        if symbol_right.type == symbol_left.type:
-            return BooleanConstant.true()
-        return None
 
-    @staticmethod
-    def _test_compatibility_operator_greater_then(symbol_right, symbol_left):
-        """
-        checks involved:
-        2 - if the types of the operands (symbol_right and symbol_left) match
-        """
-        if symbol_right.type == symbol_left.type:
-            return BooleanConstant.true()
-        return None
+class NeutralOperator(Operator):
 
-    @staticmethod
-    def _test_compatibility_operator_less_then(symbol_right, symbol_left):
-        """
-        checks involved:
-        2 - if the types of the operands (symbol_right and symbol_left) match
-        """
-        if symbol_right.type == symbol_left.type:
-            return BooleanConstant.true()
-        return None
+    @classmethod
+    def operator_left_parentheses(cls):
+        operator = cls("LEFT_PARENTHESES", 'LEFT_PARENTHESES', "(")
+        return operator
 
-    @staticmethod
-    def _test_compatibility_operator_or(symbol_right, symbol_left):
-        """
-        checks involved:
-        2 - if the types of the operands (symbol_right and symbol_left) match
-        """
-        if symbol_left.type == symbol_right.type:
-            if symbol_right.type == "RESERVED_TYPE_BOOLEAN":
-                return BooleanConstant.true()
-            elif symbol_right.type == "RESERVED_TYPE_INTEGER":
-                return Constant(None, None, None, symbol_right.type, None)
-        return None
+    @classmethod
+    def operator_right_parentheses(cls):
+        operator = cls("RIGHT_PARENTHESES", 'RIGHT_PARENTHESES', ")")
+        return operator
 
-    @staticmethod
-    def _test_compatibility_operator_and(symbol_right, symbol_left):
-        """
-        checks involved:
-        2 - if the types of the operands (symbol_right and symbol_left) match
-        """
-        if symbol_left.type == symbol_right.type:
-            if symbol_right.type == "RESERVED_TYPE_BOOLEAN":
-                return BooleanConstant.true()
-            elif symbol_right.type == "RESERVED_TYPE_INTEGER":
-                return Constant(None, None, None, symbol_right.type, None)
-        return None
 
-    @staticmethod
-    def _test_compatibility_operator_in(symbol_right, symbol_left):
-        """
-        checks involved:
-        2 - if the types of the operands (symbol_right and symbol_left) match
-        """
-        if symbol_left.type == "RESERVED_TYPE_SET":
-            return BooleanConstant.true()
-        return None
+class BinaryOperator(Operator):
+    """
+    The _compatible list maps to the types in the following order:
+                 LEFT SYMBOL
+        #        0      1    2     3     4     5     6     7     8
+        #        INT   REAL  SET   CHAR  STR   BOOL  POINT TEXT  ARRAY
+        0 INT   [0   , 1   , None, None, None, None, None, None, None]
+        1 REAL  [1   , 1   , None, None, None, None, None, None, None]
+        2 SET   [None, None, 2   , None, None, None, None, None, None]
+        3 CHAR  [None, None, None, None, None, None, None, None, None]
+        4 STR   [None, None, None, None, None, None, None, None, None]
+        5 BOOL  [None, None, None, None, None, None, None, None, None]
+        6 POINT [None, None, None, None, None, None, None, None, None]
+        7 TEXT  [None, None, None, None, None, None, None, None, None]
+        8 ARRAY [None, None, None, None, None, None, None, None, None]
 
-    @staticmethod
-    def _test_compatibility_operator_starstar(symbol_right, symbol_left):
-        """
-        checks involved:
-        2 - if the types of the operands (symbol_right and symbol_left) match
-        """
-        if symbol_right.type == "RESERVED_TYPE_INTEGER":
-            return Constant(None, None, None, symbol_left.type, None)
-        return None
+        (row, column, cell)
+        [(0,0,0),(1,1,1),(2,2,2),(0,1,1),(1,0,1)]
 
-    @staticmethod
-    def _test_compatibility_operator_not_equal_to(symbol_right, symbol_left):
-        """
-        checks involved:
-        2 - if the types of the operands (symbol_right and symbol_left) match
-        """
-        if symbol_left.type == symbol_right.type:
-            return BooleanConstant.true()
-        return None
+    """
 
-    @staticmethod
-    def _test_compatibility_operator_equal_to(symbol_right, symbol_left):
+    def _as_type(self, symbol_right, symbol_left):
         """
-        checks involved:
-        2 - if the types of the operands (symbol_right and symbol_left) match
+        Evaluates an operator using the passed symbols as parameter (operands).
+        returns None if the operator is not compatible with the operands
+        otherwise returns a tuple representing the resulting type of the operator execution
+        raises an warning if the operand is not an instance of BaseType.
         """
-        if symbol_left.type == symbol_right.type:
-            return BooleanConstant.true()
-        return None
+        if not isinstance(symbol_right, BaseType):
+            _MODULE_LOGGER.warning("symbol '{0}' is not a BaseType.".format(symbol_right))
+            return None
 
-    @staticmethod
-    def _test_compatibility_operator_assignment(symbol_right, symbol_left):
-        """
-        checks involved:
-        2 - if the types of the operands (symbol_right and symbol_left) match
-        """
-        if symbol_left.type == "RESERVED_TYPE_POINTER" or "^" in symbol_left.type or symbol_left.is_pointer:
-            if symbol_right.type == "RESERVED_TYPE_POINTER" or "^" in symbol_left.type or symbol_right.is_pointer:
-                return NilConstant.nil(None, None)
-        elif symbol_left.type == symbol_right.type:
-            return Constant(None, None, None, symbol_left.type, None)
-        return None
+        if not isinstance(symbol_left, BaseType):
+            _MODULE_LOGGER.warning("symbol '{0}' is not a BaseType.".format(symbol_left))
+            return None
 
-    @staticmethod
-    def _test_compatibility_operator_div(symbol_right, symbol_left):
-        """
-        integer division - accepts integer and real operands mixed together - result is always an integer
-        checks involved:
-        2 - if the types of the operands (symbol_right and symbol_left) match
-        """
-        if symbol_right.type in ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL"]:
-            return Constant(None, None, None, "RESERVED_TYPE_INTEGER", None)
-        return None
+        result = [t for t in self._compatible if t[0] == symbol_left.index and t[1] == symbol_right.index]
 
-    @staticmethod
-    def _test_compatibility_operator_divide(symbol_right, symbol_left):
-        """
-        real division - accepts integer and real operands mixed together - result is always a real
-        checks involved:
-        2 - if the types of the operands (symbol_right and symbol_left) match
-        """
-        if symbol_right.type in ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL"]:
-            return Constant(None, None, None, "RESERVED_TYPE_REAL", None)
-        return None
+        if len(result) > 1:
+            raise KeyError("unexpected multiple results in method")
 
-    @staticmethod
-    def _test_compatibility_operator_minus(symbol_right, symbol_left):
-        """
-        checks involved:
-        2 - if the types of the operands (symbol_right and symbol_left) match
-        """
-        # TODO -> Operator MINUS for SETS
-        if symbol_left.type == symbol_right.type:
-            return Constant(None, None, None, symbol_left.type, None)
-        return None
+        if not result:
+            return None
 
-    @staticmethod
-    def _test_compatibility_operator_plus(symbol_right, symbol_left):
-        """
-        checks involved:
-        2 - if the types of the operands (symbol_right and symbol_left) match
-        """
-        # TODO -> Operator PLUS for SETS
-        if symbol_left.type == symbol_right.type:
-            return Constant(None, None, None, symbol_left.type, None)
-        return None
+        return result[0]
 
-    @staticmethod
-    def _test_compatibility_operator_multiply(symbol_right, symbol_left):
+    def is_compatible(self, symbol_right, symbol_left):
         """
-        checks involved:
-        2 - if the types of the operands (symbol_right and symbol_left) match
+        Check if an operator is compatible with the symbols passed as parameter (operands).
+        returns False if the operator is not compatible with the operands
+        otherwise returns True
+        raises and exception if the operand is not an instance of Literal or BaseType.
         """
-        if symbol_left.type == symbol_right.type:
-            return Constant(None, None, None, symbol_left.type, None)
-        if symbol_left.type == "RESERVED_TYPE_REAL" and symbol_right.type == "RESERVED_TYPE_INTEGER":
-            return Constant(None, None, None, symbol_left.type, None)
-        if symbol_left.type == "RESERVED_TYPE_INTEGER" and symbol_right.type == "RESERVED_TYPE_REAL":
-            return Constant(None, None, None, symbol_right.type, None)
-        return None
+        result = self._as_type(symbol_right, symbol_left)
+        return True if result else False
 
-    def evaluate_to_type(self, symbol_right, symbol_left=None):
+    def evaluate_to_type(self, symbol_right, symbol_left):
         """
-        the evaluation results in True or False values
-        returns a subclass of BaseSymbol because the type_checking routine operates
-        over a list of symbols
-        checks involved:
-        1 - [TESTED IN THIS METHOD] what types can be used with the operator
-        2 - [TESTED IN THE OPERAND METHOD] if the types of the operands (symbol_right and symbol_left) match
+        Evaluates an operator using the passed symbols as parameter (operands).
+        returns None if the operator is not compatible with the operands
+        otherwise returns an instance of BasicType representing the evaluation of the operator with the operands
+        raises and exception if the operand is not an instance of Literal or BaseType.
+
+        Special case for PointerTypes. For those, expectation is that the symbol.type will return another
+        type symbol, representing the situation of a ^INTEGER or similar (a pointer to an integer type)
+
+        Unit tests are adjusted to reflect that.
         """
-        if not symbol_left:
-            return self._evaluate_type_unary(symbol_right)
-        else:
-            if symbol_left.type in Operator._compatibility_matrix[self.type]:
-                if self.type == "OPERATOR_IN":
-                    return self._test_compatibility_operator_in(symbol_right, symbol_left)
-                if self.type == "OPERATOR_AND":
-                    return self._test_compatibility_operator_and(symbol_right, symbol_left)
-                if self.type == "OPERATOR_OR":
-                    return self._test_compatibility_operator_or(symbol_right, symbol_left)
-                if self.type == "OPERATOR_GREATER_THEN":
-                    return self._test_compatibility_operator_greater_then(symbol_right, symbol_left)
-                if self.type == "OPERATOR_LESS_THEN":
-                    return self._test_compatibility_operator_less_then(symbol_right, symbol_left)
-                if self.type == "OPERATOR_GREATER_OR_EQUAL_TO":
-                    return self._test_compatibility_operator_greater_then(symbol_right, symbol_left)
-                if self.type == "OPERATOR_LESS_OR_EQUAL_TO":
-                    return self._test_compatibility_operator_less_then(symbol_right, symbol_left)
-                elif self.type == "OPERATOR_STARSTAR":
-                    return self._test_compatibility_operator_starstar(symbol_right, symbol_left)
-                elif self.type == "OPERATOR_EQUAL_TO":
-                    return self._test_compatibility_operator_equal_to(symbol_right, symbol_left)
-                elif self.type == "OPERATOR_NOT_EQUAL_TO":
-                    return self._test_compatibility_operator_equal_to(symbol_right, symbol_left)
-                elif self.type == "OPERATOR_ASSIGNMENT":
-                    return self._test_compatibility_operator_assignment(symbol_right, symbol_left)
-                elif self.type == "OPERATOR_MULTIPLY":
-                    return self._test_compatibility_operator_multiply(symbol_right, symbol_left)
-                elif self.type == "OPERATOR_PLUS":
-                    return self._test_compatibility_operator_plus(symbol_right, symbol_left)
-                elif self.type == "OPERATOR_MINUS":
-                    return self._test_compatibility_operator_plus(symbol_right, symbol_left)
-                elif self.type == "OPERATOR_DIVIDE":
-                    return self._test_compatibility_operator_divide(symbol_right, symbol_left)
-                elif self.type == "OPERATOR_DIV":
-                    return self._test_compatibility_operator_div(symbol_right, symbol_left)
-                else:
-                    raise NotImplementedError(self)
-            else:
-                raise NotImplementedError(symbol_left)
+        result = self._as_type(symbol_right, symbol_left)
+        if result == (6,6,6):    # this is the scenario for pointer operations. a compiler directive could be used to control it. if flexibility is given, OO programing could be considered
+            assert isinstance(symbol_right.type, BaseType) and isinstance(symbol_left.type, BaseType), "property 'type' for PointerType must be a BaseType. Found '{0}' and '{1}'".format(symbol_left, symbol_right)
+            result = self._as_type(symbol_right.type, symbol_left.type)
+        if not result:
+            return None
+        result = result[2]
+        if result == 0:
+            return BasicType.reserved_type_integer()
+        if result == 1:
+            return BasicType.reserved_type_real()
+        if result == 2:
+            return BasicType.reserved_type_set()
+        if result == 3:
+            return BasicType.reserved_type_char()
+        if result == 4:
+            return StringType.reserved_type_string()
+        if result == 5:
+            return BasicType.reserved_type_boolean()
+        if result == 6:
+            return PointerType.reserved_type_pointer()
+        if result == 7:
+            return BasicType.reserved_type_text()
+        if result == 8:
+            return BasicType.reserved_type_array()
+        if result == 9:
+            return BasicType.reserved_type_nil()
+
+    @classmethod
+    def operator_multiply(cls):
+        """
+         #  0      1    2     3     4     5     6     7     8      9
+         #  INT   REAL  SET   CHAR  STR   BOOL  POINT TEXT  ARRAY  NIL
+
+        (row, column, cell)
+        [(0,0,0),(1,1,1),(2,2,2),(0,1,1),(1,0,1)]
+
+        """
+        operator = cls("OPERATOR_MULTIPLY", 'OPERATOR_MULTIPLY', "*")
+        operator._compatible = [(0,0,0), (1,1,1), (2,2,2), (0,1,1), (1,0,1)]
+        # operator._as_type = lambda l, r, c: [t for t in c if t[0] == l.index and t[1] == r.index]
+        return operator
+
+    @classmethod
+    def operator_plus(cls):
+        """
+         #  0      1    2     3     4     5     6     7     8      9
+         #  INT   REAL  SET   CHAR  STR   BOOL  POINT TEXT  ARRAY  NIL
+
+        (row, column, cell)
+        [(0,0,0),(1,1,1),(2,2,2),(3,3,4),(4,4,4),(0,1,1),(1,0,1)]
+
+        """
+        operator = cls("OPERATOR_PLUS", 'OPERATOR_PLUS', "+")
+        operator._compatible = [(0,0,0), (1,1,1), (2,2,2), (3,3,4), (4,4,4), (0,1,1), (1,0,1)]
+        # operator._as_type = lambda l, r, c: [t for t in c if t[0] == l.index and t[1] == r.index]
+        return operator
+
+    @classmethod
+    def operator_minus(cls):
+        """
+         #  0      1    2     3     4     5     6     7     8      9
+         #  INT   REAL  SET   CHAR  STR   BOOL  POINT TEXT  ARRAY  NIL
+
+        (row, column, cell)
+        [(0,0,0),(1,1,1),(2,2,2),(4,4,4),(0,1,1),(1,0,1)]
+
+        """
+        operator = cls("OPERATOR_MINUS", 'OPERATOR_MINUS', "-")
+        operator._compatible = [(0,0,0),(1,1,1),(2,2,2),(4,4,4),(0,1,1),(1,0,1)]
+        # operator._as_type = lambda l, r, c: [t for t in c if t[0] == l.index and t[1] == r.index]
+        return operator
+
+    @classmethod
+    def operator_divide(cls):
+        """
+         #  0      1    2     3     4     5     6     7     8      9
+         #  INT   REAL  SET   CHAR  STR   BOOL  POINT TEXT  ARRAY  NIL
+
+        (row, column, cell)
+        [(0,0,1),(1,1,1),(0,1,1),(1,0,1)]
+
+        """
+        operator = cls("OPERATOR_DIVIDE", 'OPERATOR_DIVIDE', "/")
+        operator._compatible = [(0,0,1),(1,1,1),(0,1,1),(1,0,1)]
+        # operator._as_type = lambda l, r, c: [t for t in c if t[0] == l.index and t[1] == r.index]
+        return operator
+
+    @classmethod
+    def operator_div(cls):
+        """
+         #  0      1    2     3     4     5     6     7     8      9
+         #  INT   REAL  SET   CHAR  STR   BOOL  POINT TEXT  ARRAY  NIL
+
+        (row, column, cell)
+        [(0,0,0),(1,1,0),(0,1,0),(1,0,0)]
+
+        """
+        operator = cls("OPERATOR_DIV", 'OPERATOR_DIV', "DIV")
+        operator._compatible = [(0,0,0),(1,1,0),(0,1,0),(1,0,0)]
+        # operator._as_type = lambda l, r, c: [t for t in c if t[0] == l.index and t[1] == r.index]
+        return operator
+
+    @classmethod
+    def operator_assignment(cls):
+        """
+         #  0      1    2     3     4     5     6     7     8      9
+         #  INT   REAL  SET   CHAR  STR   BOOL  POINT TEXT  ARRAY  NIL
+
+         (row, column, cell)
+         [(0,0,0),(1,1,1),(2,2,2),(3,3,3),(4,4,4),(5,5,5),(6,6,6),(7,7,7),(8,8,8)(6,9,6)]
+
+         """
+        operator = cls("OPERATOR_ASSIGNMENT", "OPERATOR_ASSIGNMENT", ":=")
+        operator._compatible = [(0,0,0),(1,1,1),(2,2,2),(3,3,3),(4,4,4),(5,5,5),(6,6,6),(7,7,7),(8,8,8),(6,9,6)]
+        # operator._as_type = lambda l, r, c: [t for t in c if t[0] == l.index and t[1] == r.index]
+        return operator
+
+    @classmethod
+    def operator_equal_to(cls):
+        """
+         #  0      1    2     3     4     5     6     7     8      9
+         #  INT   REAL  SET   CHAR  STR   BOOL  POINT TEXT  ARRAY  NIL
+
+         (row, column, cell)
+         [(0,0,5),(1,1,5),(2,2,5),(3,3,5),(4,4,5),(5,5,5),(6,6,5),(7,7,5),(8,8,5),(6,9,5)]
+
+        """
+        operator = cls("OPERATOR_EQUAL_TO", "OPERATOR_EQUAL_TO", "=")
+        operator._compatible = [(0,0,5),(1,1,5),(2,2,5),(3,3,5),(4,4,5),(5,5,5),(6,6,5),(7,7,5),(8,8,5),(6,9,5)]
+        # operator._as_type = lambda l, r, c: [t for t in c if t[0] == l.index and t[1] == r.index]
+        return operator
+
+    @classmethod
+    def operator_not_equal_to(cls):
+        """
+         #  0      1    2     3     4     5     6     7     8      9
+         #  INT   REAL  SET   CHAR  STR   BOOL  POINT TEXT  ARRAY  NIL
+
+         (row, column, cell)
+         [(0,0,5),(1,1,5),(2,2,5),(3,3,5),(4,4,5),(5,5,5),(6,6,5),(7,7,5),(8,8,5),(6,9,5)]
+
+        """
+        operator = cls("OPERATOR_NOT_EQUAL_TO", "OPERATOR_NOT_EQUAL_TO", "<>")
+        operator._compatible = [(0,0,5),(1,1,5),(2,2,5),(3,3,5),(4,4,5),(5,5,5),(6,6,5),(7,7,5),(8,8,5),(6,9,5)]
+        # operator._as_type = lambda l, r, c: [t for t in c if t[0] == l.index and t[1] == r.index]
+        return operator
+
+    @classmethod
+    def operator_starstar(cls):
+        """
+         #  0      1    2     3     4     5     6     7     8      9
+         #  INT   REAL  SET   CHAR  STR   BOOL  POINT TEXT  ARRAY  NIL
+
+         (row, column, cell)
+         [(0,0,0),(1,0,1)]
+
+        """
+        operator = cls("OPERATOR_STARSTAR", "OPERATOR_STARSTAR", "**")
+        operator._compatible = [(0,0,0),(1,0,1)]
+        # operator._as_type = lambda l, r, c: [t for t in c if t[0] == l.index and t[1] == r.index]
+        return operator
+
+    @classmethod
+    def operator_in(cls):
+        """
+         #  0      1    2     3     4     5     6     7     8      9
+         #  INT   REAL  SET   CHAR  STR   BOOL  POINT TEXT  ARRAY  NIL
+
+         (row, column, cell)
+         [(0,2,5),(3,2,5),(5,2,5)]
+
+        """
+        operator = cls("OPERATOR_IN", "OPERATOR_IN", "IN")
+        operator._compatible = [(0,2,5),(3,2,5),(5,2,5)]
+        # operator._as_type = lambda l, r, c: [t for t in c if t[0] == l.index and t[1] == r.index]
+        return operator
+
+    @classmethod
+    def operator_and(cls):
+        """
+         #  0      1    2     3     4     5     6     7     8      9
+         #  INT   REAL  SET   CHAR  STR   BOOL  POINT TEXT  ARRAY  NIL
+
+         (row, column, cell)
+         [(0,0,0),(5,5,5)]
+
+        """
+        operator = cls("OPERATOR_AND", "OPERATOR_AND", "AND")
+        operator._compatible = [(0,0,0),(5,5,5)]
+        # operator._as_type = lambda l, r, c: [t for t in c if t[0] == l.index and t[1] == r.index]
+        return operator
+
+    @classmethod
+    def operator_or(cls):
+        """
+         #  0      1    2     3     4     5     6     7     8      9
+         #  INT   REAL  SET   CHAR  STR   BOOL  POINT TEXT  ARRAY  NIL
+
+         (row, column, cell)
+         [(0,0,0),(5,5,5)]
+
+        """
+        operator = cls("OPERATOR_OR", "OPERATOR_OR", "OR")
+        operator._compatible = [(0,0,0),(5,5,5)]
+        # operator._as_type = lambda l, r, c: [t for t in c if t[0] == l.index and t[1] == r.index]
+        return operator
+
+    @classmethod
+    def operator_xor(cls):
+        """
+         #  0      1    2     3     4     5     6     7     8      9
+         #  INT   REAL  SET   CHAR  STR   BOOL  POINT TEXT  ARRAY  NIL
+
+         (row, column, cell)
+         [(0,0,0),(5,5,5)]
+
+        """
+        operator = cls("OPERATOR_XOR", "OPERATOR_XOR", "XOR")
+        operator._compatible = [(0,0,0),(5,5,5)]
+        # operator._as_type = lambda l, r, c: [t for t in c if t[0] == l.index and t[1] == r.index]
+        return operator
+
+    @classmethod
+    def operator_lsr(cls):
+        """
+         #  0      1    2     3     4     5     6     7     8      9
+         #  INT   REAL  SET   CHAR  STR   BOOL  POINT TEXT  ARRAY  NIL
+
+         (row, column, cell)
+         [(0,0,0)]
+
+        """
+        operator = cls("OPERATOR_LSR", "OPERATOR_LSR", "LSR")
+        operator._compatible = [(0,0,0)]
+        # operator._as_type = lambda l, r, c: [t for t in c if t[0] == l.index and t[1] == r.index]
+        return operator
+
+    @classmethod
+    def operator_lsl(cls):
+        """
+         #  0      1    2     3     4     5     6     7     8      9
+         #  INT   REAL  SET   CHAR  STR   BOOL  POINT TEXT  ARRAY  NIL
+
+         (row, column, cell)
+         [(0,0,0)]
+
+        """
+        operator = cls("OPERATOR_LSL", "OPERATOR_LSL", "LSL")
+        operator._compatible = [(0,0,0)]
+        # operator._as_type = lambda l, r, c: [t for t in c if t[0] == l.index and t[1] == r.index]
+        return operator
+
+
+    @classmethod
+    def operator_greater_than(cls):
+        """
+         #  0      1    2     3     4     5     6     7     8      9
+         #  INT   REAL  SET   CHAR  STR   BOOL  POINT TEXT  ARRAY  NIL
+
+         (row, column, cell)
+         [(0,0,5),(1,1,5),(3,3,5),(4,4,5),(5,5,5),(0,1,5),(1,0,5)]
+
+        """
+        operator = cls("OPERATOR_GREATER_THAN", "OPERATOR_GREATER_THAN", ">")
+        operator._compatible = [(0,0,5),(1,1,5),(3,3,5),(4,4,5),(5,5,5),(0,1,5),(1,0,5)]
+        # operator._as_type = lambda l, r, c: [t for t in c if t[0] == l.index and t[1] == r.index]
+        return operator
+
+    @classmethod
+    def operator_less_than(cls):
+        """
+         #  0      1    2     3     4     5     6     7     8      9
+         #  INT   REAL  SET   CHAR  STR   BOOL  POINT TEXT  ARRAY  NIL
+
+         (row, column, cell)
+         [(0,0,5),(1,1,5),(3,3,5),(4,4,5),(5,5,5),(0,1,5),(1,0,5)]
+
+        """
+        operator = cls("OPERATOR_LESS_THAN", "OPERATOR_LESS_THAN", "<")
+        operator._compatible = [(0,0,5),(1,1,5),(3,3,5),(4,4,5),(5,5,5),(0,1,5),(1,0,5)]
+        # operator._as_type = lambda l, r, c: [t for t in c if t[0] == l.index and t[1] == r.index]
+        return operator
+
+    @classmethod
+    def operator_greater_or_equal_to(cls):
+        """
+         #  0      1    2     3     4     5     6     7     8      9
+         #  INT   REAL  SET   CHAR  STR   BOOL  POINT TEXT  ARRAY  NIL
+
+         (row, column, cell)
+         [(0,0,5),(1,1,5),(2,2,5),(3,3,5),(4,4,5),(5,5,5),(0,1,5),(1,0,5)]
+
+        """
+        operator = cls("OPERATOR_GREATER_OR_EQUAL_TO", "OPERATOR_GREATER_OR_EQUAL_TO", ">=")
+        operator._compatible = [(0,0,5),(1,1,5),(2,2,5),(3,3,5),(4,4,5),(5,5,5),(0,1,5),(1,0,5)]
+        # operator._as_type = lambda l, r, c: [t for t in c if t[0] == l.index and t[1] == r.index]
+        return operator
+
+    @classmethod
+    def operator_less_or_equal_to(cls):
+        """
+         #  0      1    2     3     4     5     6     7     8      9
+         #  INT   REAL  SET   CHAR  STR   BOOL  POINT TEXT  ARRAY  NIL
+
+         (row, column, cell)
+         [(0,0,5),(1,1,5),(2,2,5),(3,3,5),(4,4,5),(5,5,5),(0,1,5),(1,0,5)]
+
+        """
+        operator = cls("OPERATOR_LESS_OR_EQUAL_TO", "OPERATOR_LESS_OR_EQUAL_TO", "<=")
+        operator._compatible = [(0,0,5),(1,1,5),(2,2,5),(3,3,5),(4,4,5),(5,5,5),(0,1,5),(1,0,5)]
+        # operator._as_type = lambda l, r, c: [t for t in c if t[0] == l.index and t[1] == r.index]
+        return operator
+
+
+class UnaryOperator(Operator):
+
+    """
+    The _compatible list maps to the types in the following order:
+      0    1    2    3     4    5     6      7     8
+     [INT  REAL SET  CHAR  STR  BOOL  POINT  TEXT  ARRAY]
+    """
+
+    def _as_type(self, symbol):
+        """
+        Evaluates an operator using the passed symbol as parameter (operand).
+        returns None if the operator is not compatible with the operand
+        otherwise returns an integer representing the resulting type of the operator execution
+        raises an warning if the operand is not an instance of BaseType.
+        """
+        if not isinstance(symbol, BaseType):
+            _MODULE_LOGGER.warning("symbol '{0}' is not a BaseType.".format(symbol))
+            return None
+        return self._compatible[symbol.index]
+
+    def is_compatible(self, symbol):
+        """
+        Check if an operator is compatible with the symbols passed as parameter (operands).
+        returns False if the operator is not compatible with the operands
+        otherwise returns True
+        raises and exception if the operand is not an instance of Literal or BaseType.
+        """
+        result = self._as_type(symbol)
+        return False if result is None else True
+
+    def evaluate_to_type(self, symbol):
+        """
+        Evaluates an operator using the passed symbols as parameter (operand).
+        returns None if the operator is not compatible with the operand
+        returns an instance of BasicType if the operator is compatible with the operand
+        raises and exception if the operand is not an instance of Literal or BaseType.
+        """
+        result = self._as_type(symbol)
+        if result == 0:
+            return BasicType.reserved_type_integer()
+        if result == 1:
+            return BasicType.reserved_type_real()
+        if result == 2:
+            return BasicType.reserved_type_set()
+        if result == 3:
+            return BasicType.reserved_type_char()
+        if result == 4:
+            return StringType.reserved_type_string()
+        if result == 5:
+            return BasicType.reserved_type_boolean()
+        if result == 6:
+            return PointerType.reserved_type_pointer()
+        if result == 7:
+            return BasicType.reserved_type_text()
+        if result == 8:
+            return BasicType.reserved_type_array()
+        if result == 9:
+            return BasicType.reserved_type_nil()
+        if result == -1:    # action triggered by the UPARROW operator which is basically a de-pointer operation
+            result = symbol.type
+        return result
+
+    @classmethod
+    def operator_not(cls):
+        operator = cls("OPERATOR_NOT", "OPERATOR_NOT", "NOT")
+        #                       0     1     2     3     4     5     6     7     8     9
+        #                       INT   REAL  SET   CHAR  STR   BOOL  POINT TEXT  ARRAY NIL
+        operator._compatible = [None, None, None, None, None, 5  ,  None, None, None, None]
+        return operator
+
+    @classmethod
+    def operator_abs(cls):
+        operator = cls("OPERATOR_ABS", "OPERATOR_ABS", "ABS")
+        #                       0     1     2     3     4     5     6     7     8     9
+        #                       INT   REAL  SET   CHAR  STR   BOOL  POINT TEXT  ARRAY NIL
+        operator._compatible = [0   , 1   , None, None, None, None, None, None, None, None]
+        return operator
+
+    @classmethod
+    def operator_arithmetic_negation(cls):
+        operator = cls("OPERATOR_ARITHMETIC_NEGATION", "OPERATOR_ARITHMETIC_NEGATION", "-")
+        #                       0     1     2     3     4     5     6     7     8     9
+        #                       INT   REAL  SET   CHAR  STR   BOOL  POINT TEXT  ARRAY NIL
+        operator._compatible = [0   , 1,    None, None, None, None, None, None, None, None]
+        return operator
+
+    @classmethod
+    def operator_arithmetic_neutral(cls):
+        operator = cls("OPERATOR_ARITHMETIC_NEUTRAL", "OPERATOR_ARITHMETIC_NEUTRAL", "+")
+        #                       0     1     2     3     4     5     6     7     8     9
+        #                       INT   REAL  SET   CHAR  STR   BOOL  POINT TEXT  ARRAY NIL
+        operator._compatible = [0  ,  1  ,  None, None, None, None, None, None, None, None]
+        return operator
+
+    @classmethod
+    def operator_uparrow(cls):
+        operator = cls("OPERATOR_UPARROW", "OPERATOR_UPARROW", "^")
+        #                       0     1     2     3     4     5     6      7     8     9
+        #                       INT   REAL  SET   CHAR  STR   BOOL  POINT  TEXT  ARRAY NIL
+        operator._compatible = [None, None, None, None, None, None, -1   , None, None, None]
+        return operator

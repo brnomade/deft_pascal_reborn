@@ -5,22 +5,20 @@ DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original D
 HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
-import logging
+from logging import getLogger, DEBUG
 
 from unittest import TestCase
 from components.deft_pascal_compiler import DeftPascalCompiler
 from parameterized import parameterized
-from tests.declarations_test_suit import TestSuit
-
-
+from tests.declarations_test_suit import TestSuit, PositiveLanguageTests
 import os
 import subprocess
 import platform
 
 
-GLB_LOGGER = logging.getLogger(__name__)
+GLB_LOGGER = getLogger(__name__)
+GLB_LOGGER.level = DEBUG
 
-glb_output_filename = "my_scenario_program.c"
 param_remove_file_after_test = True
 
 
@@ -28,6 +26,7 @@ class ConfigurationForTestCodeGenerator:
 
     @classmethod
     def tests_to_run(cls):
+        # return [("scenario_variable_declaration_with_base_types", PositiveLanguageTests.scenario_variable_declaration_with_base_types)]
         return TestSuit.tests_to_run()
 
 
@@ -66,7 +65,9 @@ class TestCodeGenerator(TestCase):
         else:
             gcc_name = "gcc"
         #
-        c_compiler = "{0} -o {1}".format(gcc_name, output_exe)
+        # c_compiler = "{0} -S -c -o {1}".format(gcc_name, output_exe)
+        # c_env = "{0} {1} > {2} 2> {3}".format(c_compiler, input_source, output_out, output_err)
+        c_compiler = "{0} -S -c".format(gcc_name)
         c_env = "{0} {1} > {2} 2> {3}".format(c_compiler, input_source, output_out, output_err)
 
         GLB_LOGGER.debug(c_env)
@@ -84,8 +85,8 @@ class TestCodeGenerator(TestCase):
             file = open(output_out)
             result_out = file.read()
             file.close()
-            if not result_out:
-                GLB_LOGGER.warning("no output from gcc")
+            if result_out:
+                GLB_LOGGER.error(result_out)
             if param_remove_file_after_test:
                 os.remove(output_out)
 
@@ -94,10 +95,13 @@ class TestCodeGenerator(TestCase):
             file = open(output_err)
             result_err = file.read()
             file.close()
-            if not result_err:
-                GLB_LOGGER.warning("no errors from gcc")
+            if result_err:
+                GLB_LOGGER.error(result_err)
             if param_remove_file_after_test:
                 os.remove(output_err)
+
+        if param_remove_file_after_test:
+            os.remove(input_c)
 
         return result_out + result_err
 
@@ -126,22 +130,21 @@ class TestCodeGenerator(TestCase):
         compiler = DeftPascalCompiler(cmoc=False)
         error_log = compiler.check_syntax(source_code)
         if error_log:
-            GLB_LOGGER.error(error_log)
-        self.assertIsNone(error_log)
+            print(error_log)
+        self.assertEqual([], error_log)
         #
         GLB_LOGGER.debug(compiler.ast.pretty())
         #
         error_log = compiler.compile()
         if error_log:
-            GLB_LOGGER.error(error_log)
-        self.assertIsNone(error_log)
+            print(error_log)
+        self.assertEqual([], error_log)
         #
         ic = compiler.intermediate_code
         GLB_LOGGER.debug(ic)
         #
         output_code = compiler.generate()
-        self.assertIsNotNone(output_code)
-
+        #
         home_dir = os.getcwd()
         filepath = os.path.join(home_dir, "output", "sources")
         if not os.path.isdir(filepath):
@@ -158,7 +161,4 @@ class TestCodeGenerator(TestCase):
         output = self.compile_in_gcc(filename)
         self.assertNotIn("error", output)
         self.assertNotIn("warning", output)
-        GLB_LOGGER.debug(output)
         #
-        output = self.run_in_shell(filename)
-        self.assertEqual(0, output.returncode)

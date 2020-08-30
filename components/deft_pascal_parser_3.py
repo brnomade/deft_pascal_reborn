@@ -56,9 +56,9 @@ class DeftPascalParser:
         _constant_list : constant_definition 
                        | constant_definition _constant_list
                   
-        constant_definition : IDENTIFIER OPERATOR_EQUAL_TO _constant_expression _SEMICOLON
+        constant_definition : IDENTIFIER OPERATOR_EQUAL_TO constant_expression _SEMICOLON
         
-        _constant_expression : UNSIGNED_DECIMAL
+        constant_expression : UNSIGNED_DECIMAL
                              | SIGNED_DECIMAL
                              | UNSIGNED_REAL
                              | SIGNED_REAL
@@ -98,22 +98,24 @@ class DeftPascalParser:
                      | RESERVED_TYPE_CHAR
                      | RESERVED_TYPE_INTEGER
                      | RESERVED_TYPE_STRING
+                     | RESERVED_TYPE_STRING LEFT_PARENTHESES UNSIGNED_DECIMAL RIGHT_PARENTHESES
                      | RESERVED_TYPE_TEXT
                      | RESERVED_TYPE_SET
                      | IDENTIFIER
                      | _new_type
 
-        _new_type : _new_pointer_type
-
         // TYPE - POINTER DECLARATION
 
-        _new_pointer_type : UPARROW _domain_type
-        UPARROW : "^"
+        _new_type : _new_pointer_type
+        
+        _new_pointer_type : OPERATOR_UPARROW _domain_type
+        
         _domain_type : RESERVED_TYPE_REAL
                      | RESERVED_TYPE_BOOLEAN
                      | RESERVED_TYPE_CHAR
                      | RESERVED_TYPE_INTEGER
                      | RESERVED_TYPE_STRING
+                     | RESERVED_TYPE_STRING LEFT_PARENTHESES UNSIGNED_DECIMAL RIGHT_PARENTHESES
                      | RESERVED_TYPE_TEXT
                      | RESERVED_TYPE_SET
                      | IDENTIFIER 
@@ -204,7 +206,8 @@ class DeftPascalParser:
 
         assignment_statement : variable_access OPERATOR_ASSIGNMENT expression
 
-        variable_access : IDENTIFIER
+        variable_access : IDENTIFIER 
+                        | variable_access OPERATOR_UPARROW
          
         _boolean_expression : expression 
 
@@ -216,8 +219,8 @@ class DeftPascalParser:
 
         _relop : OPERATOR_EQUAL_TO
                | OPERATOR_NOT_EQUAL_TO
-               | OPERATOR_LESS_THEN
-               | OPERATOR_GREATER_THEN
+               | OPERATOR_LESS_THAN
+               | OPERATOR_GREATER_THAN
                | OPERATOR_LESS_OR_EQUAL_TO
                | OPERATOR_GREATER_OR_EQUAL_TO
                | OPERATOR_IN          
@@ -310,7 +313,6 @@ class DeftPascalParser:
         RESERVED_STATEMENT_WHILE : "while"i
         RESERVED_STATEMENT_BYTE : "byte"i
         RESERVED_STATEMENT_WORD : "word"i
-        RESERVED_STATEMENT_ABS : "abs"i
         RESERVED_STATEMENT_IF : "if"i
         RESERVED_STATEMENT_THEN : "then"i  
         RESERVED_STATEMENT_ELSE : "else"i
@@ -320,9 +322,9 @@ class DeftPascalParser:
         OPERATOR_EQUAL_TO : "="
         OPERATOR_NOT_EQUAL_TO : "<>"
         OPERATOR_GREATER_OR_EQUAL_TO : ">="
-        OPERATOR_GREATER_THEN : ">"
+        OPERATOR_GREATER_THAN : ">"
         OPERATOR_LESS_OR_EQUAL_TO : "<="
-        OPERATOR_LESS_THEN : "<"
+        OPERATOR_LESS_THAN : "<"
         OPERATOR_ASSIGNMENT : ":="
         OPERATOR_OR : "or"i
         OPERATOR_AND : "and"i
@@ -350,6 +352,9 @@ class DeftPascalParser:
         OPERATOR_DIVIDE : "/"
         OPERATOR_MOD : "mod"i
         OPERATOR_DIV : "div"i
+        OPERATOR_ABS : "abs"i
+        OPERATOR_UPARROW : "^"
+
         
         // regular expressions
              
@@ -394,7 +399,11 @@ class DeftPascalParser:
         error_list = []
         try:
             self._ast = self._parser(a_program)
-        except (UnexpectedCharacters, UnexpectedToken) as error:
+        except UnexpectedCharacters as error:
+            msg = "syntax error at line {0} column {1}. unexpected character found. expected {2}".format(error.line, error.column, error.allowed)
+            error_list.append(msg)
+            _MODULE_LOGGER.error(msg)
+        except UnexpectedToken as error:
             msg = "syntax error at line {0} column {1}: expected {2}".format(error.line, error.column, error.expected)
             error_list.append(msg)
             _MODULE_LOGGER.error(msg)

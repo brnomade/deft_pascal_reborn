@@ -10,9 +10,14 @@ from components.symbols.base_symbols import BaseType
 
 class PointerType(BaseType):
 
+    @classmethod
+    def reserved_type_pointer(cls):
+        a_type = cls('POINTER', 'RESERVED_TYPE_POINTER', 'POINTER')
+        return a_type
+
     @property
-    def is_pointer(self):
-        return True
+    def index(self):
+        return 6
 
 
 class CustomType(BaseType):
@@ -24,25 +29,77 @@ class CustomType(BaseType):
 class BasicType(BaseType):
 
     @classmethod
-    def reserved_type_integer(cls, a_scope=None, a_level=None):
-        return cls('INTEGER', a_scope, a_level, 'RESERVED_TYPE_INTEGER', 'INTEGER')
+    def reserved_type_integer(cls):
+        a_type = cls('INTEGER', 'RESERVED_TYPE_INTEGER', 'INTEGER')
+        a_type.index = 0
+        return a_type
 
     @classmethod
-    def reserved_type_real(cls, a_scope=None, a_level=None):
-        return cls('REAL', a_scope, a_level, 'RESERVED_TYPE_REAL', 'REAL')
+    def reserved_type_real(cls):
+        a_type = cls('REAL', 'RESERVED_TYPE_REAL', 'REAL')
+        a_type.index = 1
+        return a_type
 
     @classmethod
-    def reserved_type_boolean(cls, a_scope=None, a_level=None):
-        return cls('BOOLEAN', a_scope, a_level, 'RESERVED_TYPE_BOOLEAN', 'BOOLEAN')
+    def reserved_type_set(cls):
+        a_type = cls('SET', 'RESERVED_TYPE_SET', 'SET')
+        a_type.index = 2
+        return a_type
 
     @classmethod
-    def reserved_type_char(cls, a_scope=None, a_level=None):
-        return cls('CHAR', a_scope, a_level, 'RESERVED_TYPE_CHAR', 'CHAR')
+    def reserved_type_char(cls):
+        a_type = cls('CHAR', 'RESERVED_TYPE_CHAR', 'CHAR')
+        a_type.index = 3
+        return a_type
 
     @classmethod
-    def reserved_type_string(cls, a_scope=None, a_level=None):
-        return cls('STRING', a_scope, a_level, 'RESERVED_TYPE_STRING', 'STRING')
+    def reserved_type_boolean(cls):
+        a_type = cls('BOOLEAN', 'RESERVED_TYPE_BOOLEAN', 'BOOLEAN')
+        a_type.index = 5
+        return a_type
 
     @classmethod
-    def reserved_type_text(cls, a_scope=None, a_level=None):
-        return cls('TEXT', a_scope, a_level, 'RESERVED_TYPE_TEXT', 'TEXT')
+    def reserved_type_text(cls):
+        a_type = cls('TEXT', 'RESERVED_TYPE_TEXT', 'TEXT')
+        a_type.index = 7
+        return a_type
+
+    @classmethod
+    def reserved_type_array(cls):
+        a_type = cls('ARRAY', 'RESERVED_TYPE_ARRAY', 'ARRAY')
+        a_type.index = 8
+        return a_type
+
+    @classmethod
+    def reserved_type_nil(cls):
+        a_type = cls('NIL', 'CONSTANT_NIL', 'NIL')
+        a_type.index = 9
+        return a_type
+
+
+class StringType(BasicType):
+
+    def __str__(self):
+        return "{0}('{1}'|{2}[{5}]|{3}|{4})".format(self.category, self.name, self.type, self.value, self.references, self.dimension)
+
+    def __repr__(self):
+        return "{0}('{1}'|{2}[{5}]|{3}|{4})".format(self.category, self.name, self.type, self.value, self.references, self.dimension)
+
+    def __init__(self, a_name, a_type=None, a_value=None, dimension=80):
+        # 80 is the the default length of strings in DeftPascal
+        # 255 is the maximum length of a string in DeftPascal
+        super().__init__(a_name, a_type, a_value)
+        self._dimension = dimension
+        self.index = 4
+
+    @classmethod
+    def reserved_type_string(cls):
+        return cls('STRING', 'RESERVED_TYPE_STRING', 'STRING')
+
+    @property
+    def dimension(self):
+        return self._dimension
+
+    @dimension.setter
+    def dimension(self, new_dimension):
+        self._dimension = new_dimension

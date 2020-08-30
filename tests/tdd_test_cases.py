@@ -39,7 +39,7 @@ class TDD:
             BEGIN                                    
                REPEAT                                
                  V1 := V1 + 1                      
-               UNTIL V1 + V3 > 10 + 1         
+               UNTIL (V1 + V3) > (10 + 1)         
             END.                                   
         """
         return code

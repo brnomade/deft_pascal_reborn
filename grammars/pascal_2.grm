@@ -150,7 +150,7 @@ type_definition_list : type_definition_list type_definition
  | type_definition
  ;
 
-[DONE]EQUAL
+[DONE]
 type_definition : identifier EQUAL type_denoter semicolon
  ;
 
