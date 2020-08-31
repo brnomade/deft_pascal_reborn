@@ -11,24 +11,22 @@ from parameterized import parameterized
 from tests.declarations_test_suit import TestSuit
 from tests.negative_test_cases import NegativeLanguageTests
 
-# from tests.language_test_cases import PositiveLanguageTests
-
 
 class ConfigurationForTestDeftPascalParser:
 
     @classmethod
     def tests_to_run(cls):
-        return TestSuit.tests_to_run()
+        return TestSuit.positive_tests_to_run()
 
 
 class TestDeftPascalParser(TestCase):
 
     def setUp(self):
-        available_tests = TestSuit.available_tests()
+        available_tests = TestSuit.available_positive_tests()
         selected_tests = ConfigurationForTestDeftPascalParser.tests_to_run()
         if not set(available_tests).issubset(set(selected_tests)):
             msg = "\n\nNot all test scenarios are being run. Review TestSuit class.\n\nDifferences:\n{0}\n\n"
-            GLB_LOGGER.warning(msg.format(set(available_tests)-set(selected_tests)))
+            print(msg.format(set(available_tests)-set(selected_tests)))
 
     @parameterized.expand(ConfigurationForTestDeftPascalParser.tests_to_run())
     def test_positive(self, name, function_callable):
@@ -43,10 +41,21 @@ class TestDeftPascalParser(TestCase):
         self.assertEqual([], error_log)
         print(parser.ast.pretty())
 
-    def test_negative_scenario_any_syntax_error_raises_parser_error(self):
-        source_code = NegativeLanguageTests.scenario_any_syntax_error_raises_parser_error()
+    def test_parser_syntax_error_raises_parser_error_unexpected_token(self):
+        source_code = NegativeLanguageTests.syntax_error_raises_parser_error_unexpected_token()
         if "{{{0}}}" in source_code:
-            source_code = source_code.replace("{{{0}}}", "scenario_any_syntax_error_raises_parser_error")
+            source_code = source_code.replace("{{{0}}}", "syntax_error_raises_parser_error_unexpected_token")
+        #
+        parser = DeftPascalParser()
+        error_log = parser.parse(source_code)
+        if error_log:
+            print(error_log)
+        self.assertNotEqual([], error_log)
+
+    def test_parser_syntax_error_raises_parser_error_unexpected_character(self):
+        source_code = NegativeLanguageTests.syntax_error_raises_parser_error_unexpected_characters()
+        if "{{{0}}}" in source_code:
+            source_code = source_code.replace("{{{0}}}", "syntax_error_raises_parser_error_unexpected_characters")
         #
         parser = DeftPascalParser()
         error_log = parser.parse(source_code)

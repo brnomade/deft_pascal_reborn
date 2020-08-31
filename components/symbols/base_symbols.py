@@ -140,7 +140,6 @@ class BaseType(BaseSymbol):
         else:
             return self.name == other.name and self.type == other.type and self.value == other.value
 
-
     @property
     def index(self):
         return self._index

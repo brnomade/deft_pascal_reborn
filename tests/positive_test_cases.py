@@ -191,7 +191,7 @@ class PositiveLanguageTests:
             C1 = 2 + 2;                                  
             C1a = -1 - 1;                                 
             C1b = +1 + 1;                                 
-            C2 = 1.0 / 1.0;                                
+            C2 = 1.0 / ( 1.0 + 1.0 - 1.0 * 1.0 + (1.0 * 1.0));                                
             C2a = -1.0 / 1.0;                               
             C2b = +1.0 / 1.0;                               
             C3 = 1.0e-12 + 1.0e-12;                            
@@ -202,7 +202,7 @@ class PositiveLanguageTests:
             C4b = &O12 - &O12;                               
             C5 = 'C' + 'B';                                
             C6 = 'C8C8C8C8' + 'C8C8C8C8';                         
-            C7 = True and False or not True;                               
+            C7 = True and (False or not True) and (true and not (true or false));                               
             C8 = False and False or not True;                              
             C9 = Nil;                             
             BEGIN                                   

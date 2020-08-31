@@ -99,26 +99,32 @@ constant_definition : identifier EQUAL cexpression semicolon
 
 /*constant : cexpression ;  /* good stuff! */
 
+[DONE]
 cexpression : csimple_expression
  | csimple_expression relop csimple_expression
  ;
 
+[DONE]
 csimple_expression : cterm
  | csimple_expression addop cterm
  ;
 
+[DONE]
 cterm : cfactor
  | cterm mulop cfactor
  ;
 
+[DONE]
 cfactor : sign cfactor
  | cexponentiation
  ;
 
+[DONE]
 cexponentiation : cprimary
  | cprimary STARSTAR cexponentiation
  ;
 
+[DONE]
 cprimary : identifier
  | LPAREN cexpression RPAREN
  | unsigned_constant
