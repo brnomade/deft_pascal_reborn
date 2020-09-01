@@ -58,25 +58,28 @@ class DeftPascalParser:
                   
         constant_definition : IDENTIFIER OPERATOR_EQUAL_TO constant_expression _SEMICOLON
         
-        constant_expression : constant_simple_expression
-                            | constant_simple_expression _relop constant_simple_expression
+        constant_expression : _constant_simple_expression
+                            | _constant_simple_expression _relop _constant_simple_expression
         
-        constant_simple_expression : constant_term
-                                   | constant_simple_expression _addop constant_term
+        _constant_simple_expression : _constant_term
+                                   | _constant_simple_expression _addop _constant_term
 
-        constant_term : constant_factor
-                      | constant_term _mulop constant_factor
+        _constant_term : _constant_factor
+                       | _constant_term _mulop _constant_factor
               
-        constant_factor : _sign constant_factor
-                        | constant_exponentiation
+        _constant_factor : _sign _constant_factor
+                         | _constant_exponentiation
         
-        constant_exponentiation : constant_primary
-                                | constant_primary OPERATOR_STARSTAR constant_exponentiation
+        _constant_exponentiation : _constant_primary
+                                 | _constant_primary OPERATOR_STARSTAR _constant_exponentiation
          
-        constant_primary : IDENTIFIER
-                         | LEFT_PARENTHESES constant_expression RIGHT_PARENTHESES
-                         | _unsigned_constant
-                         | OPERATOR_NOT constant_primary
+        _constant_primary : constant_access
+                          | _unsigned_constant
+                          | LEFT_PARENTHESES constant_expression RIGHT_PARENTHESES
+                          | OPERATOR_NOT _constant_primary
+
+        constant_access : IDENTIFIER 
+
 
         //constant_expression : UNSIGNED_DECIMAL
         //                     | SIGNED_DECIMAL

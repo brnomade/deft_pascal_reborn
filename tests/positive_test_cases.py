@@ -188,6 +188,7 @@ class PositiveLanguageTests:
         code = """
             PROGRAM {{{0}}};                
             CONST                                   
+            C8 = False and False or not True;                              
             C1 = 2 + 2;                                  
             C1a = -1 - 1;                                 
             C1b = +1 + 1;                                 
@@ -203,7 +204,6 @@ class PositiveLanguageTests:
             C5 = 'C' + 'B';                                
             C6 = 'C8C8C8C8' + 'C8C8C8C8';                         
             C7 = True and (False or not True) and (true and not (true or false));                               
-            C8 = False and False or not True;                              
             C9 = Nil;                             
             BEGIN                                   
             END.                                  
@@ -216,7 +216,7 @@ class PositiveLanguageTests:
             PROGRAM {{{0}}};                
             CONST                                   
             C1 = 2 + 2;                                  
-            C1a = -1 - C2;                                 
+            C1a = -1 - C1;                                 
             C1b = +1 + C1a;                                 
             C2 = 1.0 / C1;                                
             C2a = -1.0 / C2;                               

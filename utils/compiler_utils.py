@@ -181,7 +181,8 @@ def check_type_compatibility(expression):
     #
     compatible = True
     stack = []
-    for index, token in enumerate(convert_to_postfix(expression)):
+    postfix_expression = convert_to_postfix(expression)
+    for token in postfix_expression:
 
         if isinstance(token, Operator):
             symbol_right = stack.pop()

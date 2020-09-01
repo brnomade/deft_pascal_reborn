@@ -52,6 +52,7 @@ class DeftPascalCompiler:
                          "CONSTANT_DEFINITION_PART",
                          "CONSTANT_DEFINITION",
                          "CONSTANT_EXPRESSION",
+                         "CONSTANT_ACCESS",
                          "TYPE_DEFINITION_PART",
                          "TYPE_DEFINITION",
                          "VARIABLE_DECLARATION_PART",
@@ -88,7 +89,7 @@ class DeftPascalCompiler:
         #
         self._error_list = []
         for i in ast.children:
-            self._internal_compile(i)
+            self._internal_compile(i, [])
         #
         return self._error_list
 
@@ -129,6 +130,7 @@ class DeftPascalCompiler:
             return method_to_call(self, action_name, a_tree.children, working_stack)
         else:
             self._log(ERROR, "action '{0}' not yet implemented for tree {1}".format(a_tree.data.upper(), a_tree))
+            return working_stack
 
 
     def _compile_token(self, a_token, working_stack):
@@ -138,9 +140,10 @@ class DeftPascalCompiler:
             return method_to_call(self, action_name, a_token, working_stack)
         else:
             self._log(ERROR, "action '{0}' not yet implemented for token {1}".format(a_token.type.upper(), a_token.value.upper()))
+            return working_stack
 
 
-    def _internal_compile(self, ast, working_stack=[]):
+    def _internal_compile(self, ast, working_stack):
         if isinstance(ast, Tree):
             if len(ast.children) > 0:
                 return self._compile_tree(ast, working_stack)
@@ -164,9 +167,9 @@ class DeftPascalCompiler:
         else:
             msg = "[{0}] incompatible types in expression: {1}"
             self._log(ERROR, msg.format(action_name, expression))
-            assert compatible is None, "received {0}".format(compatible)
+            # assert compatible is None, "received {0}".format(compatible)
 
-        assert compatible is not None or not isinstance(compatible, BasicType), "received {0}".format(compatible)
+        # assert compatible is not None or not isinstance(compatible, BasicType), "received {0}".format(compatible)
 
         return compatible
 
@@ -268,7 +271,7 @@ class DeftPascalCompiler:
         input_list -> BEGIN Tree() Tree() Tree() ... END
         """
         while input_list:
-            self._internal_compile(input_list.pop(0))
+            self._internal_compile(input_list.pop(0), working_stack)
 
 
     def _reserved_structure_begin(self, action_name, input_token, working_stack):
@@ -315,7 +318,7 @@ class DeftPascalCompiler:
         # process declarations
         for constant_definition in input_list:
 
-            self._internal_compile(constant_definition)
+            self._internal_compile(constant_definition, [])
 
         # generate the intermediate code
         self._ic.flush()
@@ -359,8 +362,9 @@ class DeftPascalCompiler:
                 compliant = new_constant.complies_to_type_restrictions()
                 if compliant is None:
                     self._log(WARNING, "[{0}] complex constant expression '{1}' cannot be validated for type compliance during compilation".format(action_name, constant_identifier))
+                    compliant = True
 
-                elif compliant:
+                if compliant:
                     # push the new constant into the symbol_table
                     self._symbol_table.append(new_constant)
 
@@ -386,43 +390,68 @@ class DeftPascalCompiler:
         this is called from other actions and therefore it does not create its own action on the intermediate code
         it also does not need to flush the intermediate code. this will be done in another action.
         """
-        for token in input_list:
-            if isinstance(token, Tree):
-                working_stack = self._internal_compile(token, working_stack)
+        return self._expression(action_name, input_list, working_stack)
+        # for token in input_list:
+        #     if isinstance(token, Tree):
+        #         working_stack = self._internal_compile(token, working_stack)
+        #
+        #     elif isinstance(token, Token):
+        #         """
+        #         on a constant_expression, any element present can only be:
+        #         - a pre-defined ConstantIdentifier or Literal
+        #         - a brand new Literal
+        #         """
+        #         a_symbol = self._symbol_table.retrieve(token.type, equal_level_only=False)
+        #         if a_symbol:
+        #
+        #             if isinstance(a_symbol, ConstantIdentifier) or isinstance(a_symbol, BooleanLiteral) or isinstance(a_symbol, NilLiteral):
+        #                 working_stack.append(a_symbol)
+        #
+        #             else:
+        #                 msg = "[{0}] : invalid symbol '{1}' used in constant definition expression"
+        #                 self._log(ERROR, msg.format(action_name, token.type))
+        #
+        #         else:
+        #
+        #             a_symbol = self._operator_table.retrieve(token.type, equal_level_only=False)
+        #             if a_symbol:
+        #                 working_stack.append(a_symbol)
+        #
+        #             else:
+        #                 if token.type in ["UNSIGNED_DECIMAL", "SIGNED_DECIMAL", "NUMBER_BINARY", "NUMBER_OCTAL",
+        #                                   "NUMBER_HEXADECIMAL", "UNSIGNED_REAL", "SIGNED_REAL"]:
+        #                     a_symbol = NumericLiteral.from_token(token)
+        #                     working_stack.append(a_symbol)
+        #
+        #                 elif token.type in ["CHARACTER", "STRING_VALUE"]:
+        #                     a_symbol = StringLiteral.from_token(token)
+        #                     working_stack.append(a_symbol)
+        #
+        #                 else:
+        #                     msg = "[{0}] invalid symbol '{1}' used in constant definition expression"
+        #                     self._log(ERROR, msg.format(action_name, token.type))
+        #
+        #     else:
+        #         raise NotImplementedError("expected a Token or a Tree but received '{0}'".format(token))
+        #
+        # return working_stack
 
-            elif isinstance(token, Token):
-                """
-                on a constant_expression, any element present can only be:
-                - a pre-defined ConstantIdentifier or Literal
-                - a brand new Literal
-                """
-                a_symbol = self._symbol_table.retrieve(token.type, equal_level_only=False)
-                if a_symbol:
+    def _constant_access(self, action_name, input_list, working_stack):
+        """
+        input_list -> [Token(IDENTIFIER, 'C2')]
+        This method will push the identifier to the expression stack and intermediate code stack
+        """
+        identifier_name = input_list[0].value
 
-                    if isinstance(a_symbol, ConstantIdentifier) or isinstance(a_symbol, BooleanLiteral) or isinstance(a_symbol, NilLiteral):
-                        working_stack.append(a_symbol)
+        # identifier - it must exist in the symbol table
+        identifier_symbol = self._symbol_table.retrieve(identifier_name, equal_level_only=False)
 
-                    else:
-                        msg = "[{0}] : invalid symbol '{1}' used in constant definition expression"
-                        self._log(ERROR, msg.format(action_name, token.type))
+        if identifier_symbol:
+            working_stack.append(identifier_symbol)
 
-                else:
-
-                    if token.type in ["UNSIGNED_DECIMAL", "SIGNED_DECIMAL", "NUMBER_BINARY", "NUMBER_OCTAL",
-                                      "NUMBER_HEXADECIMAL", "UNSIGNED_REAL", "SIGNED_REAL"]:
-                        a_symbol = NumericLiteral.from_token(token)
-                        working_stack.append(a_symbol)
-
-                    elif token.type in ["CHARACTER", "STRING_VALUE"]:
-                        a_symbol = StringLiteral.from_token(token)
-                        working_stack.append(a_symbol)
-
-                    else:
-                        msg = "[{0}] invalid symbol '{1}' used in constant definition expression"
-                        self._log(ERROR, msg.format(action_name, token.type))
-
-            else:
-                raise NotImplementedError("expected a Token or a Tree but received '{0}'".format(token))
+        else:
+            msg = "[{0}] :  Reference to undeclared constant '{1}'"
+            self._log(ERROR, msg.format(action_name, identifier_name))
 
         return working_stack
 
@@ -441,7 +470,7 @@ class DeftPascalCompiler:
         # process declarations
         for variable_declaration in input_list:
 
-            self._internal_compile(variable_declaration)
+            self._internal_compile(variable_declaration, [])
 
         # generate the intermediate code
         self._ic.flush()
@@ -623,34 +652,28 @@ class DeftPascalCompiler:
         # it also does not need to flush the intermediate code. this will be done in another action.
         for token in token_list:
             if isinstance(token, Tree):
-
                 working_stack = self._internal_compile(token, working_stack)
 
             elif isinstance(token, Token):
-
-                # assuming token is an identifier, attempt to retrieve from the symbol table at any level
                 a_symbol = self._symbol_table.retrieve(token.value, equal_level_only=False)
-
                 if not a_symbol:
-                    # attempt to retrieve from the symbol table at any current level but based on token type
+
                     a_symbol = self._symbol_table.retrieve(token.type, equal_level_only=False)
-
                     if not a_symbol:
-                        if token.type in ["UNSIGNED_DECIMAL", "SIGNED_DECIMAL", "NUMBER_BINARY", "NUMBER_OCTAL",
-                                          "NUMBER_HEXADECIMAL", "UNSIGNED_REAL", "SIGNED_REAL"]:
-                            a_symbol = NumericLiteral.from_token(token)
 
-                        elif token.type in ["CHARACTER", "STRING_VALUE"]:
-                            a_symbol = StringLiteral.from_token(token)
+                        a_symbol = self._operator_table.retrieve(token.type, equal_level_only=False)
+                        if not a_symbol:
 
-                        elif token_is_an_operator(token) or token.type in ["LEFT_PARENTHESES", "RIGHT_PARENTHESES"]:
-                            a_symbol = self._operator_table.retrieve(token.type, equal_level_only=False)
-                            if not a_symbol:
-                                raise SystemError("Operator table not working correctly")
+                            if token.type in ["UNSIGNED_DECIMAL", "SIGNED_DECIMAL", "NUMBER_BINARY", "NUMBER_OCTAL",
+                                              "NUMBER_HEXADECIMAL", "UNSIGNED_REAL", "SIGNED_REAL"]:
+                                a_symbol = NumericLiteral.from_token(token)
 
-                        else:
-                            msg = "[{0}] invalid symbol '{1}' used in expression"
-                            self._log(ERROR, msg.format(action_name, token.type))
+                            elif token.type in ["CHARACTER", "STRING_VALUE"]:
+                                a_symbol = StringLiteral.from_token(token)
+
+                            else:
+                                msg = "[{0}] unknown symbol '{1}' used in expression"
+                                self._log(ERROR, msg.format(action_name, token.type))
 
                 working_stack.append(a_symbol)
 
@@ -847,7 +870,7 @@ class DeftPascalCompiler:
         # process declarations
         for type_definition in input_list:
 
-            self._internal_compile(type_definition)
+            self._internal_compile(type_definition, [])
 
         # generate the intermediate code
         self._ic.flush()

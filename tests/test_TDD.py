@@ -17,7 +17,7 @@ class ConfigurationForTestTDD:
 
     @classmethod
     def tdd_tests_to_run(cls):
-        return [(TDD, "tdd_2", TDD.tdd_2)]
+        return [(PositiveLanguageTests, "scenario_constant_declaration_with_identifier_based_expression", PositiveLanguageTests.scenario_constant_declaration_with_identifier_based_expression)]
 
 
 class TestTDD(TestCase):
