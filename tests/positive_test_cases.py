@@ -497,6 +497,7 @@ class PositiveLanguageTests:
             VAR V1 : ^INTEGER;
             BEGIN                                     
              V1 := C1;
+             V1 := NIL;
             END.                                      
         """
         return code

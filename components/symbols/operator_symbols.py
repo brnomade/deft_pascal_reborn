@@ -134,7 +134,7 @@ class BinaryOperator(Operator):
         if result == 8:
             return BasicType.reserved_type_array()
         if result == 9:
-            return BasicType.reserved_type_nil()
+            return BasicType.reserved_type_null()
 
     @classmethod
     def operator_multiply(cls):
@@ -173,11 +173,11 @@ class BinaryOperator(Operator):
          #  INT   REAL  SET   CHAR  STR   BOOL  POINT TEXT  ARRAY  NIL
 
         (row, column, cell)
-        [(0,0,0),(1,1,1),(2,2,2),(4,4,4),(0,1,1),(1,0,1)]
+        [(0,0,0),(1,1,1),(2,2,2),(0,1,1),(1,0,1)]
 
         """
         operator = cls("OPERATOR_MINUS", 'OPERATOR_MINUS', "-")
-        operator._compatible = [(0,0,0),(1,1,1),(2,2,2),(4,4,4),(0,1,1),(1,0,1)]
+        operator._compatible = [(0,0,0),(1,1,1),(2,2,2),(0,1,1),(1,0,1)]
         # operator._as_type = lambda l, r, c: [t for t in c if t[0] == l.index and t[1] == r.index]
         return operator
 
@@ -480,7 +480,7 @@ class UnaryOperator(Operator):
         if result == 8:
             return BasicType.reserved_type_array()
         if result == 9:
-            return BasicType.reserved_type_nil()
+            return BasicType.reserved_type_null()
         if result == -1:    # action triggered by the UPARROW operator which is basically a de-pointer operation
             result = symbol.type
         return result

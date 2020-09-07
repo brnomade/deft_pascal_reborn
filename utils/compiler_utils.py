@@ -6,14 +6,13 @@ HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
 from components.symbols.base_symbols import BaseType
-from components.symbols.type_symbols import PointerType
 from components.symbols.operator_symbols import Operator, UnaryOperator, NeutralOperator, BinaryOperator
-# from components.symbols.identifier_symbols import Identifier
-# from components.symbols.literals_symbols import Literal
-
 import tokenize
 from io import StringIO
 from collections import deque
+import os
+import subprocess
+import platform
 
 import logging
 logger = logging.getLogger(__name__)
@@ -217,3 +216,87 @@ def token_is_an_operator(token):
 #     return an Identifier (i.e. an identifier for anything different than TYPEs) from a parser input_token
 #     """
 #     return Identifier(parser_token.value, context_label, context_level, parser_token.type, parser_token.value)
+
+
+def compile_in_gcc(input_c, remove_file_after_test=True):
+
+    home_dir = os.getcwd()
+
+    mig_dir = "C:\\MinGW\\bin"
+
+    if platform.system() == "Windows":
+        sources_path = "output\\sources"
+        bin_path = "output\\bin"
+        logs_path = "output\\logs"
+    else:
+        sources_path = ""
+        bin_path = ""
+        logs_path = ""
+
+    input_source = os.path.join(home_dir, sources_path, input_c)
+    output_err = os.path.join(home_dir, logs_path, input_c.split(".")[0] + ".err")
+    output_out = os.path.join(home_dir, logs_path, input_c.split(".")[0] + ".out")
+    output_exe = os.path.join(home_dir, bin_path, input_c.split(".")[0] + ".exe")
+    #
+    if platform.system() == "Windows":
+        gcc_name = "gcc.exe"
+    else:
+        gcc_name = "gcc"
+    #
+    # c_compiler = "{0} -S -c -o {1}".format(gcc_name, output_exe)
+    # c_env = "{0} {1} > {2} 2> {3}".format(c_compiler, input_source, output_out, output_err)
+    c_compiler = "{0} -S -c".format(gcc_name)
+    c_env = "{0} {1} > {2} 2> {3}".format(c_compiler, input_source, output_out, output_err)
+
+    print(c_env)
+    #
+    if platform.system() == "Windows":
+        os.chdir(mig_dir)
+    #
+    subprocess.run(c_env, shell=True)
+    #
+    if platform.system() == "Windows":
+        os.chdir(home_dir)
+    #
+    result_out = "error"
+    if os.path.exists(os.path.join(home_dir, output_out)):
+        file = open(output_out)
+        result_out = file.read()
+        file.close()
+        if result_out:
+            print(result_out)
+        if remove_file_after_test:
+            os.remove(output_out)
+
+    result_err = "error"
+    if os.path.exists(os.path.join(home_dir, output_err)):
+        file = open(output_err)
+        result_err = file.read()
+        file.close()
+        if result_err:
+            print(result_err)
+        if remove_file_after_test:
+            os.remove(output_err)
+
+    if remove_file_after_test:
+        os.remove(input_c)
+
+    return result_out + result_err
+
+
+def run_in_shell(c_file_filename):
+    #
+    filename = os.path.basename(c_file_filename)
+    filepath = os.path.dirname(c_file_filename)
+    #
+    filename = filename.split(".")[0] + ".exe"
+    #
+    executable_file = os.path.join(filepath, filename)
+    #
+    msg = "{0} does not exist or cannot be found at {1}"
+    if not os.path.isfile(executable_file):
+        print(msg.format("Compiler executable", executable_file))
+    return subprocess.run(executable_file)
+
+
+

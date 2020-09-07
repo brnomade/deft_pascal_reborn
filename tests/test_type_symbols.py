@@ -87,7 +87,7 @@ class TestBasicType(TestCase):
         self.assertEqual(8, symbol.index)
 
     def test_reserved_type_nil(self):
-        symbol = BasicType.reserved_type_nil()
+        symbol = BasicType.reserved_type_null()
         self.assertEqual('NIL', symbol.name)
         self.assertEqual('CONSTANT_NIL', symbol.type)
         self.assertEqual('NIL', symbol.value)

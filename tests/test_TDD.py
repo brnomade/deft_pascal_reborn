@@ -7,17 +7,19 @@ HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 
 from unittest import TestCase
 from components.deft_pascal_compiler import DeftPascalCompiler
+from utils.compiler_utils import compile_in_gcc
 from tests.negative_test_cases import NegativeLanguageTests
 from tests.positive_test_cases import PositiveLanguageTests
 from tests.example_test_cases import PascalExamples
 from tests.tdd_test_cases import TDD
+import os
 
 
 class ConfigurationForTestTDD:
 
     @classmethod
     def tdd_tests_to_run(cls):
-        return [(PositiveLanguageTests, "scenario_constant_declaration_with_identifier_based_expression", PositiveLanguageTests.scenario_constant_declaration_with_identifier_based_expression)]
+        return [(TDD, "scenario_pointer_variable_assignment_with_constant", PositiveLanguageTests.scenario_pointer_variable_assignment_with_constant)]
 
 
 class TestTDD(TestCase):
@@ -97,16 +99,40 @@ class TestTDD(TestCase):
 
     def _execute_tdd_test(self, source_code):
         compiler = DeftPascalCompiler()
+
+        # test syntax check
         error_log = compiler.check_syntax(source_code)
         if error_log:
             print(error_log)
         else:
             print(compiler.ast.pretty())
         self.assertEqual([], error_log)
-        #
+
+        # test compilation
         error_log = compiler.compile()
         if error_log:
             print(error_log)
         else:
             print(compiler.intermediate_code)
         self.assertEqual([], error_log)
+
+        # test code generation
+        output_code = compiler.generate()
+        home_dir = os.getcwd()
+        filepath = os.path.join(home_dir, "output", "sources")
+
+        if not os.path.isdir(filepath):
+            filepath = home_dir
+        filename = os.path.join(filepath, "{0}.c".format("test_tdd"))
+
+        if output_code:
+            print(output_code)
+            print(filename)
+            file = open(filename, "w")
+            file.write(output_code)
+            file.close()
+        #
+        output = compile_in_gcc(filename, False)
+        self.assertNotIn("error", output)
+        self.assertNotIn("warning", output)
+        #

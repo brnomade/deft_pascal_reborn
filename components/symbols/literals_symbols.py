@@ -15,6 +15,9 @@ class Literal(BaseSymbol):
     def from_value(cls, a_value, a_type_name=None):
         raise NotImplementedError("Must be implemented by Literal subclasses")
 
+    def value_to_c(self):
+        raise NotImplementedError("Must be implemented by Literal subclasses")
+
 
 class BooleanLiteral(Literal):
 
@@ -30,16 +33,22 @@ class BooleanLiteral(Literal):
     def from_value(cls, value, a_type_name=None):
         return cls.true() if str(value).upper() == 'TRUE' else cls.false()
 
+    def value_to_c(self):
+        return "true" if self.value else "false"
+
 
 class NilLiteral(Literal):
 
     @classmethod
     def nil(cls):
-        return cls('CONSTANT_NIL', BasicType.reserved_type_nil(), None)
+        return cls('CONSTANT_NIL', BasicType.reserved_type_null(), None)
 
     @classmethod
     def from_value(cls, a_value, a_type_name=None):
         return cls.nil()
+
+    def value_to_c(self):
+        return "NULL"
 
 
 class NumericLiteral(Literal):
@@ -58,6 +67,22 @@ class NumericLiteral(Literal):
             raise ValueError("'{0}' is incompatible with '{1}'".format(a_type_name, "NumericLiteral"))
         return cls(str(a_value), a_type, a_value)
 
+    def value_to_c(self):
+        if self.type.type == "RESERVED_TYPE_INTEGER":
+            if "&B" in self.value.upper():  # == "NUMBER_BINARY"
+                return "0b{0}".format(self.value.upper().strip("&B"))
+
+            if "&H" in self.value.upper():  # == "NUMBER_HEXADECIMAL"
+                return "0x{0}".format(self.value.upper().strip("&H"))
+
+            if "&O" in self.value.upper():  # == "NUMBER_OCTAL"
+                return "0{0}".format(self.value.upper().strip("&O"))
+
+            return self.value
+
+        if self.type.type == "RESERVED_TYPE_REAL":
+            return self.value
+
 
 class StringLiteral(Literal):
 
@@ -70,3 +95,6 @@ class StringLiteral(Literal):
         else:
             raise ValueError("'{0}' is incompatible with '{1}'".format(a_type_name, "StringLiteral"))
         return cls(str(a_value), a_type, a_value)
+
+    def value_to_c(self):
+        return '\"{0}\"'.format(self.value.strip("'").strip('"'))

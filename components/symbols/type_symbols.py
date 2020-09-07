@@ -19,11 +19,19 @@ class PointerType(BaseType):
     def index(self):
         return 6
 
+    @property
+    def type_to_c(self):
+        return "int"
+
 
 class CustomType(BaseType):
 
     def do_nothing(self):
         pass
+
+    @property
+    def type_to_c(self):
+        return "NOT IMPLEMENTED YET"
 
 
 class BasicType(BaseType):
@@ -71,10 +79,36 @@ class BasicType(BaseType):
         return a_type
 
     @classmethod
-    def reserved_type_nil(cls):
-        a_type = cls('NIL', 'CONSTANT_NIL', 'NIL')
+    def reserved_type_null(cls):
+        a_type = cls('NULL', 'NULL', 'NULL')
         a_type.index = 9
         return a_type
+
+    @property
+    def type_to_c(self):
+        if self.type == "RESERVED_TYPE_INTEGER":
+            return "int"
+
+        if self.type == "RESERVED_TYPE_REAL":
+            return "double"
+
+        if self.type == "RESERVED_TYPE_SET":
+            return "NOT IMPLEMENTED YET"
+
+        if self.type in ["RESERVED_TYPE_CHAR", "RESERVED_TYPE_TEXT"]:
+            return "unsigned char"
+
+        if self.type == "RESERVED_TYPE_BOOLEAN":
+            return "_Bool"
+
+        if self.type == "RESERVED_TYPE_ARRAY":
+            return "NOT IMPLEMENTED YET"
+
+        if self.type == "CONSTANT_NIL":
+            return "int"
+
+        print("translation for BasicType '{0}' not yet implemented".format(self))
+        return self.type
 
 
 class StringType(BasicType):
@@ -103,3 +137,7 @@ class StringType(BasicType):
     @dimension.setter
     def dimension(self, new_dimension):
         self._dimension = new_dimension
+
+    @property
+    def type_to_c(self):
+        return "unsigned char"

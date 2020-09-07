@@ -25,7 +25,7 @@ class TestBinaryOperator(TestCase):
                              BasicType.reserved_type_boolean(),
                              BasicType.reserved_type_text(),
                              BasicType.reserved_type_array(),
-                             BasicType.reserved_type_nil()
+                             BasicType.reserved_type_null()
                              ]
         #
 
@@ -211,7 +211,7 @@ class TestUnaryOperator(TestCase):
                              PointerType.reserved_type_pointer(),
                              BasicType.reserved_type_text(),
                              BasicType.reserved_type_array(),
-                             BasicType.reserved_type_nil()
+                             BasicType.reserved_type_null()
                              ]
         #
 

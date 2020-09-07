@@ -5,8 +5,6 @@ DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original D
 HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
-from logging import getLogger, DEBUG
-
 from unittest import TestCase
 from components.deft_pascal_compiler import DeftPascalCompiler
 from parameterized import parameterized
@@ -16,9 +14,6 @@ import subprocess
 import platform
 
 
-GLB_LOGGER = getLogger(__name__)
-GLB_LOGGER.level = DEBUG
-
 param_remove_file_after_test = True
 
 
@@ -26,18 +21,17 @@ class ConfigurationForTestCodeGenerator:
 
     @classmethod
     def tests_to_run(cls):
-        # return [("scenario_variable_declaration_with_base_types", PositiveLanguageTests.scenario_variable_declaration_with_base_types)]
-        return TestSuit.tests_to_run()
+        return TestSuit.positive_tests_to_run()
 
 
 class TestCodeGenerator(TestCase):
 
     def setUp(self):
-        available_tests = TestSuit.available_tests()
+        available_tests = TestSuit.available_positive_tests()
         selected_tests = ConfigurationForTestCodeGenerator.tests_to_run()
         if not set(available_tests).issubset(set(selected_tests)):
             msg = "\n\nNot all test scenarios are being run. Review TestSuit class.\n\nDifferences:\n{0}\n\n"
-            GLB_LOGGER.warning(msg.format(set(available_tests)-set(selected_tests)))
+            print(msg.format(set(available_tests)-set(selected_tests)))
 
     @staticmethod
     def compile_in_gcc(input_c):
@@ -70,7 +64,7 @@ class TestCodeGenerator(TestCase):
         c_compiler = "{0} -S -c".format(gcc_name)
         c_env = "{0} {1} > {2} 2> {3}".format(c_compiler, input_source, output_out, output_err)
 
-        GLB_LOGGER.debug(c_env)
+        print(c_env)
         #
         if platform.system() == "Windows":
             os.chdir(mig_dir)
@@ -86,7 +80,7 @@ class TestCodeGenerator(TestCase):
             result_out = file.read()
             file.close()
             if result_out:
-                GLB_LOGGER.error(result_out)
+                print(result_out)
             if param_remove_file_after_test:
                 os.remove(output_out)
 
@@ -96,7 +90,7 @@ class TestCodeGenerator(TestCase):
             result_err = file.read()
             file.close()
             if result_err:
-                GLB_LOGGER.error(result_err)
+                print(result_err)
             if param_remove_file_after_test:
                 os.remove(output_err)
 
@@ -117,7 +111,7 @@ class TestCodeGenerator(TestCase):
         #
         msg = "{0} does not exist or cannot be found at {1}"
         if not os.path.isfile(executable_file):
-            GLB_LOGGER.error(msg.format("Compiler executable", executable_file))
+            print(msg.format("Compiler executable", executable_file))
         return subprocess.run(executable_file)
 
 
@@ -133,7 +127,7 @@ class TestCodeGenerator(TestCase):
             print(error_log)
         self.assertEqual([], error_log)
         #
-        GLB_LOGGER.debug(compiler.ast.pretty())
+        print(compiler.ast.pretty())
         #
         error_log = compiler.compile()
         if error_log:
@@ -141,7 +135,7 @@ class TestCodeGenerator(TestCase):
         self.assertEqual([], error_log)
         #
         ic = compiler.intermediate_code
-        GLB_LOGGER.debug(ic)
+        print(ic)
         #
         output_code = compiler.generate()
         #
@@ -152,8 +146,8 @@ class TestCodeGenerator(TestCase):
         filename = os.path.join(filepath, "{0}.c".format(name))
 
         if output_code:
-            GLB_LOGGER.debug(output_code)
-            GLB_LOGGER.debug(filename)
+            print(output_code)
+            print(filename)
             file = open(filename, "w")
             file.write(output_code)
             file.close()

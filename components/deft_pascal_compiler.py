@@ -353,6 +353,9 @@ class DeftPascalCompiler:
                 # check type compatibility
                 constant_type = self._perform_type_check(action_name, expression_stack)
 
+                if constant_type.type == "CONSTANT_NIL":
+                    constant_type = PointerType.reserved_type_pointer()
+
                 g = GenericExpression.from_list(expression_stack)
                 g.type = constant_type
 
@@ -390,51 +393,15 @@ class DeftPascalCompiler:
         this is called from other actions and therefore it does not create its own action on the intermediate code
         it also does not need to flush the intermediate code. this will be done in another action.
         """
+        """
+        FreePascal rule: The compiler must be able to evaluate the expression in a constant declaration at compile time. 
+        This means that most of the functions in the Run-Time library cannot be used in a constant declaration. 
+        Operators such as +, -, *, /, not, and, or, div, mod, ord, chr, sizeof, pi, int, trunc, round, frac, odd can be 
+        used, however.
+        """
+        # TODO: Check the expression to ensure no PROCEDURE OR FUNCTION references are included.
         return self._expression(action_name, input_list, working_stack)
-        # for token in input_list:
-        #     if isinstance(token, Tree):
-        #         working_stack = self._internal_compile(token, working_stack)
-        #
-        #     elif isinstance(token, Token):
-        #         """
-        #         on a constant_expression, any element present can only be:
-        #         - a pre-defined ConstantIdentifier or Literal
-        #         - a brand new Literal
-        #         """
-        #         a_symbol = self._symbol_table.retrieve(token.type, equal_level_only=False)
-        #         if a_symbol:
-        #
-        #             if isinstance(a_symbol, ConstantIdentifier) or isinstance(a_symbol, BooleanLiteral) or isinstance(a_symbol, NilLiteral):
-        #                 working_stack.append(a_symbol)
-        #
-        #             else:
-        #                 msg = "[{0}] : invalid symbol '{1}' used in constant definition expression"
-        #                 self._log(ERROR, msg.format(action_name, token.type))
-        #
-        #         else:
-        #
-        #             a_symbol = self._operator_table.retrieve(token.type, equal_level_only=False)
-        #             if a_symbol:
-        #                 working_stack.append(a_symbol)
-        #
-        #             else:
-        #                 if token.type in ["UNSIGNED_DECIMAL", "SIGNED_DECIMAL", "NUMBER_BINARY", "NUMBER_OCTAL",
-        #                                   "NUMBER_HEXADECIMAL", "UNSIGNED_REAL", "SIGNED_REAL"]:
-        #                     a_symbol = NumericLiteral.from_token(token)
-        #                     working_stack.append(a_symbol)
-        #
-        #                 elif token.type in ["CHARACTER", "STRING_VALUE"]:
-        #                     a_symbol = StringLiteral.from_token(token)
-        #                     working_stack.append(a_symbol)
-        #
-        #                 else:
-        #                     msg = "[{0}] invalid symbol '{1}' used in constant definition expression"
-        #                     self._log(ERROR, msg.format(action_name, token.type))
-        #
-        #     else:
-        #         raise NotImplementedError("expected a Token or a Tree but received '{0}'".format(token))
-        #
-        # return working_stack
+
 
     def _constant_access(self, action_name, input_list, working_stack):
         """

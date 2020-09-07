@@ -49,11 +49,10 @@ class BaseSymbol:
 
 
     def __str__(self):
-        return "{0}('{1}'|{2}|{3}|{4})".format(self.category, self.name, self.type, self.value, self.references)
+        return "\n{0}('{1}'|{2}|{3})".format(self.category, self.name, self.type, self.value)
 
     def __repr__(self):
-        return "{0}('{1}'|{2}|{3}|{4})".format(self.category, self.name, self.type, self.value, self.references)
-
+        return "\n{0}('{1}'|{2}|{3})".format(self.category, self.name, self.type, self.value)
 
     @classmethod
     def from_token(cls, parser_token):
@@ -148,8 +147,9 @@ class BaseType(BaseSymbol):
     def index(self, new_index):
         self._index = new_index
 
-    #def __eq__(self, other):
-    #    return (self._name == other._name) and (self._type == other._type)
+    @property
+    def type_to_c(self):
+        raise NotImplementedError("Must be implemented by BaseType subclasses")
 
 
 class Keyword(BaseSymbol):
@@ -159,6 +159,22 @@ class Keyword(BaseSymbol):
 
 
 class GenericExpression(BaseSymbol):
+
+    def __str__(self):
+        value_str = ""
+        for i in self.value:
+            if i:
+                value_str = value_str + "{0}({1})|".format(i.category, i.name)
+        value_str = value_str.rstrip("|")
+        return "{0}[{1}]".format(self.category, value_str)
+
+    def __repr__(self):
+        value_str = ""
+        for i in self.value:
+            if i:
+                value_str = value_str + "{0}({1})|".format(i.category, i.name)
+        value_str = value_str.rstrip("|")
+        return "{0}[{1}]".format(self.category, value_str)
 
     @classmethod
     def from_list(cls, expression_list):

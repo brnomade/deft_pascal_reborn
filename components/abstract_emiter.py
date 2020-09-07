@@ -66,36 +66,39 @@ class CEmitter(AbstractEmitter):
         self.emit_header_line("#include <stdbool.h>")
         self.emit_header_line("#include <string.h>")
 
-    def emit_constant_definition_part_string(self, in_name, in_type, in_value):
+    def emit_constant_definition_part_string(self, in_name, in_type, dimension):
         """
         CONSTANT_DEFINITION_PART
+        const type variable = expression;
         """
-        line = "const {0} {1} [{2}] = \"{3}\";"
-        self.emit_header_line(line.format(in_type, in_name, len(in_value), in_value))
+        # line = "const {0} {1} [{2}] = \"{3}\";"
+        line = "const {0} {1} [{2}] = "
+        self.emit_header(line.format(in_type, in_name, dimension))
 
-    def emit_constant_definition_part_char(self, in_name, in_type, in_value):
+    def emit_constant_definition_part_char(self, in_name, in_type):
         """
         CONSTANT_DEFINITION_PART
-        const type variable = value;
+        const type variable = expression;
         """
-        line = "const {0} {1} = '{2}';"
-        self.emit_header_line(line.format(in_type, in_name, in_value))
+        line = "const {0} {1} = "
+        self.emit_header(line.format(in_type, in_name))
 
-    def emit_constant_definition_part_pointer(self, in_name, in_type, in_value):
+    def emit_constant_definition_part_pointer(self, in_name, in_type):
         """
         CONSTANT_DEFINITION_PART
-        const type variable = value;
+        const type variable = expression;
         """
-        line = "const {0} *{1} = {2};"
-        self.emit_header_line(line.format(in_type, in_name, in_value))
+        line = "const {0} *{1} = "
+        self.emit_header(line.format(in_type, in_name))
 
-    def emit_constant_definition_part_generic(self, in_name, in_type, in_value):
+    def emit_constant_definition_part_generic(self, in_name, in_type):
         """
         CONSTANT_DEFINITION_PART
-        const type variable = value;
+        const type variable = expression;
         """
-        line = "const {0} {1} = {2};"
-        self.emit_header_line(line.format(in_type, in_name, in_value))
+        line = "const {0} {1} = "
+        self.emit_header(line.format(in_type, in_name))
+
 
     def emit_variable_declaration_part_string(self, in_type, in_name, in_dimension):
         """
