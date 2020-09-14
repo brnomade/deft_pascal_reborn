@@ -19,7 +19,7 @@ class ConfigurationForTestTDD:
 
     @classmethod
     def tdd_tests_to_run(cls):
-        return [(TDD, "scenario_pointer_variable_assignment_with_constant", PositiveLanguageTests.scenario_pointer_variable_assignment_with_constant)]
+        return [(PositiveLanguageTests, "scenario_constant_declaration_with_nil", PositiveLanguageTests.scenario_constant_declaration_with_nil)]
 
 
 class TestTDD(TestCase):

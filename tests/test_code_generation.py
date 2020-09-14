@@ -8,7 +8,7 @@ HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 from unittest import TestCase
 from components.deft_pascal_compiler import DeftPascalCompiler
 from parameterized import parameterized
-from tests.declarations_test_suit import TestSuit, PositiveLanguageTests
+from tests.declarations_test_suit import TestSuit
 import os
 import subprocess
 import platform
@@ -17,105 +17,108 @@ import platform
 param_remove_file_after_test = True
 
 
+def compile_in_gcc(input_c):
+    home_dir = os.getcwd()
+
+    mig_dir = "C:\\MinGW\\bin"
+
+    if platform.system() == "Windows":
+        sources_path = "output\\sources"
+        bin_path = "output\\bin"
+        logs_path = "output\\logs"
+    else:
+        sources_path = ""
+        bin_path = ""
+        logs_path = ""
+
+    input_source = os.path.join(home_dir, sources_path, input_c)
+    output_err = os.path.join(home_dir, logs_path, input_c.split(".")[0] + ".err")
+    output_out = os.path.join(home_dir, logs_path, input_c.split(".")[0] + ".out")
+    output_exe = os.path.join(home_dir, bin_path, input_c.split(".")[0] + ".exe")
+    #
+    if platform.system() == "Windows":
+        gcc_name = "gcc.exe"
+    else:
+        gcc_name = "gcc"
+    #
+    # c_compiler = "{0} -S -c -o {1}".format(gcc_name, output_exe)
+    # c_env = "{0} {1} > {2} 2> {3}".format(c_compiler, input_source, output_out, output_err)
+    c_compiler = "{0} -S -c".format(gcc_name)
+    c_env = "{0} {1} > {2} 2> {3}".format(c_compiler, input_source, output_out, output_err)
+
+    print(c_env)
+    #
+    if platform.system() == "Windows":
+        os.chdir(mig_dir)
+    #
+    subprocess.run(c_env, shell=True)
+    #
+    if platform.system() == "Windows":
+        os.chdir(home_dir)
+    #
+    result_out = "error"
+    if os.path.exists(os.path.join(home_dir, output_out)):
+        file = open(output_out)
+        result_out = file.read()
+        file.close()
+        if result_out:
+            print(result_out)
+        if param_remove_file_after_test:
+            os.remove(output_out)
+
+    result_err = "error"
+    if os.path.exists(os.path.join(home_dir, output_err)):
+        file = open(output_err)
+        result_err = file.read()
+        file.close()
+        if result_err:
+            print(result_err)
+        if param_remove_file_after_test:
+            os.remove(output_err)
+
+    if param_remove_file_after_test:
+        os.remove(input_c)
+
+    return result_out + result_err
+
+
+def run_in_shell(c_file_filename):
+    #
+    filename = os.path.basename(c_file_filename)
+    filepath = os.path.dirname(c_file_filename)
+    #
+    filename = filename.split(".")[0] + ".exe"
+    #
+    executable_file = os.path.join(filepath, filename)
+    #
+    msg = "{0} does not exist or cannot be found at {1}"
+    if not os.path.isfile(executable_file):
+        print(msg.format("Compiler executable", executable_file))
+    return subprocess.run(executable_file)
+
+
 class ConfigurationForTestCodeGenerator:
 
     @classmethod
-    def tests_to_run(cls):
+    def positive_tests_to_run(cls):
         return TestSuit.positive_tests_to_run()
 
+    @classmethod
+    def example_tests_to_run(cls):
+        return TestSuit.example_tests_to_run()
 
-class TestCodeGenerator(TestCase):
+
+class TestGeneratorPositiveScenarios(TestCase):
 
     def setUp(self):
         available_tests = TestSuit.available_positive_tests()
-        selected_tests = ConfigurationForTestCodeGenerator.tests_to_run()
+        selected_tests = ConfigurationForTestCodeGenerator.positive_tests_to_run()
         if not set(available_tests).issubset(set(selected_tests)):
             msg = "\n\nNot all test scenarios are being run. Review TestSuit class.\n\nDifferences:\n{0}\n\n"
             print(msg.format(set(available_tests)-set(selected_tests)))
 
-    @staticmethod
-    def compile_in_gcc(input_c):
 
-        home_dir = os.getcwd()
-
-        mig_dir = "C:\\MinGW\\bin"
-
-        if platform.system() == "Windows":
-            sources_path = "output\\sources"
-            bin_path = "output\\bin"
-            logs_path = "output\\logs"
-        else:
-            sources_path = ""
-            bin_path = ""
-            logs_path = ""
-
-        input_source = os.path.join(home_dir, sources_path, input_c)
-        output_err = os.path.join(home_dir, logs_path, input_c.split(".")[0] + ".err")
-        output_out = os.path.join(home_dir, logs_path, input_c.split(".")[0] + ".out")
-        output_exe = os.path.join(home_dir, bin_path, input_c.split(".")[0] + ".exe")
-        #
-        if platform.system() == "Windows":
-            gcc_name = "gcc.exe"
-        else:
-            gcc_name = "gcc"
-        #
-        # c_compiler = "{0} -S -c -o {1}".format(gcc_name, output_exe)
-        # c_env = "{0} {1} > {2} 2> {3}".format(c_compiler, input_source, output_out, output_err)
-        c_compiler = "{0} -S -c".format(gcc_name)
-        c_env = "{0} {1} > {2} 2> {3}".format(c_compiler, input_source, output_out, output_err)
-
-        print(c_env)
-        #
-        if platform.system() == "Windows":
-            os.chdir(mig_dir)
-        #
-        subprocess.run(c_env, shell=True)
-        #
-        if platform.system() == "Windows":
-            os.chdir(home_dir)
-        #
-        result_out = "error"
-        if os.path.exists(os.path.join(home_dir, output_out)):
-            file = open(output_out)
-            result_out = file.read()
-            file.close()
-            if result_out:
-                print(result_out)
-            if param_remove_file_after_test:
-                os.remove(output_out)
-
-        result_err = "error"
-        if os.path.exists(os.path.join(home_dir, output_err)):
-            file = open(output_err)
-            result_err = file.read()
-            file.close()
-            if result_err:
-                print(result_err)
-            if param_remove_file_after_test:
-                os.remove(output_err)
-
-        if param_remove_file_after_test:
-            os.remove(input_c)
-
-        return result_out + result_err
-
-    @staticmethod
-    def run_in_shell(c_file_filename):
-        #
-        filename = os.path.basename(c_file_filename)
-        filepath = os.path.dirname(c_file_filename)
-        #
-        filename = filename.split(".")[0] + ".exe"
-        #
-        executable_file = os.path.join(filepath, filename)
-        #
-        msg = "{0} does not exist or cannot be found at {1}"
-        if not os.path.isfile(executable_file):
-            print(msg.format("Compiler executable", executable_file))
-        return subprocess.run(executable_file)
-
-
-    @parameterized.expand(ConfigurationForTestCodeGenerator.tests_to_run())
+    @parameterized.expand(ConfigurationForTestCodeGenerator.positive_tests_to_run())
     def test_positive(self, name, function_callable):
         source_code = function_callable()
         if "{{{0}}}" in source_code:
@@ -152,7 +155,60 @@ class TestCodeGenerator(TestCase):
             file.write(output_code)
             file.close()
         #
-        output = self.compile_in_gcc(filename)
+        output = compile_in_gcc(filename)
+        self.assertNotIn("error", output)
+        self.assertNotIn("warning", output)
+
+
+class TestGeneratorExampleScenarios(TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        available_tests = TestSuit.available_example_tests()
+        selected_tests = ConfigurationForTestCodeGenerator.example_tests_to_run()
+        if not set(available_tests).issubset(set(selected_tests)):
+            msg = "\n\nNot all example test scenarios are being run. Review TestSuit class.\n\nDifferences:\n{0}\n\n"
+            print(msg.format(set(available_tests)-set(selected_tests)))
+
+
+    @parameterized.expand(ConfigurationForTestCodeGenerator.example_tests_to_run())
+    def test_examples(self, name, function_callable):
+        source_code = function_callable()
+        if "{{{0}}}" in source_code:
+            source_code = source_code.replace("{{{0}}}", name)
+        #
+        compiler = DeftPascalCompiler(cmoc=False)
+        error_log = compiler.check_syntax(source_code)
+        if error_log:
+            print(error_log)
+        self.assertEqual([], error_log)
+        #
+        print(compiler.ast.pretty())
+        #
+        error_log = compiler.compile()
+        if error_log:
+            print(error_log)
+        self.assertEqual([], error_log)
+        #
+        ic = compiler.intermediate_code
+        print(ic)
+        #
+        output_code = compiler.generate()
+        #
+        home_dir = os.getcwd()
+        filepath = os.path.join(home_dir, "output", "sources")
+        if not os.path.isdir(filepath):
+            filepath = home_dir
+        filename = os.path.join(filepath, "{0}.c".format(name))
+
+        if output_code:
+            print(output_code)
+            print(filename)
+            file = open(filename, "w")
+            file.write(output_code)
+            file.close()
+        #
+        output = compile_in_gcc(filename)
         self.assertNotIn("error", output)
         self.assertNotIn("warning", output)
         #

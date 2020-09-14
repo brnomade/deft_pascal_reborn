@@ -158,11 +158,11 @@ class BinaryOperator(Operator):
          #  INT   REAL  SET   CHAR  STR   BOOL  POINT TEXT  ARRAY  NIL
 
         (row, column, cell)
-        [(0,0,0),(1,1,1),(2,2,2),(3,3,4),(4,4,4),(0,1,1),(1,0,1)]
+        [(0,0,0),(1,1,1),(2,2,2),(3,3,4),(3,4,4),(4,3,4),(4,4,4),(0,1,1),(1,0,1)]
 
         """
         operator = cls("OPERATOR_PLUS", 'OPERATOR_PLUS', "+")
-        operator._compatible = [(0,0,0), (1,1,1), (2,2,2), (3,3,4), (4,4,4), (0,1,1), (1,0,1)]
+        operator._compatible = [(0,0,0), (1,1,1), (2,2,2), (3,3,4), (3,4,4), (4,3,4), (4,4,4), (0,1,1), (1,0,1)]
         # operator._as_type = lambda l, r, c: [t for t in c if t[0] == l.index and t[1] == r.index]
         return operator
 

@@ -157,6 +157,34 @@ class PositiveLanguageTests:
 
 
     @staticmethod
+    def scenario_constant_declaration_with_nil():
+        code = """
+            PROGRAM {{{0}}};                
+            CONST                                   
+            C1 = Nil;                             
+            C2 = C1;
+            BEGIN                                   
+            END.                                  
+        """
+        return code
+
+    @staticmethod
+    def scenario_constant_declaration_with_string():
+        code = """
+            PROGRAM {{{0}}};                
+            CONST                                   
+            C1 = 'C';                                
+            C3 = 'C' + 'B';                                
+            C5 = C1 + C3;                                
+            C2 = 'C8C8C8C8';                         
+            C4 = 'C8C8C8C8' + 'C8C8C8C8';                         
+            C6 = C2 + C4;                         
+            BEGIN                                   
+            END.                                  
+        """
+        return code
+
+    @staticmethod
     def scenario_constant_declaration_with_single_value():
         code = """
             PROGRAM {{{0}}};                
@@ -173,11 +201,8 @@ class PositiveLanguageTests:
             C4 = &HFF;                               
             C4a = &B10;                               
             C4b = &O12;                               
-            C5 = 'C';                                
-            C6 = 'C8C8C8C8';                         
             C7 = True;                               
             C8 = False;                              
-            C9 = Nil;                             
             BEGIN                                   
             END.                                  
         """
@@ -201,10 +226,7 @@ class PositiveLanguageTests:
             C4 = &HFF + &HFF;                               
             C4a = &B10 + &B10;                               
             C4b = &O12 - &O12;                               
-            C5 = 'C' + 'B';                                
-            C6 = 'C8C8C8C8' + 'C8C8C8C8';                         
             C7 = True and (False or not True) and (true and not (true or false));                               
-            C9 = Nil;                             
             BEGIN                                   
             END.                                  
         """
@@ -226,12 +248,11 @@ class PositiveLanguageTests:
             C3b = 1.0e12 / 1.0e-12;                            
             C4 = &HFF + &HFF;                               
             C4a = &B10 + &B10;                               
-            C4b = &O12 - &O12;                               
-            C5 = 'C' + 'B';                                
-            C6 = 'C8C8C8C8' + 'C8C8C8C8';                         
-            C7 = True and False or not True;                               
-            C8 = False and False or not True;                              
-            C9 = Nil;                             
+            C4b = &O12 - &O12;      
+            C6 = True;
+            C7 = False;                         
+            C8 = C6 and C7 or not C6;                               
+            C9 = C7 and C7 or not (C6 OR C7) and C8;                              
             BEGIN                                   
             END.                                  
         """
