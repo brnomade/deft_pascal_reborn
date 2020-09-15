@@ -359,12 +359,17 @@ class DeftPascalCompiler:
                 g = GenericExpression.from_list(expression_stack)
                 g.type = constant_type
 
-                new_constant = ConstantIdentifier(constant_identifier, constant_type, g)
+                if g.cardinality > 1 and (g.type.type in ["RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING"]):
+                    self._log(ERROR, "[{0}] string based constant expressions are not supported: {1}".format(action_name, g))
+                    g.trim_cardinality_down()
+
+                # new_constant = ConstantIdentifier(constant_identifier, g.type, g)
+                new_constant = ConstantIdentifier(constant_identifier, g)
 
                 # constant - its value must not exceed the types available in the target environment
                 compliant = new_constant.complies_to_type_restrictions()
                 if compliant is None:
-                    self._log(WARNING, "[{0}] complex constant expression '{1}' cannot be validated for type compliance during compilation".format(action_name, constant_identifier))
+                    self._log(WARNING, "[{0}] constant expression '{1}' cannot be validated at compilation".format(action_name, constant_identifier))
                     compliant = True
 
                 if compliant:

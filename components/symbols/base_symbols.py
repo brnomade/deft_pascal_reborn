@@ -179,3 +179,11 @@ class GenericExpression(BaseSymbol):
     @classmethod
     def from_list(cls, expression_list):
         return cls('GENERIC_EXPRESSION', 'GENERIC_EXPRESSION', expression_list)
+
+    @property
+    def cardinality(self):
+        return len(self.value) if self.value else None
+
+    def trim_cardinality_down(self):
+        self.value = self.value[:1]
+        self.type = self.value[-1].type

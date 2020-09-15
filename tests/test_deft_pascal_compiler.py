@@ -59,7 +59,7 @@ class TestCompilerPositiveScenarios(TestCase):
             print(error_log)
         self.assertEqual([], error_log)
         #
-        GLB_LOGGER.debug(compiler.ast.pretty())
+        # GLB_LOGGER.debug(compiler.ast.pretty())
         #
         error_log = compiler.compile()
         if error_log:
@@ -123,7 +123,7 @@ class TestCompilerExampleScenarios(TestCase):
             print(error_log)
         self.assertEqual([], error_log)
         #
-        GLB_LOGGER.debug(compiler.ast.pretty())
+        # GLB_LOGGER.debug(compiler.ast.pretty())
         #
         error_log = compiler.compile()
         if error_log:

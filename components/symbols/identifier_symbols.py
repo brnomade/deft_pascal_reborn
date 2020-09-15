@@ -16,8 +16,8 @@ class Identifier(BaseIdentifier):
 
 class ConstantIdentifier(BaseIdentifier):
 
-    def do_nothing(self):
-        pass
+    def __init__(self, a_name, an_expression):
+        super().__init__(a_name, an_expression.type, an_expression)
 
     def complies_to_type_restrictions(self):
         """
@@ -38,27 +38,27 @@ class ConstantIdentifier(BaseIdentifier):
          - None if the expression is complex
          - True or False if the expression is simple
         """
-        expression_is_complex = len(self.value.value) > 1
-        #
+        expression_is_complex = self.value.cardinality > 1
         if expression_is_complex:
             return None
 
-        else:
-            value_to_check = self.value.value[0].value
-            valid = True
-            if self.type.type == "RESERVED_TYPE_INTEGER":
-                value_to_check = value_to_check.upper()
-                if "&B" in value_to_check:     # == "NUMBER_BINARY"
-                    valid = 0 <= int(value_to_check.replace("&B", "0b"), 2) <= 65535
-                elif "&H" in value_to_check:   # == "NUMBER_HEXADECIMAL"
-                    valid = 0 <= int(value_to_check.replace("&H", "0x"), 16) <= 65535
-                elif "&O" in value_to_check:   # == "NUMBER_OCTAL"
-                    valid = 0 <= int(value_to_check.replace("&O", "0o"), 8) <= 65535
-                else:
-                    valid = (0 <= int(value_to_check) <= 65535) or (-32768 <= int(value_to_check) <= 32767)
-            elif self.type.type in ["RESERVED_TYPE_STRING", "STRING_VALUE"]:
-                valid = len(value_to_check) <= 80
-            return valid
+        if self.value.value[0].category == "ConstantIdentifier":
+            return self.value.value[0].complies_to_type_restrictions()
+
+        valid = True
+        if self.type.type == "RESERVED_TYPE_INTEGER":
+            value_to_check = self.value.value[0].value.upper()
+            if "&B" in value_to_check:     # == "NUMBER_BINARY"
+                valid = 0 <= int(value_to_check.replace("&B", "0b"), 2) <= 65535
+            elif "&H" in value_to_check:   # == "NUMBER_HEXADECIMAL"
+                valid = 0 <= int(value_to_check.replace("&H", "0x"), 16) <= 65535
+            elif "&O" in value_to_check:   # == "NUMBER_OCTAL"
+                valid = 0 <= int(value_to_check.replace("&O", "0o"), 8) <= 65535
+            else:
+                valid = (0 <= int(value_to_check) <= 65535) or (-32768 <= int(value_to_check) <= 32767)
+        elif self.type.type in ["RESERVED_TYPE_STRING", "STRING_VALUE"]:
+            valid = self.value.value[0].length <= 80
+        return valid
 
 
 class PointerIdentifier(BaseIdentifier):

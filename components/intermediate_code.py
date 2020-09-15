@@ -283,8 +283,9 @@ class IntermediateCode:
         example:
         [ ConstantIdentifier('C1'|BasicType(RESERVED_TYPE_INTEGER)|GenericExpression('GENERIC_EXPRESSION'|BasicType(RESERVED_TYPE_INTEGER)|[NumericLiteral('&B00'|BasicType(RESERVED_TYPE_INTEGER)|&B00|[])]|[])|[]),
           ConstantIdentifier('C2'|BasicType(RESERVED_TYPE_INTEGER)|GenericExpression('GENERIC_EXPRESSION'|BasicType(RESERVED_TYPE_INTEGER)|[NumericLiteral('&b11'|BasicType(RESERVED_TYPE_INTEGER)|&b11|[])]|[])|[]),
-          ConstantIdentifier('C3'|BasicType(RESERVED_TYPE_INTEGER)|GenericExpression('GENERIC_EXPRESSION'|BasicType(RESERVED_TYPE_INTEGER)|[NumericLiteral('&B101010101010'|BasicType(RESERVED_TYPE_INTEGER)|&B101010101010|[])]|[])|[]),
-          ConstantIdentifier('C4'|BasicType(RESERVED_TYPE_INTEGER)|GenericExpression('GENERIC_EXPRESSION'|BasicType(RESERVED_TYPE_INTEGER)|[NumericLiteral('&b101010101010'|BasicType(RESERVED_TYPE_INTEGER)|&b101010101010|[])]|[])|[])
+          ConstantIdentifier('C1'|BasicType(RESERVED_TYPE_CHAR)|GenericExpression[StringLiteral('C')]),
+          ConstantIdentifier('C3'|StringType(RESERVED_TYPE_STRING[80])|GenericExpression[StringLiteral('C')|BinaryOperator(OPERATOR_PLUS)|StringLiteral('B')]),
+          ConstantIdentifier('C5'|StringType(RESERVED_TYPE_STRING[80])|GenericExpression[ConstantIdentifier(C1)|BinaryOperator(OPERATOR_PLUS)|ConstantIdentifier(C3)])
         ]
         """
         for token in token_list:

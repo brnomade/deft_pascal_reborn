@@ -169,16 +169,26 @@ class PositiveLanguageTests:
         return code
 
     @staticmethod
-    def scenario_constant_declaration_with_string():
+    def scenario_constant_declaration_with_string_literal():
         code = """
             PROGRAM {{{0}}};                
             CONST                                   
             C1 = 'C';                                
-            C3 = 'C' + 'B';                                
-            C5 = C1 + C3;                                
             C2 = 'C8C8C8C8';                         
-            C4 = 'C8C8C8C8' + 'C8C8C8C8';                         
-            C6 = C2 + C4;                         
+            BEGIN                                   
+            END.                                  
+        """
+        return code
+
+    @staticmethod
+    def scenario_constant_declaration_with_string_constant():
+        code = """
+            PROGRAM {{{0}}};                
+            CONST                                   
+            C1 = 'C';                                
+            C5 = C1;                                
+            C2 = 'C8C8C8C8';                         
+            C6 = C2;                         
             BEGIN                                   
             END.                                  
         """

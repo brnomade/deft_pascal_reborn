@@ -173,6 +173,54 @@ class NegativeLanguageTests:
         return code
 
     @staticmethod
+    def scenario_string_based_constant_expression_raises_compiler_error_scenario_char_literals():
+        code = ("not supported", """
+            PROGRAM {{{0}}};                
+            CONST                                   
+            C3 = 'C' + 'B';                                
+            BEGIN                                   
+            END.                                  
+        """)
+        return code
+
+    @staticmethod
+    def scenario_string_based_constant_expression_raises_compiler_error_scenario_strings_literals():
+        code = ("not supported", """
+            PROGRAM {{{0}}};                
+            CONST                                   
+            C4 = 'C8C8C8C8' + 'C8C8C8C8';                         
+            BEGIN                                   
+            END.                                  
+        """)
+        return code
+
+    @staticmethod
+    def scenario_string_based_constant_expression_raises_compiler_error_scenario_string_constants():
+        code = ("not supported", """
+            PROGRAM {{{0}}};                
+            CONST                                   
+            C1 = 'C';                                
+            C2 = 'BBBBBBBB';                                
+            C3 = C1 + C2;                                
+            BEGIN                                   
+            END.                                  
+        """)
+        return code
+
+    @staticmethod
+    def scenario_string_based_constant_expression_raises_compiler_error_scenario_string_constants_reversed_order():
+        code = ("not supported", """
+            PROGRAM {{{0}}};                
+            CONST                                   
+            C1 = 'C';                                
+            C2 = 'BBBBBBBB';                                
+            C3 = C2 + C1;                                
+            BEGIN                                   
+            END.                                  
+        """)
+        return code
+
+    @staticmethod
     def scenario_variable_identifier_already_declared_raises_compiler_error():
         code = ("already declared", """
             PROGRAM {{{0}}};        

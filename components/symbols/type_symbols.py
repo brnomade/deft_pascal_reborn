@@ -114,10 +114,10 @@ class BasicType(BaseType):
 class StringType(BasicType):
 
     def __str__(self):
-        return "{0}('{1}'|{2}[{5}]|{3}|{4})".format(self.category, self.name, self.type, self.value, self.references, self.dimension)
+        return "{0}({1}[{2}])".format(self.category, self.type, self.dimension)
 
     def __repr__(self):
-        return "{0}('{1}'|{2}[{5}]|{3}|{4})".format(self.category, self.name, self.type, self.value, self.references, self.dimension)
+        return "{0}({1}[{2}])".format(self.category, self.type, self.dimension)
 
     def __init__(self, a_name, a_type=None, a_value=None, dimension=80):
         # 80 is the the default length of strings in DeftPascal

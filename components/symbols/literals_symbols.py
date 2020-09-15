@@ -97,4 +97,13 @@ class StringLiteral(Literal):
         return cls(str(a_value), a_type, a_value)
 
     def value_to_c(self):
-        return '\"{0}\"'.format(self.value.strip("'").strip('"'))
+        if self.type.type == "RESERVED_TYPE_STRING":
+            return '\"{0}\"'.format(self.value.strip("'").strip('"'))
+        elif self.type.type == "RESERVED_TYPE_CHAR":
+            return "\'{0}\'".format(self.value.strip("'").strip('"'))
+        else:
+            raise NotImplementedError("Unknown type for {0}".format(self))
+
+    @property
+    def length(self):
+        return len(self.value)
