@@ -5,15 +5,15 @@ DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original D
 HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
-from components.symbols.literals_symbols import *
-from components.symbols.type_symbols import *
+from components.symbols.base_symbols import BaseOperator, BaseType
+from components.symbols.type_symbols import BasicType, StringType, PointerType
 import logging
 
 
 _MODULE_LOGGER = logging.getLogger(__name__)
 
 
-class Operator(BaseSymbol):
+class Operator(BaseOperator):
 
     def __init__(self, *args, **kwargs):
         #

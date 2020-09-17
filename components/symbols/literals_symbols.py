@@ -15,6 +15,7 @@ class Literal(BaseSymbol):
     def from_value(cls, a_value, a_type_name=None):
         raise NotImplementedError("Must be implemented by Literal subclasses")
 
+    @property
     def value_to_c(self):
         raise NotImplementedError("Must be implemented by Literal subclasses")
 
@@ -33,6 +34,7 @@ class BooleanLiteral(Literal):
     def from_value(cls, value, a_type_name=None):
         return cls.true() if str(value).upper() == 'TRUE' else cls.false()
 
+    @property
     def value_to_c(self):
         return "true" if self.value else "false"
 
@@ -47,6 +49,7 @@ class NilLiteral(Literal):
     def from_value(cls, a_value, a_type_name=None):
         return cls.nil()
 
+    @property
     def value_to_c(self):
         return "NULL"
 
@@ -67,6 +70,7 @@ class NumericLiteral(Literal):
             raise ValueError("'{0}' is incompatible with '{1}'".format(a_type_name, "NumericLiteral"))
         return cls(str(a_value), a_type, a_value)
 
+    @property
     def value_to_c(self):
         if self.type.type == "RESERVED_TYPE_INTEGER":
             if "&B" in self.value.upper():  # == "NUMBER_BINARY"
@@ -96,9 +100,10 @@ class StringLiteral(Literal):
             raise ValueError("'{0}' is incompatible with '{1}'".format(a_type_name, "StringLiteral"))
         return cls(str(a_value), a_type, a_value)
 
+    @property
     def value_to_c(self):
         if self.type.type == "RESERVED_TYPE_STRING":
-            return '\"{0}\"'.format(self.value.strip("'").strip('"'))
+            return '\"{0}\"'.format(self.value.lstrip("'").rstrip("'"))
         elif self.type.type == "RESERVED_TYPE_CHAR":
             return "\'{0}\'".format(self.value.strip("'").strip('"'))
         else:

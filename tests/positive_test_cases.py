@@ -484,7 +484,7 @@ class PositiveLanguageTests:
              V9 : INTEGER;                             
              V10 : INTEGER;                           
              V12 : REAL;                             
-            BEGIN                                    
+            BEGIN                   
              V1 := -2;                                
              V2 := False;                             
              V3 := 'C';                              
@@ -494,7 +494,7 @@ class PositiveLanguageTests:
              V8 := &HFF;                             
              V9 := &B10;                             
              V10 := &O11;                            
-             V12 := -1.1E-23;                        
+             V12 := -1.1E-23;                         
             END.                                   
         """
         return code
@@ -690,10 +690,10 @@ class PositiveLanguageTests:
     def scenario_for_to_loop_without_begin_end():
         code = """
             PROGRAM {{{0}}};                 
-            VAR V1 : INTEGER;                            
+            VAR V1, V2 : INTEGER;                            
             BEGIN                                        
                FOR V1 := 1 TO 10 DO                       
-                  WRITELN(V1);                                   
+                  V1 := V2;                                   
             END.                                       
         """
         return code
@@ -727,10 +727,10 @@ class PositiveLanguageTests:
     def scenario_for_downto_loop_without_begin_end():
         code = """
             PROGRAM {{{0}}};                 
-            VAR V1 : INTEGER;                            
+            VAR V1, V2 : INTEGER;                            
             BEGIN                                        
                FOR V1 := 1 TO 10 DO                       
-                  WRITELN(V1);                                   
+                  V1 := V2;                                   
             END.             
         """
         return code

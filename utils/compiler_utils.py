@@ -5,7 +5,7 @@ DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original D
 HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
-from components.symbols.base_symbols import BaseType
+# from components.symbols.base_symbols import BaseType
 from components.symbols.operator_symbols import Operator, UnaryOperator, NeutralOperator, BinaryOperator
 import tokenize
 from io import StringIO
@@ -173,38 +173,38 @@ def convert_to_postfix(expression):
 #        return glb_compatibility_matrix[operator_name]
 
 
-def check_type_compatibility(expression):
-    """
-    expression - is a list of tokens.
-    """
-    #
-    compatible = True
-    stack = []
-    postfix_expression = convert_to_postfix(expression)
-    for token in postfix_expression:
-
-        if isinstance(token, Operator):
-            symbol_right = stack.pop()
-            symbol_right = symbol_right if isinstance(symbol_right, BaseType) else symbol_right.type
-
-            if isinstance(token, UnaryOperator):
-                result = token.evaluate_to_type(symbol_right)
-
-            elif isinstance(token, BinaryOperator):
-                symbol_left = stack.pop()
-                symbol_left = symbol_left if isinstance(symbol_left, BaseType) else symbol_left.type
-                result = token.evaluate_to_type(symbol_right=symbol_right, symbol_left=symbol_left)
-
-            if result:
-                stack.append(result)
-
-            else:
-                return None
-
-        else:
-            stack.append(token)
-
-    return stack[-1]
+# def check_type_compatibility(expression):
+#     """
+#     expression - is a list of tokens.
+#     """
+#     #
+#     compatible = True
+#     stack = []
+#     postfix_expression = convert_to_postfix(expression)
+#     for token in postfix_expression:
+#
+#         if isinstance(token, Operator):
+#             symbol_right = stack.pop()
+#             symbol_right = symbol_right if isinstance(symbol_right, BaseType) else symbol_right.type
+#
+#             if isinstance(token, UnaryOperator):
+#                 result = token.evaluate_to_type(symbol_right)
+#
+#             elif isinstance(token, BinaryOperator):
+#                 symbol_left = stack.pop()
+#                 symbol_left = symbol_left if isinstance(symbol_left, BaseType) else symbol_left.type
+#                 result = token.evaluate_to_type(symbol_right=symbol_right, symbol_left=symbol_left)
+#
+#             if result:
+#                 stack.append(result)
+#
+#             else:
+#                 return None
+#
+#         else:
+#             stack.append(token)
+#
+#     return stack[-1]
 
 
 def token_is_an_operator(token):

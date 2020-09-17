@@ -6,7 +6,7 @@ HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
 from unittest import TestCase
-from components.symbols.base_symbols import BaseSymbol, BaseIdentifier, BaseType, Keyword, GenericExpression
+from components.symbols.base_symbols import BaseSymbol, BaseIdentifier, BaseType, BaseKeyword, BaseExpression
 from components.symbols.literals_symbols import Literal
 from lark import Token
 
@@ -128,18 +128,18 @@ class TestBaseType(TestCase):
 class TestKeyword(TestCase):
 
     def test_is_instance(self):
-        symbol = Keyword("keyword")
-        self.assertIsInstance(symbol, Keyword)
+        symbol = BaseKeyword("keyword")
+        self.assertIsInstance(symbol, BaseKeyword)
 
 
 class TestGenericExpression(TestCase):
 
     def test_is_instance(self):
-        symbol = GenericExpression("generic")
-        self.assertIsInstance(symbol, GenericExpression)
+        symbol = BaseExpression("generic")
+        self.assertIsInstance(symbol, BaseExpression)
 
     def test_from_list(self):
-        symbol = GenericExpression.from_list([1,2,3])
+        symbol = BaseExpression.from_list([1, 2, 3])
         self.assertEqual([1,2,3], symbol.value)
         self.assertEqual('GENERIC_EXPRESSION', symbol.name)
         self.assertEqual('GENERIC_EXPRESSION', symbol.type)

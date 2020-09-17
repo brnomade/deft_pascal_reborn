@@ -6,6 +6,7 @@ HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
 from lark import Token
+from collections import deque
 
 
 class BaseSymbol:
@@ -49,10 +50,10 @@ class BaseSymbol:
 
 
     def __str__(self):
-        return "\n{0}('{1}'|{2}|{3})".format(self.category, self.name, self.type, self.value)
+        return "{0}('{1}'|{2}|{3})".format(self.category, self.name, self.type, self.value)
 
     def __repr__(self):
-        return "\n{0}('{1}'|{2}|{3})".format(self.category, self.name, self.type, self.value)
+        return "{0}('{1}'|{2}|{3})".format(self.category, self.name, self.type, self.value)
 
     @classmethod
     def from_token(cls, parser_token):
@@ -121,6 +122,12 @@ class BaseIdentifier(BaseSymbol):
         pass
 
 
+class BaseOperator(BaseSymbol):
+
+    def do_nothing(self):
+        pass
+
+
 class BaseType(BaseSymbol):
 
     def __init__(self, *args, **kwargs):
@@ -152,13 +159,13 @@ class BaseType(BaseSymbol):
         raise NotImplementedError("Must be implemented by BaseType subclasses")
 
 
-class Keyword(BaseSymbol):
+class BaseKeyword(BaseSymbol):
 
     def do_nothing(self):
         pass
 
 
-class GenericExpression(BaseSymbol):
+class BaseExpression(BaseSymbol):
 
     def __str__(self):
         value_str = ""
@@ -176,9 +183,88 @@ class GenericExpression(BaseSymbol):
         value_str = value_str.rstrip("|")
         return "{0}[{1}]".format(self.category, value_str)
 
+    def _infix_to_postfix(self):
+        stack = deque()
+        infix_tokens = self.value.copy()
+        postfix_tokens = []
+        lp = BaseOperator("LEFT_PARENTHESES", 'LEFT_PARENTHESES', "(")
+        rp = BaseOperator("RIGHT_PARENTHESES", 'RIGHT_PARENTHESES', ")")
+
+        stack.appendleft(lp)
+        infix_tokens.append(rp)
+
+        while infix_tokens:
+            token = infix_tokens.pop(0)
+
+            if token.value == lp.value:
+                stack.appendleft(token)
+
+            elif token.value == rp.value:
+
+                while not stack[0].value == lp.value:       # peek at topmost item in the stack
+                    postfix_tokens.append(stack.popleft())
+                stack.popleft()
+
+            elif token.category == "BinaryOperator" or token.category == "UnaryOperator":
+
+                # while stack and self.precedence_rules[stack[0].type] >= self.precedence_rules[token.type]:
+                while stack and stack[0].precedence >= token.precedence:
+                    postfix_tokens.append(stack.popleft())
+                stack.appendleft(token)
+
+            else:
+                postfix_tokens.append(token)
+        return postfix_tokens
+
+    def _evaluate_to_type(self):
+        """
+        expression - is a list of tokens.
+        """
+        #
+        compatible = True
+        stack = []
+        postfix_expression = self._infix_to_postfix()
+        for token in postfix_expression:
+
+            if isinstance(token, BaseOperator):
+                symbol_right = stack.pop()
+                symbol_right = symbol_right if isinstance(symbol_right, BaseType) else symbol_right.type
+
+                if token.category == "UnaryOperator":
+                    # if isinstance(token, operator_symbols.UnaryOperator):
+                    result = token.evaluate_to_type(symbol_right)
+
+                elif token.category == "BinaryOperator":
+                    # elif isinstance(token, BinaryOperator):
+                    symbol_left = stack.pop()
+                    symbol_left = symbol_left if isinstance(symbol_left, BaseType) else symbol_left.type
+                    result = token.evaluate_to_type(symbol_right=symbol_right, symbol_left=symbol_left)
+
+                if result:
+                    stack.append(result)
+
+                else:
+                    return None
+
+            else:
+                stack.append(token)
+
+        return stack[-1] if isinstance(stack[-1], BaseType) else stack[-1].type
+
     @classmethod
     def from_list(cls, expression_list):
-        return cls('GENERIC_EXPRESSION', 'GENERIC_EXPRESSION', expression_list)
+        """
+        :return: None if the expression_list contains incompatible types
+        :return: an instance of GenericExpression if the expression_list contains compatible_types.
+                The returned GenericExpression is of the type of expression_list evaluation.
+        """
+        expression = BaseExpression(None, None, expression_list)
+        result = expression._evaluate_to_type()
+        if result:
+            expression.type = result
+            return expression
+        else:
+            return None
 
     @property
     def cardinality(self):
@@ -187,3 +273,18 @@ class GenericExpression(BaseSymbol):
     def trim_cardinality_down(self):
         self.value = self.value[:1]
         self.type = self.value[-1].type
+
+    @property
+    def type(self):
+        if self._type is None:
+            return None
+        else:
+            return self._type.type if isinstance(self._type, BaseType) else self.type
+
+    @type.setter
+    def type(self, new_type):
+        self._type = new_type
+
+    @property
+    def native_type(self):
+        return self._type

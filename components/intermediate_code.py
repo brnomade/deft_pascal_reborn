@@ -6,7 +6,7 @@ HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
 from components.abstract_emiter import CEmitter, CMOCEmitter
-from components.symbols.base_symbols import BaseSymbol, Keyword, BaseType, GenericExpression
+from components.symbols.base_symbols import BaseSymbol, BaseKeyword, BaseType, BaseExpression
 from components.symbols.operator_symbols import Operator
 from components.symbols.type_symbols import PointerType, BasicType, StringType
 from components.symbols.identifier_symbols import Identifier, PointerIdentifier, ConstantIdentifier
@@ -289,22 +289,27 @@ class IntermediateCode:
         ]
         """
         for token in token_list:
+            assert token.category == "ConstantIdentifier", "ConstantIdentifier expected but found {0}".format(token)
 
-            if isinstance(token, ConstantIdentifier):
-                inner_type = token.type.type
-                c_type = token.type.type_to_c
-                if inner_type in ["RESERVED_TYPE_STRING"]:
-                    self._emiter.emit_constant_definition_part_string(token.name, c_type, token.type.dimension)
-                elif inner_type in ["RESERVED_TYPE_CHAR"]:
-                    self._emiter.emit_constant_definition_part_char(token.name, c_type)
-                elif inner_type in ["RESERVED_TYPE_POINTER"]:
-                    self._emiter.emit_constant_definition_part_pointer(token.name, c_type)
-                else:
-                    self._emiter.emit_constant_definition_part_generic(token.name, c_type)
+            inner_type = token.type.type
+            inner_c_type = token.type.type_to_c
+
+            if inner_type in ["RESERVED_TYPE_STRING"]:
+                inner_literal = token.to_literal()
+                self._emiter.emit_constant_definition_part_string(token.name, inner_c_type, inner_literal.type.dimension, inner_literal.value_to_c)
+
+            elif inner_type in ["RESERVED_TYPE_CHAR"]:
+                self._emiter.emit_constant_definition_part_char(token.name, inner_c_type)
+                self._expression(token.value)
+
+            elif inner_type in ["RESERVED_TYPE_POINTER"]:
+                self._emiter.emit_constant_definition_part_pointer(token.name, inner_c_type)
+                self._expression(token.value)
+
             else:
-                raise ValueError("expected a ConstantIdentifier but received {0}".format(token))
+                self._emiter.emit_constant_definition_part_generic(token.name, inner_c_type)
+                self._expression(token.value)
 
-            self._expression(token.value)
             self._emiter.emit_statement_terminator()
 
     def _type_definition_part(self, token_list):
@@ -438,7 +443,7 @@ class IntermediateCode:
         # Process the incoming generic EXPRESSION
         while a_generic_expression.value:
             token = a_generic_expression.value.pop(0)
-            if isinstance(token, Keyword):
+            if isinstance(token, BaseKeyword):
 
                 self._log(ERROR, "Incorrect keyword '{0}' received.".format(token))
 
@@ -451,7 +456,7 @@ class IntermediateCode:
 
                 # token = self._translate_constant_to_c(token)
                 # self._emiter.emit_singleton(token.name)
-                self._emiter.emit_singleton(token.value_to_c())
+                self._emiter.emit_singleton(token.value_to_c)
 
             elif isinstance(token, Identifier):
 
@@ -504,7 +509,7 @@ class IntermediateCode:
         """
         # process keyword 'for'
         token = input_list.pop(0)
-        if not isinstance(token, Keyword):
+        if not isinstance(token, BaseKeyword):
             self._log(ERROR, "Unknown symbol '{0}' received. Keyword expected.".format(token))
 
         # get control_variable
@@ -526,7 +531,7 @@ class IntermediateCode:
 
         # process keyword 'to' or 'downto' - first part
         token = input_list.pop(0)
-        if not isinstance(token, Keyword):
+        if not isinstance(token, BaseKeyword):
             self._log(ERROR, "Unknown symbol '{0}' received. Keyword expected.".format(token))
         direction = token.type == "RESERVED_STATEMENT_TO"
         if direction:
@@ -561,7 +566,7 @@ class IntermediateCode:
         """
         # process keyword 'while'
         token = input_list.pop(0)
-        if not isinstance(token, Keyword):
+        if not isinstance(token, BaseKeyword):
             self._log(ERROR, "Unknown symbol '{0}' received. Keyword expected.".format(token))
 
         self._emiter.emit_closed_while_statement()
@@ -701,7 +706,7 @@ class IntermediateCode:
         """
         # process keyword 'if'
         token = input_list.pop(0)
-        if not isinstance(token, Keyword):
+        if not isinstance(token, BaseKeyword):
             self._log(ERROR, "Unknown symbol '{0}' received. Keyword expected.".format(token))
         self._emiter.emit_closed_if_statement()
 
@@ -711,7 +716,7 @@ class IntermediateCode:
 
         # process keyword 'then'
         token = input_list.pop(0)
-        if not isinstance(token, Keyword):
+        if not isinstance(token, BaseKeyword):
             self._log(ERROR, "Unknown symbol '{0}' received. Keyword expected.".format(token))
         self._emiter.emit_closed_if_statement_then()
 
@@ -725,7 +730,7 @@ class IntermediateCode:
         """
         # process keyword 'ELSE'
         token = input_list.pop(0)
-        if not isinstance(token, Keyword):
+        if not isinstance(token, BaseKeyword):
             self._log(ERROR, "Unknown symbol '{0}' received. Keyword expected.".format(token))
         self._emiter.emit_closed_if_statement_else()
 

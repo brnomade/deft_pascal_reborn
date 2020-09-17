@@ -8,13 +8,14 @@ HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 from lark import Tree, Token
 from components.deft_pascal_parser_3 import DeftPascalParser
 from components.symbol_table import SymbolTable
-from components.symbols.base_symbols import BaseSymbol, Keyword, GenericExpression
+from components.symbols.base_symbols import BaseSymbol, BaseKeyword, BaseExpression
 from components.symbols.operator_symbols import Operator, BinaryOperator, UnaryOperator, NeutralOperator
 from components.symbols.identifier_symbols import Identifier, PointerIdentifier, ProcedureIdentifier, ConstantIdentifier
 from components.symbols.literals_symbols import Literal, BooleanLiteral, NilLiteral, NumericLiteral, StringLiteral
 from components.symbols.type_symbols import PointerType, BasicType, StringType
+from components.symbols.expression_symbols import ConstantExpression, IntegerExpression, BooleanExpression
 from components.intermediate_code import IntermediateCode
-from utils.compiler_utils import check_type_compatibility, token_is_an_operator
+# from utils.compiler_utils import check_type_compatibility, token_is_an_operator
 import copy
 import logging
 from logging import ERROR, WARNING, INFO, DEBUG
@@ -108,11 +109,8 @@ class DeftPascalCompiler:
         return self._ic.generate()
 
     def _log(self, log_type=INFO, log_info=""):
-        # retrieve the scope details from the stack
-        context_label = self._symbol_table.current_scope
-        context_level = self._symbol_table.current_level
         # emit log
-        msg = "[{0}/{1}] {2}".format(context_label, context_level, log_info)
+        msg = "[{0}/{1}] {2}".format(self._symbol_table.current_scope, self._symbol_table.current_level, log_info)
         if log_type == ERROR:
             self._error_list.append(msg)
             _MODULE_LOGGER.error(msg)
@@ -154,24 +152,22 @@ class DeftPascalCompiler:
             raise TypeError
 
 
-    def _perform_type_check(self, action_name, expression):
-        """
-        expression - is a list of tokens.
-        always returns an instance of BasicType if the expression passes type checking
-        returns None if expression is not conformant
-        """
-        compatible = check_type_compatibility(expression)
-        if compatible:
-            # instead of returning an instance of symbol, return only the type of that symbol.
-            compatible = compatible if isinstance(compatible, BasicType) else compatible.type
-        else:
-            msg = "[{0}] incompatible types in expression: {1}"
-            self._log(ERROR, msg.format(action_name, expression))
-            # assert compatible is None, "received {0}".format(compatible)
-
-        # assert compatible is not None or not isinstance(compatible, BasicType), "received {0}".format(compatible)
-
-        return compatible
+    # def _perform_type_check(self, action_name, expression):
+    #     """
+    #     expression - is a list of tokens.
+    #     always returns an instance of BasicType if the expression passes type checking
+    #     returns None if expression is not conformant
+    #     """
+    #     compatible = check_type_compatibility(expression)
+    #     if compatible:
+    #         # instead of returning an instance of symbol, return only the type of that symbol.
+    #         compatible = compatible if isinstance(compatible, BasicType) else compatible.type
+    #
+    #     else:
+    #         msg = "[{0}] incompatible types in expression: {1}"
+    #         self._log(ERROR, msg.format(action_name, expression))
+    #
+    #     return compatible
 
 
     def _increase_scope(self, scope_label=None):
@@ -210,19 +206,11 @@ class DeftPascalCompiler:
         self._symbol_table.append(StringType.reserved_type_string())
         self._symbol_table.append(BasicType.reserved_type_text())
 
-        # add the in-built procedures to the symbol table - they are added twice, in lower and upper cases
-        for procedure in [ProcedureIdentifier.in_built_procedure_write,
-                          ProcedureIdentifier.in_built_procedure_writeln
-                          ]:
-            # lower case scenario
-            p = procedure()
-            self._symbol_table.append(p)
-            # upper case scenario
-            p = procedure()
-            p.name = p.name.upper()
-            self._symbol_table.append(p)
+        # add the in-built procedures to the symbol table
+        self._symbol_table.append(ProcedureIdentifier.in_built_procedure_write())
+        self._symbol_table.append(ProcedureIdentifier.in_built_procedure_writeln())
 
-        # initialise the operator table
+        # add all operators to the operator table
         self._operator_table.append(BinaryOperator.operator_multiply())
         self._operator_table.append(BinaryOperator.operator_plus())
         self._operator_table.append(BinaryOperator.operator_minus())
@@ -347,43 +335,34 @@ class DeftPascalCompiler:
             input_list.pop(0)
 
             # process the constant_expression (literals)
-            expression_stack = self._internal_compile(input_list.pop(0), [])
-
-            if expression_stack:
-                # check type compatibility
-                constant_type = self._perform_type_check(action_name, expression_stack)
-
-                if constant_type.type == "CONSTANT_NIL":
-                    constant_type = PointerType.reserved_type_pointer()
-
-                g = GenericExpression.from_list(expression_stack)
-                g.type = constant_type
-
-                if g.cardinality > 1 and (g.type.type in ["RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING"]):
-                    self._log(ERROR, "[{0}] string based constant expressions are not supported: {1}".format(action_name, g))
-                    g.trim_cardinality_down()
-
-                # new_constant = ConstantIdentifier(constant_identifier, g.type, g)
-                new_constant = ConstantIdentifier(constant_identifier, g)
-
-                # constant - its value must not exceed the types available in the target environment
-                compliant = new_constant.complies_to_type_restrictions()
-                if compliant is None:
-                    self._log(WARNING, "[{0}] constant expression '{1}' cannot be validated at compilation".format(action_name, constant_identifier))
-                    compliant = True
-
-                if compliant:
-                    # push the new constant into the symbol_table
-                    self._symbol_table.append(new_constant)
-
-                    # push the new constant into the intermediate_code engine
-                    self._ic.push(new_constant)
-
-                    # log successful declaration
-                    self._log(DEBUG, "[{0}] new constant declared : {1}".format(action_name, new_constant))
+            stack = self._internal_compile(input_list.pop(0), [])
+            if stack:
+                expression = ConstantExpression.from_list(stack)
+                if expression is None:
+                    msg = "[{0}] incompatible types in expression: {1}"
+                    self._log(ERROR, msg.format(action_name, expression))
 
                 else:
-                    self._log(ERROR, "[{0}] constant '{1}' not compatible with type limitations".format(action_name, new_constant))
+                    new_constant = ConstantIdentifier(constant_identifier, expression)
+
+                    # constant - its value must not exceed the types available in the target environment
+                    compliant = new_constant.complies_to_type_restrictions()
+                    if compliant is None:
+                        self._log(WARNING, "[{0}] constant expression '{1}' cannot be validated at compilation".format(action_name, constant_identifier))
+                        compliant = True
+
+                    if compliant:
+                        # push the new constant into the symbol_table
+                        self._symbol_table.append(new_constant)
+
+                        # push the new constant into the intermediate_code engine
+                        self._ic.push(new_constant)
+
+                        # log successful declaration
+                        self._log(DEBUG, "[{0}] new constant declared : {1}".format(action_name, new_constant))
+
+                    else:
+                        self._log(ERROR, "[{0}] constant '{1}' not compatible with type limitations".format(action_name, new_constant))
 
             else:
                 self._log(ERROR, "[{0}] invalid expression in constant definition".format(action_name))
@@ -598,22 +577,29 @@ class DeftPascalCompiler:
 
             if expression_stack:
 
-                # check type compatibility
-                expression_type = self._perform_type_check(action_name, working_stack + expression_stack)
+                expression = BaseExpression.from_list(working_stack + expression_stack)
+                if expression is None:
+                    msg = "[{0}] incompatible types in expression: {1}"
+                    self._log(ERROR, msg.format(action_name, expression))
 
-                #TODO: if the assignment is to a string variable, need to check the string being assigned is compatible with the variable dimension.
+                else:
+                    expression = BaseExpression.from_list(expression_stack)
+                    # check type compatibility
+                    # expression_type = self._perform_type_check(action_name, working_stack + expression_stack)
 
-                # push the expression to the working stack
-                g = GenericExpression.from_list(expression_stack)
-                g.type = expression_type
-                working_stack.append(g)
+                    #TODO: if the assignment is to a string variable, need to check the string being assigned is compatible with the variable dimension.
 
-                # generate the intermediate code
-                self._ic.init(action_name)
-                self._ic.push(working_stack)
-                self._ic.flush()
+                    # push the expression to the working stack
+                    # g = BaseExpression.from_list(expression_stack)
+                    # g.type = expression_type
+                    working_stack.append(expression)
 
-                self._log(DEBUG, "[{0}] : {1}".format(action_name, working_stack))
+                    # generate the intermediate code
+                    self._ic.init(action_name)
+                    self._ic.push(working_stack)
+                    self._ic.flush()
+
+                    self._log(DEBUG, "[{0}] : {1}".format(action_name, working_stack))
 
         return working_stack
 
@@ -671,7 +657,7 @@ class DeftPascalCompiler:
         working_stack = []
 
         # process reserved word REPEAT
-        keyword = Keyword.from_token(input_list.pop(0))
+        keyword = BaseKeyword.from_token(input_list.pop(0))
         working_stack.append(keyword)
         self._ic.push(working_stack)
         self._ic.flush()
@@ -682,7 +668,7 @@ class DeftPascalCompiler:
         while True:
             token = input_list.pop(0)
             if isinstance(token, Token) and token.type == "RESERVED_STATEMENT_UNTIL":
-                keyword = Keyword.from_token(token)
+                keyword = BaseKeyword.from_token(token)
                 working_stack.append(keyword)
                 break
             else:
@@ -693,23 +679,21 @@ class DeftPascalCompiler:
 
         # process expression after UNTIL
         expression_stack = self._internal_compile(input_list.pop(0), [])
+        expression = BooleanExpression.from_list(expression_stack)
 
-        # check type compatibility of the expression and ensure it returns a boolean type
-        expression_type = self._perform_type_check(action_name, expression_stack)
-        if not expression_type == BasicType.reserved_type_boolean():
+        if expression is None:
             msg = "[{0}] expected boolean expression but found: {1}"
-            self._log(ERROR, msg.format(action_name, expression_type))
+            self._log(ERROR, msg.format(action_name, expression_stack))
 
-        # append the generic expression to the stack
-        g = GenericExpression.from_list(expression_stack)
-        g.type = expression_type
-        working_stack.append(g)
+        else:
+            working_stack.append(expression)
 
-        # generate the intermediate code
-        self._ic.init(action_name)
-        self._ic.push(working_stack)
-        self._ic.flush()
-        self._log(DEBUG, "[{0}] {1}".format(action_name, working_stack))
+            # generate the intermediate code
+            self._ic.init(action_name)
+            self._ic.push(working_stack)
+            self._ic.flush()
+
+            self._log(DEBUG, "[{0}] {1}".format(action_name, working_stack))
 
         return working_stack
 
@@ -724,7 +708,7 @@ class DeftPascalCompiler:
         working_stack = []
 
         # process reserved word FOR
-        keyword = Keyword.from_token(input_list.pop(0))
+        keyword = BaseKeyword.from_token(input_list.pop(0))
         working_stack.append(keyword)
 
         # process the control variable (or expression)
@@ -742,38 +726,34 @@ class DeftPascalCompiler:
 
         # process the 'initial_value' (or expression) on the for
         expression_stack = self._internal_compile(input_list.pop(0), [])
+        expression = IntegerExpression.from_list(control_variable_stack + expression_stack)
 
-        # check type compatibility of the control_variable := expression(initial_value)
-        expression_type = self._perform_type_check(action_name, control_variable_stack + expression_stack)
-        if not expression_type == BasicType.reserved_type_integer():
+        if expression is None:
             msg = "[{0}] expected integer expression but found: {1}"
-            self._log(ERROR, msg.format(action_name, expression_type))
+            self._log(ERROR, msg.format(action_name, expression_stack))
 
-        # append the generic expression to the stack
-        g = GenericExpression.from_list(expression_stack)
-        g.type = expression_type
-        working_stack.append(g)
+        else:
+            expression = IntegerExpression.from_list(expression_stack)
+            working_stack.append(expression)
 
         # emit reserved word to / downto
-        keyword = Keyword.from_token(input_list.pop(0))
+        keyword = BaseKeyword.from_token(input_list.pop(0))
         working_stack.append(keyword)
 
         # process the 'final_value' on the for
         expression_stack = self._internal_compile(input_list.pop(0), [])
+        expression = IntegerExpression.from_list(control_variable_stack + expression_stack)
 
-        # check compatibility of the control_variable := expression(final_value)
-        expression_type = self._perform_type_check(action_name, control_variable_stack + expression_stack)
-        if not expression_type == BasicType.reserved_type_integer():
+        if expression is None:
             msg = "[{0}] expected integer expression but found: {1}"
-            self._log(ERROR, msg.format(action_name, expression_type))
+            self._log(ERROR, msg.format(action_name, expression_stack))
 
-        # append the generic expression to the stack
-        g = GenericExpression.from_list(expression_stack)
-        g.type = expression_type
-        working_stack.append(g)
+        else:
+            expression = IntegerExpression.from_list(expression_stack)
+            working_stack.append(expression)
 
         # emit reserved word do
-        keyword = Keyword.from_token(input_list.pop(0))
+        keyword = BaseKeyword.from_token(input_list.pop(0))
         working_stack.append(keyword)
 
         # generate the intermediate code
@@ -796,25 +776,22 @@ class DeftPascalCompiler:
         working_stack = []
 
         # process reserved word WHILE
-        keyword = Keyword.from_token(input_list.pop(0))
+        keyword = BaseKeyword.from_token(input_list.pop(0))
         working_stack.append(keyword)
 
         # process control expression
         expression_stack = self._internal_compile(input_list.pop(0), [])
+        expression = BooleanExpression.from_list(expression_stack)
 
-        # check type compatibility of the expression and ensure it returns a boolean type
-        expression_type = self._perform_type_check(action_name, expression_stack)
-        if not expression_type == BasicType.reserved_type_boolean():
+        if expression is None:
             msg = "[{0}] expected boolean expression but found: {1}"
-            self._log(ERROR, msg.format(action_name, expression_type))
+            self._log(ERROR, msg.format(action_name, expression_stack))
 
-        # append the generic expression to the stack
-        g = GenericExpression.from_list(expression_stack)
-        g.type = expression_type
-        working_stack.append(g)
+        else:
+            working_stack.append(expression)
 
         # emit reserved word do
-        keyword = Keyword.from_token(input_list.pop(0))
+        keyword = BaseKeyword.from_token(input_list.pop(0))
         working_stack.append(keyword)
 
         # generate the intermediate code
@@ -914,6 +891,11 @@ class DeftPascalCompiler:
 
         # retrieve the actual procedure identifier from the symbol_table
         token = input_list.pop(0)
+
+        # ensure in built procedures use a lowercase name
+        if ProcedureIdentifier.name_is_reserved_for_in_built_procedure(token.value):
+            token.value = token.value.lower()
+
         identifier = self._symbol_table.retrieve(token.value, equal_level_only=False)
         if identifier:
             # push the identifier to the working stack
@@ -939,29 +921,27 @@ class DeftPascalCompiler:
                     decimal_field_width_stack = None
 
                     # type checking the expression passed as parameter
-                    expression_type = self._perform_type_check(action_name, value_to_print_stack)
-
+                    expression_value_to_print = BaseExpression.from_list(value_to_print_stack)
                     # TODO: check if the expression type is compatible with the procedure parameter type definition
 
                     if token.data.upper() in ["BINARY_PARAMETER", "TERNARY_PARAMETER"]:
                         field_width_stack = self._internal_compile(token.children[1], [])
-                        self._perform_type_check(action_name, field_width_stack)
+                        expression_field_width = BaseExpression.from_list(field_width_stack)
 
                     if token.data.upper() == "TERNARY_PARAMETER":
                         decimal_field_width_stack = self._internal_compile(token.children[2], [])
-                        self._perform_type_check(action_name, decimal_field_width_stack)
+                        expression_decimal_field = BaseExpression.from_list(decimal_field_width_stack)
 
-                    if (field_width_stack or decimal_field_width_stack) and identifier.name.upper() not in ["WRITE", "WRITELN"]:
+                    if (expression_field_width or expression_decimal_field) and identifier.name.upper() not in ["WRITE", "WRITELN"]:
                         msg = "[{0}] formatting parameters incompatible with {1}}. Formatting will be ignored."
                         self._log(WARNING, msg.format(action_name, identifier.name))
-                        field_width_stack = None
-                        decimal_field_width_stack = None
+                        expression_field_width = None
+                        expression_decimal_field = None
 
                     # create the parameter as a generic expression
-                    generic_expression = GenericExpression.from_list((GenericExpression.from_list(value_to_print_stack),
-                                                                      GenericExpression.from_list(field_width_stack) if field_width_stack else None,
-                                                                      GenericExpression.from_list(decimal_field_width_stack) if decimal_field_width_stack else None
-                                                                      ))
+                    generic_expression = BaseExpression.from_list([expression_value_to_print,
+                                                                   expression_field_width,
+                                                                   expression_decimal_field])
                     generic_expression.type = expression_type
 
                     # push to the working stack
@@ -1005,25 +985,26 @@ class DeftPascalCompiler:
         working_stack = []
 
         # process reserved word IF
-        keyword = Keyword.from_token(input_list.pop(0))
+        keyword = BaseKeyword.from_token(input_list.pop(0))
         working_stack.append(keyword)
 
         # process boolean expression
         expression_stack = self._internal_compile(input_list.pop(0), [])
+        expression = BaseExpression.from_list(expression_stack)
 
-        # check type compatibility of the expression and ensure it returns a boolean type
-        expression_type = self._perform_type_check(action_name, expression_stack)
-        if not expression_type == BasicType.reserved_type_boolean():
+        if expression is None:
+            msg = "[{0}] incompatible types in expression: {1}"
+            self._log(ERROR, msg.format(action_name, expression))
+
+        elif not expression.type == "RESERVED_TYPE_BOOLEAN":
             msg = "[{0}] expected boolean expression but found: {1}"
-            self._log(ERROR, msg.format(action_name, expression_type))
+            self._log(ERROR, msg.format(action_name, expression.type))
 
-        # store the expression on the stack
-        g = GenericExpression.from_list(expression_stack)
-        g.type = expression_type
-        working_stack.append(g)
+        else:
+            working_stack.append(expression)
 
         # process reserved word THEN
-        keyword = Keyword.from_token(input_list.pop(0))
+        keyword = BaseKeyword.from_token(input_list.pop(0))
         working_stack.append(keyword)
 
         # generate the intermediate code
@@ -1041,7 +1022,7 @@ class DeftPascalCompiler:
 
         # process reserved word ELSE
         working_stack = []
-        keyword = Keyword.from_token(input_list.pop(0))
+        keyword = BaseKeyword.from_token(input_list.pop(0))
         working_stack.append(keyword)
 
         # generate the intermediate code

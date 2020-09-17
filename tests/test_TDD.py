@@ -19,7 +19,7 @@ class ConfigurationForTestTDD:
 
     @classmethod
     def tdd_tests_to_run(cls):
-        return [(PositiveLanguageTests, "scenario_constant_declaration_with_string", PositiveLanguageTests.scenario_constant_declaration_with_string)]
+        return [(TDD, "scenario_variable_assignment_with_single_value", PositiveLanguageTests.scenario_variable_assignment_with_single_value)]
 
 
 class TestTDD(TestCase):
@@ -109,11 +109,14 @@ class TestTDD(TestCase):
         self.assertEqual([], error_log)
 
         # test compilation
-        error_log = compiler.compile()
+        try:
+            error_log = compiler.compile()
+        except:
+            error_log = "EXCEPTION RAISED"
+
         if error_log:
             print(error_log)
-        else:
-            print(compiler.intermediate_code)
+        print(compiler.intermediate_code)
         self.assertEqual([], error_log)
 
         # test code generation

@@ -66,14 +66,14 @@ class CEmitter(AbstractEmitter):
         self.emit_header_line("#include <stdbool.h>")
         self.emit_header_line("#include <string.h>")
 
-    def emit_constant_definition_part_string(self, in_name, in_type, dimension):
+    def emit_constant_definition_part_string(self, in_name, in_type, dimension, in_value):
         """
         CONSTANT_DEFINITION_PART
         const type variable = expression;
         """
-        # line = "const {0} {1} [{2}] = \"{3}\";"
-        line = "const {0} {1} [{2}] = "
-        self.emit_header(line.format(in_type, in_name, dimension))
+        line = "const {0} {1} [{2}] = {3}"
+        # line = "const {0} {1} [{2}] = "
+        self.emit_header(line.format(in_type, in_name, dimension + 1, in_value))
 
     def emit_constant_definition_part_char(self, in_name, in_type):
         """

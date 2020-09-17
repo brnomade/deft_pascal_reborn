@@ -17,7 +17,19 @@ class Identifier(BaseIdentifier):
 class ConstantIdentifier(BaseIdentifier):
 
     def __init__(self, a_name, an_expression):
-        super().__init__(a_name, an_expression.type, an_expression)
+        super().__init__(a_name, None, an_expression)
+
+    @property
+    def type(self):
+        if self.value is None:
+            return None
+        else:
+            return self.value.native_type
+
+    @type.setter
+    def type(self, new_type):
+        raise KeyError("ConstantIdentifiers derive their type from their expression")
+
 
     def complies_to_type_restrictions(self):
         """
@@ -46,7 +58,7 @@ class ConstantIdentifier(BaseIdentifier):
             return self.value.value[0].complies_to_type_restrictions()
 
         valid = True
-        if self.type.type == "RESERVED_TYPE_INTEGER":
+        if self.type == "RESERVED_TYPE_INTEGER":
             value_to_check = self.value.value[0].value.upper()
             if "&B" in value_to_check:     # == "NUMBER_BINARY"
                 valid = 0 <= int(value_to_check.replace("&B", "0b"), 2) <= 65535
@@ -56,9 +68,19 @@ class ConstantIdentifier(BaseIdentifier):
                 valid = 0 <= int(value_to_check.replace("&O", "0o"), 8) <= 65535
             else:
                 valid = (0 <= int(value_to_check) <= 65535) or (-32768 <= int(value_to_check) <= 32767)
-        elif self.type.type in ["RESERVED_TYPE_STRING", "STRING_VALUE"]:
+        elif self.type in ["RESERVED_TYPE_STRING", "STRING_VALUE"]:
             valid = self.value.value[0].length <= 80
         return valid
+
+    def to_literal(self):
+        """
+        returns the literal used in a chain of constant expressions
+        return None if the constant expression is complex
+        """
+        if self.value.value[0].category == "ConstantIdentifier":
+            return self.value.value[0].to_literal()
+        else:
+            return self.value.value[0]
 
 
 class PointerIdentifier(BaseIdentifier):
@@ -73,6 +95,10 @@ class ProcedureIdentifier(BaseIdentifier):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._parameter_counter = 0
+
+    @classmethod
+    def name_is_reserved_for_in_built_procedure(cls, name):
+        return True if name.upper() in ["WRITE", "WRITELN"] else False
 
     @property
     def parameter_counter(self):
