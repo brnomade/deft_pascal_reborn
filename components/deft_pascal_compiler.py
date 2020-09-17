@@ -20,7 +20,23 @@ import copy
 import logging
 from logging import ERROR, WARNING, INFO, DEBUG
 
-_MODULE_LOGGER = logging.getLogger(__name__)
+
+_LOG_ROLL_ = []
+
+
+class LogRequestsHandler(logging.Handler):
+    def emit(self, record):
+        """Record any errors raised by the compiler.
+        """
+        # msg = "[{0}] {1} - {2}".format(record.levelname.upper(), record.funcName.upper().lstrip("_"), record.getMessage())
+        msg = record.getMessage()
+        if record.levelname.upper() == "ERROR":
+            _LOG_ROLL_.append(msg)
+
+
+_MODULE_LOGGER_ = logging.getLogger("deft_pascal_reborn")
+_MODULE_LOGGER_.addHandler(LogRequestsHandler())
+_MODULE_LOGGER_.setLevel(DEBUG)
 
 
 class DeftPascalCompiler:
@@ -46,7 +62,7 @@ class DeftPascalCompiler:
         self._stack_begin = []
         self._stack_end = []
 
-        self._error_list = []
+        # self._error_list = []
 
         self._actions = {"PROGRAM_HEADING",
                          "LABEL_DECLARATION_PART",
@@ -81,18 +97,17 @@ class DeftPascalCompiler:
         return error_list
 
     def compile(self, ast=None):
-        _MODULE_LOGGER.debug("start compile")
         if not ast and not self._ast:
             raise ValueError("AST is not yet defined")
-        #
+
         if not ast and self._ast:
             ast = self._ast
-        #
-        self._error_list = []
+
+        _LOG_ROLL_.clear()
         for i in ast.children:
             self._internal_compile(i, [])
-        #
-        return self._error_list
+
+        return _LOG_ROLL_
 
     @property
     def ast(self):
@@ -109,17 +124,18 @@ class DeftPascalCompiler:
         return self._ic.generate()
 
     def _log(self, log_type=INFO, log_info=""):
+        pass
         # emit log
-        msg = "[{0}/{1}] {2}".format(self._symbol_table.current_scope, self._symbol_table.current_level, log_info)
-        if log_type == ERROR:
-            self._error_list.append(msg)
-            _MODULE_LOGGER.error(msg)
-        elif log_type == WARNING:
-            _MODULE_LOGGER.warning(msg)
-        elif log_type == INFO:
-            _MODULE_LOGGER.info(msg)
-        else:
-            _MODULE_LOGGER.debug(msg)
+        # msg = "[{0}/{1}] {2}".format(self._symbol_table.current_scope, self._symbol_table.current_level, log_info)
+        # if log_type == ERROR:
+        #     # self._error_list.append(msg)
+        #     _MODULE_LOGGER_.error(msg)
+        # elif log_type == WARNING:
+        #     _MODULE_LOGGER_.warning(msg)
+        # elif log_type == INFO:
+        #     _MODULE_LOGGER_.info(msg)
+        # else:
+        #     _MODULE_LOGGER_.debug(msg)
 
     def _compile_tree(self, a_tree, working_stack):
         action_name = a_tree.data.upper()
@@ -127,7 +143,7 @@ class DeftPascalCompiler:
             method_to_call = getattr(DeftPascalCompiler, "_" + action_name.lower())
             return method_to_call(self, action_name, a_tree.children, working_stack)
         else:
-            self._log(ERROR, "action '{0}' not yet implemented for tree {1}".format(a_tree.data.upper(), a_tree))
+            _MODULE_LOGGER_.error("action '{0}' not yet implemented for tree {1}".format(a_tree.data.upper(), a_tree))
             return working_stack
 
 
@@ -137,7 +153,7 @@ class DeftPascalCompiler:
             method_to_call = getattr(DeftPascalCompiler, "_" + action_name.lower())
             return method_to_call(self, action_name, a_token, working_stack)
         else:
-            self._log(ERROR, "action '{0}' not yet implemented for token {1}".format(a_token.type.upper(), a_token.value.upper()))
+            _MODULE_LOGGER_.error("action '{0}' not yet implemented for token {1}".format(a_token.type.upper(), a_token.value.upper()))
             return working_stack
 
 
@@ -148,26 +164,8 @@ class DeftPascalCompiler:
         elif isinstance(ast, Token):
             return self._compile_token(ast, working_stack)
         else:
-            self._log(ERROR, 'Error - unknown AST object {0}'.format(ast))
+            _MODULE_LOGGER_.error('Error - unknown AST object {0}'.format(ast))
             raise TypeError
-
-
-    # def _perform_type_check(self, action_name, expression):
-    #     """
-    #     expression - is a list of tokens.
-    #     always returns an instance of BasicType if the expression passes type checking
-    #     returns None if expression is not conformant
-    #     """
-    #     compatible = check_type_compatibility(expression)
-    #     if compatible:
-    #         # instead of returning an instance of symbol, return only the type of that symbol.
-    #         compatible = compatible if isinstance(compatible, BasicType) else compatible.type
-    #
-    #     else:
-    #         msg = "[{0}] incompatible types in expression: {1}"
-    #         self._log(ERROR, msg.format(action_name, expression))
-    #
-    #     return compatible
 
 
     def _increase_scope(self, scope_label=None):
@@ -247,10 +245,10 @@ class DeftPascalCompiler:
         self._ic.push(token_list[1])
         self._ic.flush()
 
-        self._log(DEBUG, "[{0}] : '{1}' - stack: {2} {3}".format(action_name, identifier, self._symbol_table, self._stack_scope))
+        _MODULE_LOGGER_.debug("[{0}] : '{1}' - stack: {2} {3}".format(action_name, identifier, self._symbol_table, self._stack_scope))
 
         if len(token_list) > 2:
-            self._log(WARNING, "[{0}] variables detected - all will be ignored".format(action_name))
+            _MODULE_LOGGER_.warning("[{0}] variables detected - all will be ignored".format(action_name))
 
 
     def _compound_statement(self, action_name, input_list, working_stack):
@@ -276,7 +274,7 @@ class DeftPascalCompiler:
         self._ic.push(input_token)
         self._ic.flush()
 
-        self._log(DEBUG, "[{0}] : {1} {2}".format(action, self._symbol_table, self._stack_scope))
+        _MODULE_LOGGER_.debug("[{0}] : {1} {2}".format(action, self._symbol_table, self._stack_scope))
 
 
     def _reserved_structure_end(self, action_name, input_token, working_stack):
@@ -289,7 +287,7 @@ class DeftPascalCompiler:
         self._ic.push(input_token)
         self._ic.flush()
 
-        self._log(DEBUG, "[{0}] : {1}".format(action, self._symbol_table))
+        _MODULE_LOGGER_.debug("[{0}] : {1}".format(action, self._symbol_table))
 
 
     def _constant_definition_part(self, action_name, input_list, working_stack):
@@ -328,7 +326,7 @@ class DeftPascalCompiler:
 
         # identifier - it must not exist in the symbol_table yet
         if self._symbol_table.contains(constant_identifier, equal_level_only=False):
-            self._log(ERROR, "[{0}] constant identifier '{1}' already declared ".format(action_name, constant_identifier))
+            _MODULE_LOGGER_.error("[{0}] constant identifier '{1}' already declared ".format(action_name, constant_identifier))
 
         else:
             # discard the operator =
@@ -340,7 +338,7 @@ class DeftPascalCompiler:
                 expression = ConstantExpression.from_list(stack)
                 if expression is None:
                     msg = "[{0}] incompatible types in expression: {1}"
-                    self._log(ERROR, msg.format(action_name, expression))
+                    _MODULE_LOGGER_.error(msg.format(action_name, expression))
 
                 else:
                     new_constant = ConstantIdentifier(constant_identifier, expression)
@@ -348,7 +346,7 @@ class DeftPascalCompiler:
                     # constant - its value must not exceed the types available in the target environment
                     compliant = new_constant.complies_to_type_restrictions()
                     if compliant is None:
-                        self._log(WARNING, "[{0}] constant expression '{1}' cannot be validated at compilation".format(action_name, constant_identifier))
+                        _MODULE_LOGGER_.warning("[{0}] constant expression '{1}' cannot be validated at compilation".format(action_name, constant_identifier))
                         compliant = True
 
                     if compliant:
@@ -362,10 +360,10 @@ class DeftPascalCompiler:
                         self._log(DEBUG, "[{0}] new constant declared : {1}".format(action_name, new_constant))
 
                     else:
-                        self._log(ERROR, "[{0}] constant '{1}' not compatible with type limitations".format(action_name, new_constant))
+                        _MODULE_LOGGER_.error("[{0}] constant '{1}' not compatible with type limitations".format(action_name, new_constant))
 
             else:
-                self._log(ERROR, "[{0}] invalid expression in constant definition".format(action_name))
+                _MODULE_LOGGER_.error("[{0}] invalid expression in definition of constant '{1}'".format(action_name, constant_identifier))
 
         return working_stack
 
@@ -402,7 +400,7 @@ class DeftPascalCompiler:
 
         else:
             msg = "[{0}] :  Reference to undeclared constant '{1}'"
-            self._log(ERROR, msg.format(action_name, identifier_name))
+            _MODULE_LOGGER_.error(msg.format(action_name, identifier_name))
 
         return working_stack
 
@@ -480,7 +478,7 @@ class DeftPascalCompiler:
                     if self._symbol_table.contains(identifier, equal_level_only=False):
 
                         msg = "[{0}] identifier '{1}' already declared."
-                        self._log(ERROR, msg.format(action_name, identifier))
+                        _MODULE_LOGGER_.error(msg.format(action_name, identifier))
 
                     else:
 
@@ -498,7 +496,7 @@ class DeftPascalCompiler:
         else:
 
             msg = "[{0}] unknown type '{1}' reference in declaration."
-            self._log(ERROR, msg.format(action_name, type_identifier))
+            _MODULE_LOGGER_.error(msg.format(action_name, type_identifier))
 
 
     def _variable_access(self, action_name, input_list, working_stack):
@@ -523,7 +521,7 @@ class DeftPascalCompiler:
             operator_symbol = self._operator_table.retrieve(operator_name, equal_level_only=False)
 
         else:
-            self._log(ERROR, 'Error - unknown AST object {0}'.format(input_list))
+            _MODULE_LOGGER_.error('Error - unknown AST object {0}'.format(input_list))
             raise TypeError
 
         # identifier - it must exist in the symbol table
@@ -536,7 +534,7 @@ class DeftPascalCompiler:
 
         else:
             msg = "[{0}] :  Reference to undeclared variable '{1}'"
-            self._log(ERROR, msg.format(action_name, identifier_name))
+            _MODULE_LOGGER_.error(msg.format(action_name, identifier_name))
 
         return working_stack
 
@@ -545,7 +543,7 @@ class DeftPascalCompiler:
         """
         process LABEL_DECLARATION_PART
         """
-        self._log(WARNING, "[{0}] - all will be ignored".format(action_name))
+        _MODULE_LOGGER_.warning("[{0}] - all will be ignored".format(action_name))
 
 
     def _assignment_statement(self, action_name, input_list, working_stack):
@@ -563,7 +561,7 @@ class DeftPascalCompiler:
 
             # check the identifier receiving the assignment is variable.
             if isinstance(identifier, ConstantIdentifier):
-                self._log(ERROR, "[{0}] : invalid assignment to constant '{1}'".format(action_name, working_stack))
+                _MODULE_LOGGER_.error("[{0}] : invalid assignment to constant '{1}'".format(action_name, working_stack))
 
             # consume the operator :=
             token = input_list.pop(0)
@@ -580,7 +578,7 @@ class DeftPascalCompiler:
                 expression = BaseExpression.from_list(working_stack + expression_stack)
                 if expression is None:
                     msg = "[{0}] incompatible types in expression: {1}"
-                    self._log(ERROR, msg.format(action_name, expression))
+                    _MODULE_LOGGER_.error(msg.format(action_name, expression))
 
                 else:
                     expression = BaseExpression.from_list(expression_stack)
@@ -625,15 +623,20 @@ class DeftPascalCompiler:
                             if token.type in ["UNSIGNED_DECIMAL", "SIGNED_DECIMAL", "NUMBER_BINARY", "NUMBER_OCTAL",
                                               "NUMBER_HEXADECIMAL", "UNSIGNED_REAL", "SIGNED_REAL"]:
                                 a_symbol = NumericLiteral.from_token(token)
+                                if not a_symbol:
+                                    _MODULE_LOGGER_.error("[{0}] literal '{1}' not compatible with type limitations".format(action_name, token))
 
                             elif token.type in ["CHARACTER", "STRING_VALUE"]:
                                 a_symbol = StringLiteral.from_token(token)
+                                if not a_symbol:
+                                    _MODULE_LOGGER_.error("[{0}] literal '{1}' not compatible with type limitations".format(action_name, token))
 
                             else:
                                 msg = "[{0}] unknown symbol '{1}' used in expression"
-                                self._log(ERROR, msg.format(action_name, token.type))
+                                _MODULE_LOGGER_.error(msg.format(action_name, token.type))
 
-                working_stack.append(a_symbol)
+                if a_symbol:
+                    working_stack.append(a_symbol)
 
             else:
                 raise NotImplementedError("expected a Token or a Tree but received '{0}'".format(token))
@@ -683,7 +686,7 @@ class DeftPascalCompiler:
 
         if expression is None:
             msg = "[{0}] expected boolean expression but found: {1}"
-            self._log(ERROR, msg.format(action_name, expression_stack))
+            _MODULE_LOGGER_.error(msg.format(action_name, expression_stack))
 
         else:
             working_stack.append(expression)
@@ -730,7 +733,7 @@ class DeftPascalCompiler:
 
         if expression is None:
             msg = "[{0}] expected integer expression but found: {1}"
-            self._log(ERROR, msg.format(action_name, expression_stack))
+            _MODULE_LOGGER_.error(msg.format(action_name, expression_stack))
 
         else:
             expression = IntegerExpression.from_list(expression_stack)
@@ -746,7 +749,7 @@ class DeftPascalCompiler:
 
         if expression is None:
             msg = "[{0}] expected integer expression but found: {1}"
-            self._log(ERROR, msg.format(action_name, expression_stack))
+            _MODULE_LOGGER_.error(msg.format(action_name, expression_stack))
 
         else:
             expression = IntegerExpression.from_list(expression_stack)
@@ -785,7 +788,7 @@ class DeftPascalCompiler:
 
         if expression is None:
             msg = "[{0}] expected boolean expression but found: {1}"
-            self._log(ERROR, msg.format(action_name, expression_stack))
+            _MODULE_LOGGER_.error(msg.format(action_name, expression_stack))
 
         else:
             working_stack.append(expression)
@@ -845,7 +848,7 @@ class DeftPascalCompiler:
         # identifier - it must NOT exist in the symbol_table yet
         if self._symbol_table.contains(identifier, equal_level_only=False):
             msg = "[{0}] identifier '{1}' already declared in current scope"
-            self._log(ERROR, msg.format(action_name, identifier))
+            _MODULE_LOGGER_.error(msg.format(action_name, identifier))
 
         else:
 
@@ -878,7 +881,7 @@ class DeftPascalCompiler:
             else:
 
                 msg = "[{0}] reference to unknown type '{1}'"
-                self._log(ERROR, msg.format(action_name, type_identifier))
+                _MODULE_LOGGER_.error(msg.format(action_name, type_identifier))
 
         return working_stack
 
@@ -911,30 +914,30 @@ class DeftPascalCompiler:
                 if isinstance(token, Token):
                     if not token.type == "COMMA":
                         msg = "[{0}] :  Unknown token '{1}' passed in procedure parameter."
-                        self._log(ERROR, msg.format(action_name, token))
+                        _MODULE_LOGGER_.error(msg.format(action_name, token))
 
                 elif isinstance(token, Tree):
                     parameters_counter = parameters_counter + 1
 
                     value_to_print_stack = self._internal_compile(token.children[0], [])
-                    field_width_stack = None
-                    decimal_field_width_stack = None
+                    expression_field_width = None
+                    expression_decimal_field = None
 
                     # type checking the expression passed as parameter
                     expression_value_to_print = BaseExpression.from_list(value_to_print_stack)
                     # TODO: check if the expression type is compatible with the procedure parameter type definition
 
                     if token.data.upper() in ["BINARY_PARAMETER", "TERNARY_PARAMETER"]:
-                        field_width_stack = self._internal_compile(token.children[1], [])
-                        expression_field_width = BaseExpression.from_list(field_width_stack)
+                        temp_stack = self._internal_compile(token.children[1], [])
+                        expression_field_width = IntegerExpression.from_list(temp_stack)
 
                     if token.data.upper() == "TERNARY_PARAMETER":
-                        decimal_field_width_stack = self._internal_compile(token.children[2], [])
-                        expression_decimal_field = BaseExpression.from_list(decimal_field_width_stack)
+                        temp_stack = self._internal_compile(token.children[2], [])
+                        expression_decimal_field = IntegerExpression.from_list(temp_stack)
 
                     if (expression_field_width or expression_decimal_field) and identifier.name.upper() not in ["WRITE", "WRITELN"]:
                         msg = "[{0}] formatting parameters incompatible with {1}}. Formatting will be ignored."
-                        self._log(WARNING, msg.format(action_name, identifier.name))
+                        _MODULE_LOGGER_.warning(msg.format(action_name, identifier.name))
                         expression_field_width = None
                         expression_decimal_field = None
 
@@ -942,20 +945,18 @@ class DeftPascalCompiler:
                     generic_expression = BaseExpression.from_list([expression_value_to_print,
                                                                    expression_field_width,
                                                                    expression_decimal_field])
-                    generic_expression.type = expression_type
-
                     # push to the working stack
                     working_stack.append(generic_expression)
 
                 else:
 
                     msg = "[{0}] :  Unknown object '{1}' passed to procedure {2} parameter."
-                    self._log(ERROR, msg.format(action_name, token, identifier))
+                    _MODULE_LOGGER_.error(msg.format(action_name, token, identifier))
 
             if identifier.value and not identifier.parameter_counter == parameters_counter:
 
                 msg = "[{0}] :  '{1}' parameters passed to procedure {2} but '{3}' expected."
-                self._log(ERROR, msg.format(action_name, parameters_counter, identifier.name, identifier.parameter_counter))
+                _MODULE_LOGGER_.error(msg.format(action_name, parameters_counter, identifier.name, identifier.parameter_counter))
 
             # generate the intermediate code
             self._ic.init(action_name)
@@ -967,7 +968,7 @@ class DeftPascalCompiler:
         else:
 
             msg = "[{0}] {1} :  Unknown procedure '{1}' referenced."
-            self._log(ERROR, msg.format(action_name, token.value))
+            _MODULE_LOGGER_.error(msg.format(action_name, token.value))
 
         return working_stack
 
@@ -994,11 +995,11 @@ class DeftPascalCompiler:
 
         if expression is None:
             msg = "[{0}] incompatible types in expression: {1}"
-            self._log(ERROR, msg.format(action_name, expression))
+            _MODULE_LOGGER_.error(msg.format(action_name, expression))
 
         elif not expression.type == "RESERVED_TYPE_BOOLEAN":
             msg = "[{0}] expected boolean expression but found: {1}"
-            self._log(ERROR, msg.format(action_name, expression.type))
+            _MODULE_LOGGER_.error(msg.format(action_name, expression.type))
 
         else:
             working_stack.append(expression)

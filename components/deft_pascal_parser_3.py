@@ -8,7 +8,7 @@ HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 from lark import Lark, UnexpectedCharacters, UnexpectedToken
 import logging
 
-_MODULE_LOGGER = logging.getLogger(__name__)
+_MODULE_LOGGER_ = logging.getLogger("deft_pascal_reborn")
 
 
 class DeftPascalParser:
@@ -418,18 +418,17 @@ class DeftPascalParser:
         self._ast = None
 
     def parse(self, a_program):
-        _MODULE_LOGGER.debug("start")
         error_list = []
         try:
             self._ast = self._parser(a_program)
         except UnexpectedCharacters as error:
             msg = "syntax error at line {0} column {1}. unexpected character found. expected {2}".format(error.line, error.column, error.allowed)
             error_list.append(msg)
-            _MODULE_LOGGER.error(msg)
+            _MODULE_LOGGER_.error(msg)
         except UnexpectedToken as error:
             msg = "syntax error at line {0} column {1}: expected {2}".format(error.line, error.column, error.expected)
             error_list.append(msg)
-            _MODULE_LOGGER.error(msg)
+            _MODULE_LOGGER_.error(msg)
         return error_list
 
     @property

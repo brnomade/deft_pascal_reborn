@@ -57,18 +57,28 @@ class NilLiteral(Literal):
 class NumericLiteral(Literal):
 
     @classmethod
-    def from_token(cls, parser_token):
-        return cls.from_value(parser_token.value, parser_token.type)
-
-    @classmethod
     def from_value(cls, a_value, a_type_name=None):
+        valid = False
         if a_type_name in ["INTEGER", "UNSIGNED_DECIMAL", "SIGNED_DECIMAL", "NUMBER_BINARY", "NUMBER_OCTAL", "NUMBER_HEXADECIMAL"]:
             a_type = BasicType.reserved_type_integer()
+
+            if "&B" in a_value.upper():  # == "NUMBER_BINARY"
+                valid = 0 <= int(a_value.replace("&B", "").replace("&b", ""), 2) <= 65535
+            elif "&H" in a_value.upper():  # == "NUMBER_HEXADECIMAL"
+                valid = 0 <= int(a_value.replace("&H", "").replace("&h", ""), 16) <= 65535
+            elif "&O" in a_value.upper():  # == "NUMBER_OCTAL"
+                valid = 0 <= int(a_value.replace("&O", "").replace("&o", ""), 8) <= 65535
+            else:
+                valid = (0 <= int(a_value) <= 65535) or (-32768 <= int(a_value) <= 32767)
+
         elif a_type_name in ["REAL", "UNSIGNED_REAL", "SIGNED_REAL"]:
             a_type = BasicType.reserved_type_real()
+            valid = True
+
         else:
             raise ValueError("'{0}' is incompatible with '{1}'".format(a_type_name, "NumericLiteral"))
-        return cls(str(a_value), a_type, a_value)
+
+        return cls(str(a_value), a_type, a_value) if valid else None
 
     @property
     def value_to_c(self):
@@ -92,13 +102,21 @@ class StringLiteral(Literal):
 
     @classmethod
     def from_value(cls, a_value, a_type_name=None):
-        if a_type_name in ["CHAR", "CHARACTER"]:
+        valid = False
+        if isinstance(a_value, str) and a_type_name in ["CHAR", "CHARACTER"]:
             a_type = BasicType.reserved_type_char()
-        elif a_type_name in ["STRING_VALUE"]:
+            a_value = a_value.lstrip("'").rstrip("'")
+            valid = len(a_value) == 1
+
+        elif isinstance(a_value, str) and a_type_name in ["STRING_VALUE"]:
             a_type = StringType.reserved_type_string()
+            a_value = a_value.lstrip("'").rstrip("'")
+            valid = len(a_value) <= 80
+
         else:
             raise ValueError("'{0}' is incompatible with '{1}'".format(a_type_name, "StringLiteral"))
-        return cls(str(a_value), a_type, a_value)
+
+        return cls(str(a_value), a_type, a_value) if valid else None
 
     @property
     def value_to_c(self):

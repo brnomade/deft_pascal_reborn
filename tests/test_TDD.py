@@ -19,7 +19,7 @@ class ConfigurationForTestTDD:
 
     @classmethod
     def tdd_tests_to_run(cls):
-        return [(TDD, "scenario_variable_assignment_with_single_value", PositiveLanguageTests.scenario_variable_assignment_with_single_value)]
+        return [(NegativeLanguageTests, "scenario_large_binary_number_raises_compiler_error", NegativeLanguageTests.scenario_large_binary_number_raises_compiler_error)]
 
 
 class TestTDD(TestCase):

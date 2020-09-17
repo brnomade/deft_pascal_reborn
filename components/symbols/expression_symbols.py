@@ -6,6 +6,9 @@ HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
 from components.symbols.base_symbols import BaseExpression
+import logging
+
+_MODULE_LOGGER_ = logging.getLogger("deft_pascal_reborn")
 
 
 class ConstantExpression(BaseExpression):
@@ -22,7 +25,7 @@ class ConstantExpression(BaseExpression):
             return None
 
         if expression.cardinality > 1 and (expression.type in ["RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING"]):
-            print("ERROR! - [{0}] string based constant expressions are not supported: {1}".format("UNKNOWN", expression))
+            _MODULE_LOGGER_.error("string based constant expressions are not supported: {0}".format(expression))
             expression.trim_cardinality_down()
 
         return expression

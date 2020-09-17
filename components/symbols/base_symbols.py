@@ -7,6 +7,9 @@ HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 
 from lark import Token
 from collections import deque
+import logging
+
+_MODULE_LOGGER_ = logging.getLogger("deft_pascal_reborn")
 
 
 class BaseSymbol:
@@ -195,8 +198,10 @@ class BaseExpression(BaseSymbol):
 
         while infix_tokens:
             token = infix_tokens.pop(0)
+            if not token:
+                pass
 
-            if token.value == lp.value:
+            elif token.value == lp.value:
                 stack.appendleft(token)
 
             elif token.value == rp.value:
@@ -246,7 +251,7 @@ class BaseExpression(BaseSymbol):
                 else:
                     return None
 
-            else:
+            elif token:
                 stack.append(token)
 
         return stack[-1] if isinstance(stack[-1], BaseType) else stack[-1].type
@@ -264,6 +269,7 @@ class BaseExpression(BaseSymbol):
             expression.type = result
             return expression
         else:
+            _MODULE_LOGGER_.error("incompatible types in expression: {0}".format(expression_list))
             return None
 
     @property

@@ -91,13 +91,13 @@ class TestCompilerNegativeScenarios(TestCase):
         if error_log:
             print(error_log)
         self.assertEqual([], error_log)
+        #
         error_log = compiler.compile()
-        if error_log:
-            print(error_log)
+        self.assertNotEqual([], error_log)
+        #
+        # print(error_log)
         if message:
             self.assertIn(message, error_log[0])
-        else:
-            self.assertNotEqual([], error_log)
 
 
 class TestCompilerExampleScenarios(TestCase):
