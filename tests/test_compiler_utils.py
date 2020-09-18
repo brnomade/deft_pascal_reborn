@@ -1,24 +1,47 @@
 """
 PROJECT.......: Deft Pascal Reborn
 COPYRIGHT.....: Copyright (C) 2020- Andre L Ballista
-VERSION.......: 0.1
 DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original Deft Pascal compiler
 HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
 from unittest import TestCase
-from utils.compiler_utils import check_type_compatibility, convert_to_postfix, convert_to_tokens, ExpressionOriginal
-from components.symbols import BooleanConstant, Constant, Operator
-import logging
-
-logger = logging.getLogger(__name__)
+from utils.compiler_utils import check_type_compatibility, convert_to_postfix, ExpressionOriginal
+from components.symbols.operator_symbols import BinaryOperator, UnaryOperator, NeutralOperator
+from components.symbols.literals_symbols import BooleanLiteral, NumericLiteral
+from components.symbols.type_symbols import BasicType
 
 
 class TestCompilerInternals(TestCase):
 
+    @staticmethod
+    def _convert_to_tokens(expression):
+        token_list = []
+        for i in (expression.strip().split(" ")):
+            if i == '+':
+                t = BinaryOperator.operator_plus()
+            elif i == '-':
+                t = BinaryOperator.operator_minus()
+            elif i == '*':
+                t = BinaryOperator.operator_multiply()
+            elif i == '/':
+                t = BinaryOperator.operator_divide()
+            elif i == '^' or i == "**":
+                t = BinaryOperator.operator_starstar()
+                t.value = '^'
+            elif i == '(':
+                t = NeutralOperator.operator_left_parentheses()
+            elif i == ')':
+                t = NeutralOperator.operator_right_parentheses()
+            else:
+                t = NumericLiteral(i, None, None, BasicType.reserved_type_integer(), int(i))
+            token_list.append(t)
+        return token_list
+
+
     def _perform_postfix_conversion_test(self, infix_expression):
         print("\ninfix expression: {0} \n".format(infix_expression))
-        symbol_list = convert_to_tokens(infix_expression)
+        symbol_list = self._convert_to_tokens(infix_expression)
         #
         result = convert_to_postfix(symbol_list)
         print("\npostfix expression: {0} \n".format([i.value for i in result]))
@@ -161,116 +184,68 @@ class TestCompilerInternals(TestCase):
         self._perform_postfix_conversion_test("1 + 1")
 
 
-    def x_test_type_check_scenario_assignment_unary_operation_compatible_type(self):
+    def test_type_check_scenario_assignment_unary_operation_compatible_type(self):
         #
         symbol_list = [
-            BooleanConstant.false(),
-            Operator(":=", None, None, "OPERATOR_ASSIGNMENT", ":="),
-            Operator("NOT", None, None, "OPERATOR_NOT", "NOT"),
-            BooleanConstant.false(),
+            BooleanLiteral.false(),
+            BinaryOperator.operator_assignment(),
+            UnaryOperator.operator_not(),
+            BooleanLiteral.false(),
         ]
         #
         result = check_type_compatibility(symbol_list)
         self.assertTrue(result)
 
-    def x_test_type_check_scenario_assignment_unary_operation_not_compatible_type(self):
+    def test_type_check_scenario_assignment_unary_operation_not_compatible_type(self):
         #
         symbol_list = [
-            Constant("1", None, None, "RESERVED_TYPE_INTEGER", 1),
-            Operator(":=", None, None, "OPERATOR_ASSIGNMENT", ":="),
-            Operator("NOT", None, None, "OPERATOR_NOT", "NOT"),
-            BooleanConstant.false(),
+            NumericLiteral("1", None, None, BasicType.reserved_type_integer(), 1),
+            BinaryOperator.operator_assignment(),
+            UnaryOperator.operator_not(),
+            BooleanLiteral.false(),
         ]
         #
         result = check_type_compatibility(symbol_list)
         self.assertFalse(result)
 
-    def x_test_type_check_scenario_expression_unary_operation_compatible_type(self):
+    def test_type_check_scenario_expression_unary_operation_compatible_type(self):
         #
         symbol_list = [
-            Operator("NOT", None, None, "OPERATOR_NOT", "NOT"),
-            BooleanConstant.false(),
+            UnaryOperator.operator_not(),
+            BooleanLiteral.false(),
         ]
         #
         result = check_type_compatibility(symbol_list)
         self.assertTrue(result)
 
-    def x_test_type_check_scenario_expression_unary_operation_not_compatible_type(self):
+    def test_type_check_scenario_expression_unary_operation_not_compatible_type(self):
         #
         symbol_list = [
-            Operator("NOT", None, None, "OPERATOR_NOT", "NOT"),
-            Constant("1", None, None, "RESERVED_TYPE_INTEGER", 1),
+            UnaryOperator.operator_not(),
+            NumericLiteral("1", None, None, BasicType.reserved_type_integer(), 1)
         ]
         #
         result = check_type_compatibility(symbol_list)
         self.assertFalse(result)
 
-    def x_test_type_check_scenario_assignment_single_level_not_compatible_types(self):
-       #
+    def test_type_check_scenario_assignment_single_level_not_compatible_types(self):
+        #
         symbol_list = [
-            Constant("1", None, None, "RESERVED_TYPE_INTEGER", 1),
-            Operator(":=", None, None, "OPERATOR_ASSIGNMENT", ":="),
-            BooleanConstant.false(),
+            NumericLiteral("1", None, None, BasicType.reserved_type_integer(), 1),
+            BinaryOperator.operator_assignment(),
+            BooleanLiteral.false(),
         ]
         #
         result = check_type_compatibility(symbol_list)
         self.assertFalse(result)
 
-    def x_test_type_check_scenario_assignment_single_level_compatible_types(self):
+    def test_type_check_scenario_assignment_single_level_compatible_types(self):
         #
         symbol_list = [
-            BooleanConstant.true(),
-            Operator(":=", None, None, "OPERATOR_ASSIGNMENT", ":="),
-            BooleanConstant.false(),
+            BooleanLiteral.true(),
+            BinaryOperator.operator_assignment(),
+            BooleanLiteral.false(),
         ]
         #
         result = check_type_compatibility(symbol_list)
         self.assertTrue(result)
-
-    def DONOTRUN_test_type_check_scenario_expression_single_level_compatible_types(self):
-        #
-        symbol_list = [
-            Constant("1", None, None, "RESERVED_TYPE_INTEGER", 1),
-            Operator("+", None, None, "OPERATOR_PLUS", "+"),
-            Constant("1", None, None, "RESERVED_TYPE_CHAR", 1),
-            Operator("*", None, None, "OPERATOR_MULTIPLY", "*"),
-            Constant("1", None, None, "RESERVED_TYPE_INTEGER", 1),
-        ]
-        # (x > 5) and ('C' in {'A', 'B', 'C'})
-        result = check_type_compatibility(symbol_list)
-        self.assertFalse(result)
-
-    def DONOTRUN_test_type_check_scenario_dual_levels_not_compatible_types(self):
-        #
-        symbol_list = [
-            Constant("1", None, None, "UNSIGNED_REAL", 1),
-            Operator(":=", None, None, "OPERATOR_ASSIGNMENT", ":="),
-            Operator(":=", None, None, "OPERATOR_ASSIGNMENT", ":="),
-            BooleanConstant.false(),
-            +
-            (
-            BooleanConstant.false(),
-            +
-            Constant("1", None, None, "UNSIGNED_REAL", 1),
-            )
-        ]
-        #
-        result = check_type_compatibility(symbol_list)
-        self.assertFalse(result)
-
-"""
-Identifier('V1'|RESERVED_TYPE_INTEGER|scenario_variable_declaration|0|V1|[]), 
-Identifier('V2'|RESERVED_TYPE_INTEGER|scenario_variable_declaration|0|V2|[]), 
-Identifier('_V3'|RESERVED_TYPE_REAL|scenario_variable_declaration|0|_V3|[]), 
-Identifier('_V3_b'|RESERVED_TYPE_BOOLEAN|scenario_variable_declaration|0|_V3_b|[]), 
-Identifier('_V3c'|RESERVED_TYPE_BYTE|scenario_variable_declaration|0|_V3c|[]), 
-Identifier('_V3_d'|RESERVED_TYPE_CHAR|scenario_variable_declaration|0|_V3_d|[]), 
-Identifier('_V3_e'|RESERVED_TYPE_STRING|scenario_variable_declaration|0|_V3_e|[]), 
-Identifier('_V3_f'|RESERVED_TYPE_TEXT|scenario_variable_declaration|0|_V3_f|[]), 
-Identifier('_V3g'|RESERVED_TYPE_WORD|scenario_variable_declaration|0|_V3g|[]), 
-Identifier('_V3h'|RESERVED_TYPE_SET|scenario_variable_declaration|0|_V3h|[]), 
-Identifier('V4'|^IDENTIFIER|scenario_variable_declaration|0|V4|[]), 
-Identifier('V5'|^IDENTIFIER|scenario_variable_declaration|0|V5|[]), 
-Identifier('V6'|^IDENTIFIER|scenario_variable_declaration|0|V6|[]), 
-Identifier('V7'|^IDENTIFIER|scenario_variable_declaration|0|V7|[])]}
-"""

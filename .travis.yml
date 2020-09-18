@@ -13,13 +13,7 @@ before_script:
   - chmod +x ./cc-test-reporter
   - ./cc-test-reporter before-build
 script:
-  - coverage run --omit */lib/* --omit /obsoletes/* -m unittest discover tests
-- python -m unittest tests/test_compiler_internals.py
-  - python -m unittest tests/test_symbols.py
-  - python -m unittest tests/test_symbol_table.py
-  - python -m unittest tests/test_deft_pascal_parser.py
-  - python -m unittest tests/test_deft_pascal_compiler.py
-  - python -m unittest tests/test_code_generation.py
+  - coverage run --omit */Lib/* -m unittest
 after_script:
   - coverage xml
   - ./cc-test-reporter after-build -r 17b6f0d248c948db0156cad289d5b8e989e26dcb5d5a341c876484719e4247fd --exit-code $TRAVIS_TEST_RESULT

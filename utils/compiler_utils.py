@@ -1,8 +1,18 @@
-from components.symbols import Operator, Constant, Identifier, BaseSymbol
+"""
+PROJECT.......: Deft Pascal Reborn
+COPYRIGHT.....: Copyright (C) 2020- Andre L Ballista
+DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original Deft Pascal compiler
+HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
+"""
 
+# from components.symbols.base_symbols import BaseType
+from components.symbols.operator_symbols import Operator, UnaryOperator, NeutralOperator, BinaryOperator
 import tokenize
 from io import StringIO
 from collections import deque
+import os
+import subprocess
+import platform
 
 import logging
 logger = logging.getLogger(__name__)
@@ -91,66 +101,57 @@ class Expression:
     def __init__(self, expression):
         self.infix_tokens = expression
         self.postfix_tokens = []
-        self.precedence_rules = {"OPERATOR_ARITHMETIC_NEGATION": 70,
-                                 "OPERATOR_ARITHMETIC_NEUTRAL": 70,
-                                 "OPERATOR_STARSTAR": 60,
-                                 "OPERATOR_DIVIDE": 50,
-                                 "OPERATOR_DIV": 50,
-                                 "OPERATOR_MOD": 50,
-                                 "OPERATOR_MULTIPLY": 50,
-                                 "OPERATOR_ABS": 40,
-                                 "OPERATOR_PLUS": 30,
-                                 "OPERATOR_MINUS": 30,
-                                 "OPERATOR_LSL": 20,
-                                 "OPERATOR_LSR": 20,
-                                 "OPERATOR_XOR": 20,
-                                 "OPERATOR_SHL": 20,
-                                 "OPERATOR_SHR": 20,
-                                 "OPERATOR_NOT": 10,
-                                 "OPERATOR_AND": 10,
-                                 "OPERATOR_OR": 10,
-                                 "OPERATOR_IN": 5,
-                                 "OPERATOR_EQUAL_TO": 5,
-                                 "OPERATOR_NOT_EQUAL_TO": 5,
-                                 "OPERATOR_LESS_THEN": 5,
-                                 "OPERATOR_GREATER_THEN": 5,
-                                 "OPERATOR_LESS_OR_EQUAL_TO": 5,
-                                 "OPERATOR_GREATER_OR_EQUAL_TO": 5,
-                                 "OPERATOR_ASSIGNMENT": 1,
-                                 "LEFT_PARENTHESES": 0
-                                 }
+        # self.precedence_rules = {"OPERATOR_ARITHMETIC_NEGATION": 70,
+        #                          "OPERATOR_ARITHMETIC_NEUTRAL": 70,
+        #                          "OPERATOR_STARSTAR": 60,
+        #                          "OPERATOR_DIVIDE": 50,
+        #                          "OPERATOR_DIV": 50,
+        #                          "OPERATOR_MOD": 50,
+        #                          "OPERATOR_MULTIPLY": 50,
+        #                          "OPERATOR_ABS": 40,
+        #                          "OPERATOR_PLUS": 30,
+        #                          "OPERATOR_MINUS": 30,
+        #                          "OPERATOR_LSL": 20,
+        #                          "OPERATOR_LSR": 20,
+        #                          "OPERATOR_XOR": 20,
+        #                          "OPERATOR_SHL": 20,
+        #                          "OPERATOR_SHR": 20,
+        #                          "OPERATOR_NOT": 10,
+        #                          "OPERATOR_AND": 10,
+        #                          "OPERATOR_OR": 10,
+        #                          "OPERATOR_IN": 5,
+        #                          "OPERATOR_EQUAL_TO": 5,
+        #                          "OPERATOR_NOT_EQUAL_TO": 5,
+        #                          "OPERATOR_LESS_THEN": 5,
+        #                          "OPERATOR_GREATER_THAN": 5,
+        #                          "OPERATOR_LESS_OR_EQUAL_TO": 5,
+        #                          "OPERATOR_GREATER_OR_EQUAL_TO": 5,
+        #                          "OPERATOR_ASSIGNMENT": 1,
+        #                          "LEFT_PARENTHESES": 0
+        #                          }
 
     def infix_to_postfix(self):
         # logger.info("infix_to_postfix\n")
         stack = deque()
-        stack.appendleft(BaseSymbol("(", None, None, "LEFT_PARENTHESES", "("))
-        self.infix_tokens.append(BaseSymbol(")", None, None, "RIGHT_PARENTHESES", ")"))
+        lp = NeutralOperator.operator_left_parentheses()
+        rp = NeutralOperator.operator_right_parentheses()
 
-        # print("{0} ##\t {1} ##\t {2} ##\t {3}".format(" ",
-        #                                              [i.value for i in self.infix_tokens],
-        #                                              [i.value for i in self.postfix_tokens],
-        #                                              [i.value for i in stack]
-        #                                              ))
-
-        # logger.info("{0} ##\t {1} ##\t {2} ##\t {3}".format(" ",
-        #                                              [i.type for i in self.infix_tokens],
-        #                                              [i.type for i in self.postfix_tokens],
-        #                                              [i.type for i in stack]
-        #                                              ))
+        stack.appendleft(lp)
+        self.infix_tokens.append(rp)
 
         while self.infix_tokens:
             token = self.infix_tokens.pop(0)
 
-            if token.type == "LEFT_PARENTHESES":
+            if token.value == lp.value:
                 stack.appendleft(token)
 
-            elif token.type == "RIGHT_PARENTHESES":
+            elif token.value == rp.value:
 
-                while not stack[0].type == "LEFT_PARENTHESES":       # peek at topmost item in the stack
+                while not stack[0].value == lp.value:       # peek at topmost item in the stack
                     self.postfix_tokens.append(stack.popleft())
                 stack.popleft()
 
-            elif token.is_operator:
+            elif isinstance(token, BinaryOperator) or isinstance(token, UnaryOperator):
 
                 # while stack and self.precedence_rules[stack[0].type] >= self.precedence_rules[token.type]:
                 while stack and stack[0].precedence >= token.precedence:
@@ -159,131 +160,143 @@ class Expression:
 
             else:
                 self.postfix_tokens.append(token)
-
-            # print("{0} ##\t {1} ##\t {2} ##\t {3}".format(token.value,
-            #                                              [i.value for i in self.infix_tokens],
-            #                                              [i.value for i in self.postfix_tokens],
-            #                                              [i.value for i in stack]
-            #                                              ))
-            # logger.info("{0} ##\t {1} ##\t {2} ##\t {3}".format(token.type,
-            #                                              [i.type for i in self.infix_tokens],
-            #                                              [i.type for i in self.postfix_tokens],
-            #                                              [i.type for i in stack]
-            #                                              ))
-
         return self.postfix_tokens
-
-
-def convert_to_tokens(expression):
-    token_list = []
-    for i in (expression.strip().split(" ")):
-        if i == '+':
-            t = Operator("+", None, None, "OPERATOR_PLUS", "+")
-        elif i == '-':
-            t = Operator("–", None, None, "OPERATOR_MINUS", "-")
-        elif i == '*':
-            t = Operator("*", None, None, "OPERATOR_MULTIPLY", "*")
-        elif i == '/':
-            t = Operator("/", None, None, "OPERATOR_DIVIDE", "/")
-        elif i == '^' or i == "**":
-            t = Operator("^", None, None, "OPERATOR_STARSTAR", "^")
-        elif i == '(':
-            t = Operator("(", None, None, "LEFT_PARENTHESES", "(")
-        elif i == ')':
-            t = Operator(")", None, None, "RIGHT_PARENTHESES", ")")
-        else:
-            t = Constant(i, None, None, "RESERVED_TYPE_INTEGER", int(i))
-        token_list.append(t)
-    return token_list
-
-
-# def evaluate_postfix(expression):
-#     stack = []
-#     for i in expression:
-#         print("{0}".format([i.value for i in stack]))
-#         if i.is_operator():
-#             b = stack.pop()
-#             a = stack.pop()
-#             if i.value == "+":
-#                 v = a.value + b.value
-#             elif i.value == "-":
-#                 v = a.value - b.value
-#             elif i.value == '*':
-#                 v = a.value * b.value
-#             elif i.value == "/":
-#                 v = a.value / b.value
-#             elif i.value == "^" or i.value == "**":
-#                 v = a.value ** b.value
-#             else:
-#                 print("error", i)
-#                 v = 0
-#             c = Constant(str(v), None, None, "RESERVED_TYPE_INTEGER", v)
-#             stack.append(c)
-#         else:
-#             stack.append(i)
-#     return stack.pop()
 
 
 def convert_to_postfix(expression):
     return Expression(expression.copy()).infix_to_postfix()
 
 
-def check_type_compatibility(expression):
-    """
-    expression - is a list of tokens.
-    """
+#def compatibility_for_operator(operator_name):
+#    # this is defined from the symbol_left perspective.
+#    if operator_name in glb_compatibility_matrix:
+#        return glb_compatibility_matrix[operator_name]
+
+
+# def check_type_compatibility(expression):
+#     """
+#     expression - is a list of tokens.
+#     """
+#     #
+#     compatible = True
+#     stack = []
+#     postfix_expression = convert_to_postfix(expression)
+#     for token in postfix_expression:
+#
+#         if isinstance(token, Operator):
+#             symbol_right = stack.pop()
+#             symbol_right = symbol_right if isinstance(symbol_right, BaseType) else symbol_right.type
+#
+#             if isinstance(token, UnaryOperator):
+#                 result = token.evaluate_to_type(symbol_right)
+#
+#             elif isinstance(token, BinaryOperator):
+#                 symbol_left = stack.pop()
+#                 symbol_left = symbol_left if isinstance(symbol_left, BaseType) else symbol_left.type
+#                 result = token.evaluate_to_type(symbol_right=symbol_right, symbol_left=symbol_left)
+#
+#             if result:
+#                 stack.append(result)
+#
+#             else:
+#                 return None
+#
+#         else:
+#             stack.append(token)
+#
+#     return stack[-1]
+
+
+def token_is_an_operator(token):
+    return "OPERATOR_" in token.type
+
+
+# def identifier_from_token(parser_token, context_label, context_level):
+#     """
+#     return an Identifier (i.e. an identifier for anything different than TYPEs) from a parser input_token
+#     """
+#     return Identifier(parser_token.value, context_label, context_level, parser_token.type, parser_token.value)
+
+
+def compile_in_gcc(input_c, remove_file_after_test=True):
+
+    home_dir = os.getcwd()
+
+    mig_dir = "C:\\MinGW\\bin"
+
+    if platform.system() == "Windows":
+        sources_path = "output\\sources"
+        bin_path = "output\\bin"
+        logs_path = "output\\logs"
+    else:
+        sources_path = ""
+        bin_path = ""
+        logs_path = ""
+
+    input_source = os.path.join(home_dir, sources_path, input_c)
+    output_err = os.path.join(home_dir, logs_path, input_c.split(".")[0] + ".err")
+    output_out = os.path.join(home_dir, logs_path, input_c.split(".")[0] + ".out")
+    output_exe = os.path.join(home_dir, bin_path, input_c.split(".")[0] + ".exe")
     #
-    compatible = True
-    stack = []
-    for index, token in enumerate(convert_to_postfix(expression)):
+    if platform.system() == "Windows":
+        gcc_name = "gcc.exe"
+    else:
+        gcc_name = "gcc"
+    #
+    # c_compiler = "{0} -S -c -o {1}".format(gcc_name, output_exe)
+    # c_env = "{0} {1} > {2} 2> {3}".format(c_compiler, input_source, output_out, output_err)
+    c_compiler = "{0} -S -c".format(gcc_name)
+    c_env = "{0} {1} > {2} 2> {3}".format(c_compiler, input_source, output_out, output_err)
 
-        if token.is_operator:
+    print(c_env)
+    #
+    if platform.system() == "Windows":
+        os.chdir(mig_dir)
+    #
+    subprocess.run(c_env, shell=True)
+    #
+    if platform.system() == "Windows":
+        os.chdir(home_dir)
+    #
+    result_out = "error"
+    if os.path.exists(os.path.join(home_dir, output_out)):
+        file = open(output_out)
+        result_out = file.read()
+        file.close()
+        if result_out:
+            print(result_out)
+        if remove_file_after_test:
+            os.remove(output_out)
 
-            symbol_right = stack.pop()
-            symbol_left = None if token.is_unary() else stack.pop()
-            result = token.evaluate_to_type(symbol_right=symbol_right, symbol_left=symbol_left)
-            if result:
-                stack.append(result)
-            else:
-                # logger.info("{0}".format([x for x in stack]))
-                # compatible = False
-                # break
-                return None
-        else:
-            stack.append(token)
+    result_err = "error"
+    if os.path.exists(os.path.join(home_dir, output_err)):
+        file = open(output_err)
+        result_err = file.read()
+        file.close()
+        if result_err:
+            print(result_err)
+        if remove_file_after_test:
+            os.remove(output_err)
 
-    return stack[-1]
+    if remove_file_after_test:
+        os.remove(input_c)
 
-# def type_from_token(parser_token, context_label, context_level):
-#   """
-#    return a BaseSymbol from a parser input_token
-#    """
-#    return BaseSymbol(parser_token.value, context_label, context_level, parser_token.type, parser_token.value)
-
-
-# def operator_from_token(parser_token, context_label, context_level):
-#    """
-#    return an Operator from a parser input_token
-#    """
-#    return Operator(parser_token.value, context_label, context_level, parser_token.type, parser_token.value)
-
-
-# def type_identifier_from_token(parser_token, context_label, context_level):
-#    """
-#    return an TypeIdentifier (i.e. an identifier for TYPEs) from a parser input_token
-#    """
-#    return TypeIdentifier(parser_token.value, context_label, context_level, parser_token.type, parser_token.value)
-
-
-# def pointer_type_identifier_from_token(parser_token, context_label, context_level):
-#    """
-#    return an TypeIdentifier (i.e. an identifier for TYPEs) from a parser input_token
-#    """
-#    return PointerTypeIdentifier(parser_token.value, context_label, context_level, parser_token.type, parser_token.value)
+    return result_out + result_err
 
 
-def identifier_from_token(parser_token, context_label, context_level):
-    """
-    return an Identifier (i.e. an identifier for anything different than TYPEs) from a parser input_token
-    """
-    return Identifier(parser_token.value, context_label, context_level, parser_token.type, parser_token.value)
+def run_in_shell(c_file_filename):
+    #
+    filename = os.path.basename(c_file_filename)
+    filepath = os.path.dirname(c_file_filename)
+    #
+    filename = filename.split(".")[0] + ".exe"
+    #
+    executable_file = os.path.join(filepath, filename)
+    #
+    msg = "{0} does not exist or cannot be found at {1}"
+    if not os.path.isfile(executable_file):
+        print(msg.format("Compiler executable", executable_file))
+    return subprocess.run(executable_file)
+
+
+

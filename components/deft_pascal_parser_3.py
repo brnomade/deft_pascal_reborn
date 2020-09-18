@@ -1,15 +1,14 @@
 """
 PROJECT.......: Deft Pascal Reborn
 COPYRIGHT.....: Copyright (C) 2020- Andre L Ballista
-VERSION.......: 0.1
 DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original Deft Pascal compiler
 HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
-from lark import Lark, UnexpectedCharacters
+from lark import Lark, UnexpectedCharacters, UnexpectedToken
 import logging
 
-_MODULE_LOGGER = logging.getLogger(__name__)
+_MODULE_LOGGER_ = logging.getLogger("deft_pascal_reborn")
 
 
 class DeftPascalParser:
@@ -57,20 +56,43 @@ class DeftPascalParser:
         _constant_list : constant_definition 
                        | constant_definition _constant_list
                   
-        constant_definition : IDENTIFIER OPERATOR_EQUAL_TO _constant_expression _SEMICOLON
+        constant_definition : IDENTIFIER OPERATOR_EQUAL_TO constant_expression _SEMICOLON
         
-        _constant_expression : UNSIGNED_DECIMAL
-                             | SIGNED_DECIMAL
-                             | UNSIGNED_REAL
-                             | SIGNED_REAL
-                             | NUMBER_BINARY
-                             | NUMBER_OCTAL
-                             | NUMBER_HEXADECIMAL
-                             | CHARACTER
-                             | STRING_VALUE
-                             | CONSTANT_TRUE
-                             | CONSTANT_FALSE
-                             | CONSTANT_NIL
+        constant_expression : _constant_simple_expression
+                            | _constant_simple_expression _relop _constant_simple_expression
+        
+        _constant_simple_expression : _constant_term
+                                   | _constant_simple_expression _addop _constant_term
+
+        _constant_term : _constant_factor
+                       | _constant_term _mulop _constant_factor
+              
+        _constant_factor : _sign _constant_factor
+                         | _constant_exponentiation
+        
+        _constant_exponentiation : _constant_primary
+                                 | _constant_primary OPERATOR_STARSTAR _constant_exponentiation
+         
+        _constant_primary : constant_access
+                          | _unsigned_constant
+                          | LEFT_PARENTHESES constant_expression RIGHT_PARENTHESES
+                          | OPERATOR_NOT _constant_primary
+
+        constant_access : IDENTIFIER 
+
+
+        //constant_expression : UNSIGNED_DECIMAL
+        //                     | SIGNED_DECIMAL
+        //                     | UNSIGNED_REAL
+        //                     | SIGNED_REAL
+        //                     | NUMBER_BINARY
+        //                     | NUMBER_OCTAL
+        //                     | NUMBER_HEXADECIMAL
+        //                     | CHARACTER
+        //                     | STRING_VALUE
+        //                     | CONSTANT_TRUE
+        //                     | CONSTANT_FALSE
+        //                     | CONSTANT_NIL
            
         // TYPE DECLARATION
        
@@ -99,22 +121,24 @@ class DeftPascalParser:
                      | RESERVED_TYPE_CHAR
                      | RESERVED_TYPE_INTEGER
                      | RESERVED_TYPE_STRING
+                     | RESERVED_TYPE_STRING LEFT_PARENTHESES UNSIGNED_DECIMAL RIGHT_PARENTHESES
                      | RESERVED_TYPE_TEXT
                      | RESERVED_TYPE_SET
                      | IDENTIFIER
                      | _new_type
 
-        _new_type : _new_pointer_type
-
         // TYPE - POINTER DECLARATION
 
-        _new_pointer_type : UPARROW _domain_type
-        UPARROW : "^"
+        _new_type : _new_pointer_type
+        
+        _new_pointer_type : OPERATOR_UPARROW _domain_type
+        
         _domain_type : RESERVED_TYPE_REAL
                      | RESERVED_TYPE_BOOLEAN
                      | RESERVED_TYPE_CHAR
                      | RESERVED_TYPE_INTEGER
                      | RESERVED_TYPE_STRING
+                     | RESERVED_TYPE_STRING LEFT_PARENTHESES UNSIGNED_DECIMAL RIGHT_PARENTHESES
                      | RESERVED_TYPE_TEXT
                      | RESERVED_TYPE_SET
                      | IDENTIFIER 
@@ -205,7 +229,8 @@ class DeftPascalParser:
 
         assignment_statement : variable_access OPERATOR_ASSIGNMENT expression
 
-        variable_access : IDENTIFIER
+        variable_access : IDENTIFIER 
+                        | variable_access OPERATOR_UPARROW
          
         _boolean_expression : expression 
 
@@ -217,8 +242,8 @@ class DeftPascalParser:
 
         _relop : OPERATOR_EQUAL_TO
                | OPERATOR_NOT_EQUAL_TO
-               | OPERATOR_LESS_THEN
-               | OPERATOR_GREATER_THEN
+               | OPERATOR_LESS_THAN
+               | OPERATOR_GREATER_THAN
                | OPERATOR_LESS_OR_EQUAL_TO
                | OPERATOR_GREATER_OR_EQUAL_TO
                | OPERATOR_IN          
@@ -311,7 +336,6 @@ class DeftPascalParser:
         RESERVED_STATEMENT_WHILE : "while"i
         RESERVED_STATEMENT_BYTE : "byte"i
         RESERVED_STATEMENT_WORD : "word"i
-        RESERVED_STATEMENT_ABS : "abs"i
         RESERVED_STATEMENT_IF : "if"i
         RESERVED_STATEMENT_THEN : "then"i  
         RESERVED_STATEMENT_ELSE : "else"i
@@ -321,9 +345,9 @@ class DeftPascalParser:
         OPERATOR_EQUAL_TO : "="
         OPERATOR_NOT_EQUAL_TO : "<>"
         OPERATOR_GREATER_OR_EQUAL_TO : ">="
-        OPERATOR_GREATER_THEN : ">"
+        OPERATOR_GREATER_THAN : ">"
         OPERATOR_LESS_OR_EQUAL_TO : "<="
-        OPERATOR_LESS_THEN : "<"
+        OPERATOR_LESS_THAN : "<"
         OPERATOR_ASSIGNMENT : ":="
         OPERATOR_OR : "or"i
         OPERATOR_AND : "and"i
@@ -351,6 +375,9 @@ class DeftPascalParser:
         OPERATOR_DIVIDE : "/"
         OPERATOR_MOD : "mod"i
         OPERATOR_DIV : "div"i
+        OPERATOR_ABS : "abs"i
+        OPERATOR_UPARROW : "^"
+
         
         // regular expressions
              
@@ -391,17 +418,17 @@ class DeftPascalParser:
         self._ast = None
 
     def parse(self, a_program):
-        _MODULE_LOGGER.debug("start")
-        error_list = None
+        error_list = []
         try:
             self._ast = self._parser(a_program)
         except UnexpectedCharacters as error:
-            msg = "syntax error at line {0} column {1}. \n\n {2}"
-            error_list = [msg.format(error.line, error.column, error.args[0])]
-            _MODULE_LOGGER.error(msg.format(error.line, error.column, error.args[0]))
-        except Exception as error:
-            error_list = [error]
-            _MODULE_LOGGER.error(error)
+            msg = "syntax error at line {0} column {1}. unexpected character found. expected {2}".format(error.line, error.column, error.allowed)
+            error_list.append(msg)
+            _MODULE_LOGGER_.error(msg)
+        except UnexpectedToken as error:
+            msg = "syntax error at line {0} column {1}: expected {2}".format(error.line, error.column, error.expected)
+            error_list.append(msg)
+            _MODULE_LOGGER_.error(msg)
         return error_list
 
     @property

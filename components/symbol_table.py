@@ -1,18 +1,17 @@
 """
 PROJECT.......: Deft Pascal Reborn
 COPYRIGHT.....: Copyright (C) 2020- Andre L Ballista
-VERSION.......: 0.1
 DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original Deft Pascal compiler
 HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
-
-from components.symbols import BaseSymbol
 
 
 class SymbolTable:
 
     def __init__(self):
         self._symbol_table = {}
+        self._stack_scope = []
+        self._current_level = 0
 
     def __str__(self):
         return "{0}({1})".format(self.__class__.__name__, self._symbol_table)
@@ -20,91 +19,104 @@ class SymbolTable:
     def __repr__(self):
         return "{0}({1})".format(self.__class__.__name__, self._symbol_table)
 
-    def has_equal(self, a_symbol, equal_class=True, equal_type=True, equal_level=True, equal_name=True):
-        if a_symbol.level in self._symbol_table:
-            if a_symbol.name in self._symbol_table[a_symbol.level]:
-                return self._symbol_table[a_symbol.level][a_symbol.name].is_equal(a_symbol,
-                                                                                  equal_class,
-                                                                                  equal_type,
-                                                                                  equal_level,
-                                                                                  equal_name)
-            else:
-                return False
-        else:
-            return False
 
-    def has_equal_at_lower_scope(self, a_symbol, equal_class=True, equal_type=True, equal_name=True):
-        for i in range(a_symbol.level - 1, -1, -1):
-            if i in self._symbol_table:
-                if a_symbol.name in self._symbol_table[i]:
-                    return self._symbol_table[i][a_symbol.name].is_equal(a_symbol,
-                                                                         equal_class,
-                                                                         equal_type,
-                                                                         False,
-                                                                         equal_name)
-        return False
-
-
-    def contains_name(self, a_name, context_label, context_level, equal_level_only=True):
-        a_symbol = BaseSymbol(a_name, context_label, context_level, None, None)
-        result = self.has_equal(a_symbol, False, False, True, True)
-        if equal_level_only:
-            return result
-        else:
-            return result or self.has_equal_at_lower_scope(a_symbol, False, False, True)
-
-
-    def retrieve_by_name(self, a_name, context_label, context_level, equal_level_only=True):
-        a_symbol = BaseSymbol(a_name, context_label, context_level, None, None)
-        if self.has_equal(a_symbol, False, False, True, True):
-            return self.get(a_symbol)
-        elif equal_level_only:
-            return None
-        else:
-            return self.get_from_lower_scope(a_symbol)
+    def contains(self, name, equal_level_only=True):
+        result = self.retrieve(name, equal_level_only)
+        return result is not None
 
 
     def append(self, a_symbol):
-        if a_symbol.level not in self._symbol_table:
-            self._symbol_table[a_symbol.level] = {}
+        """
+        The incoming symbol will be appended to the current symbol table level
+        """
+        if self.current_level not in self._symbol_table:
+            self._symbol_table[self.current_level] = {}
         #
-        if a_symbol.name in self._symbol_table[a_symbol.level]:
-            raise KeyError("symbol '{0}' already present".format(a_symbol))
+        if a_symbol.name in self._symbol_table[self.current_level]:
+            raise KeyError("symbol '{0}' already present at level '{1}-{2}'".format(a_symbol, self.current_level, self.current_scope))
         #
         element_to_append = {a_symbol.name: a_symbol}
-        self._symbol_table[a_symbol.level].update(element_to_append)
+        self._symbol_table[self.current_level].update(element_to_append)
 
 
-    def remove(self, a_symbol):
-        if a_symbol.level not in self._symbol_table:
-            raise KeyError("no symbols present at level '{0}'".format(a_symbol.level))
+    def get(self, name, equal_level_only=True):
+        if self.current_level not in self._symbol_table:
+            raise KeyError("no symbols present at level '{0}-{1}'".format(self.current_level, self.current_scope))
         #
-        if a_symbol.name not in self._symbol_table[a_symbol.level]:
-            raise KeyError("symbol '{0}' not present in table".format(a_symbol))
+        if name not in self._symbol_table[self.current_level]:
+            if equal_level_only:
+                raise KeyError("symbol '{0}' not present at level '{0}-{1}'".format(self.current_level, self.current_scope))
+            else:
+                result = self._get_from_lower_scope(name)
+                if not result:
+                    raise KeyError("symbol '{0}' not found".format(name))
+        else:
+            result = self._symbol_table[self.current_level][name]
         #
-        return self._symbol_table[a_symbol.level].pop(a_symbol.name)
+        return result
 
 
-    def get(self, a_symbol):
-        if a_symbol.level not in self._symbol_table:
-            raise KeyError("no symbols present at level '{0}'".format(a_symbol.level))
+    def retrieve(self, name, equal_level_only=True):
+        if self.current_level not in self._symbol_table:
+            result = None
+        elif name not in self._symbol_table[self.current_level]:
+            if equal_level_only:
+                result = None
+            else:
+                result = self._get_from_lower_scope(name)
+        else:
+            result = self._symbol_table[self.current_level][name]
         #
-        if a_symbol.name not in self._symbol_table[a_symbol.level]:
-            raise KeyError("symbol '{0}' not present in table".format(a_symbol))
-        #
-        return self._symbol_table[a_symbol.level][a_symbol.name]
+        return result
 
 
-    def get_from_lower_scope(self, a_symbol):
-        for i in range(a_symbol.level - 1, -1, -1):
+    def _get_from_lower_scope(self, name):
+        for i in range(self.current_level - 1, -1, -1):
             if i in self._symbol_table:
-                if a_symbol.name in self._symbol_table[i]:
-                    return self._symbol_table[i][a_symbol.name]
+                if name in self._symbol_table[i]:
+                    return self._symbol_table[i][name]
         return None
 
 
-    def purge_all_from_scope(self, a_symbol):
-        if a_symbol.level in self._symbol_table:
-            self._symbol_table[a_symbol.level] = {}
+    def purge_all_from_current_scope(self):
+        self._symbol_table[self.current_level] = {}
 
 
+    def remove(self, name):
+        if self.current_level not in self._symbol_table:
+            raise KeyError("no symbols present  at level '{0}-{1}'".format(self.current_level, self.current_scope))
+        #
+        if name not in self._symbol_table[self.current_level]:
+            raise KeyError("symbol '{0}' not present at level '{0}-{1}'".format(self.current_level, self.current_scope))
+        #
+        return self._symbol_table[self.current_level].pop(name)
+
+
+    @property
+    def current_scope(self):
+        if self._stack_scope:
+            return self._stack_scope[-1][0]
+        else:
+            raise KeyError("stack scope is currently empty")
+
+    @property
+    def current_level(self):
+        if self._stack_scope:
+            return self._stack_scope[-1][1]
+        else:
+            raise KeyError("stack scope is currently empty")
+
+
+    def increase_level(self, a_scope):
+        self._current_level = self._current_level + 1
+        self._stack_scope.append((a_scope, self._current_level))
+        return self._stack_scope[-1]
+
+
+    def decrease_level(self):
+        if self._current_level > 0:
+            self._stack_scope.pop()
+            self._current_level = self._current_level - 1
+            return self._stack_scope[-1]
+        else:
+            raise ValueError("stack scope is at lowest level")

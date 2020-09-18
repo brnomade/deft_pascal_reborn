@@ -1,7 +1,6 @@
 """
 PROJECT.......: Deft Pascal Reborn
 COPYRIGHT.....: Copyright (C) 2020- Andre L Ballista
-VERSION.......: 0.1
 DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original Deft Pascal compiler
 HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
@@ -40,7 +39,7 @@ class TDD:
             BEGIN                                    
                REPEAT                                
                  V1 := V1 + 1                      
-               UNTIL V1 + V3 > 10 + 1         
+               UNTIL (V1 + V3) > (10 + 1)         
             END.                                   
         """
         return code

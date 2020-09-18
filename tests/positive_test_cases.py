@@ -1,7 +1,6 @@
 """
 PROJECT.......: Deft Pascal Reborn
 COPYRIGHT.....: Copyright (C) 2020- Andre L Ballista
-VERSION.......: 0.1
 DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original Deft Pascal compiler
 HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
@@ -88,8 +87,8 @@ class PositiveLanguageTests:
             CONST                                    
             C1 = &O00;                               
             C2 = &o00;                               
-            C3 = &O01234567;                         
-            C4 = &O01234567;                         
+            C3 = &O01267;                         
+            C4 = &o177777;                         
             BEGIN                                    
             END.                                   
         """
@@ -103,12 +102,12 @@ class PositiveLanguageTests:
             CONST                                    
             C1 = &h00;                               
             C2 = &H00;                               
-            C3 = &hABCDFE;                           
-            C4 = &HABCDFE;                           
-            C5 = &h0123456789;                       
-            C6 = &H0123456789;                       
-            C7 = &H0123456789ABCDEF;                 
-            C8 = &h0123456789ABCDEF;                 
+            C3 = &HAAAA;                           
+            C4 = &HBBBB;                           
+            C5 = &hCCCC;                       
+            C6 = &HDDDD;                       
+            C7 = &HEEEE;                 
+            C8 = &hFFFF;                 
             BEGIN                                    
             END.                                   
         """
@@ -141,14 +140,62 @@ class PositiveLanguageTests:
             C6 = false;                             
             C7 = TrUe;                               
             C8 = fAlSe;                             
-            BEGIN                                    
+            VAR
+            V1 : BOOLEAN;
+            BEGIN                
+            V1 := True;                               
+            V1 := False;                             
+            V1 := TRUE;                               
+            V1 := FALSE;                             
+            V1 := true;                               
+            V1 := false;                             
+            V1 := TrUe;                               
+            V1 := fAlSe;                                               
             END.                                   
         """
         return code
 
 
     @staticmethod
-    def scenario_constant_declaration():
+    def scenario_constant_declaration_with_nil():
+        code = """
+            PROGRAM {{{0}}};                
+            CONST                                   
+            C1 = Nil;                             
+            C2 = C1;
+            BEGIN                                   
+            END.                                  
+        """
+        return code
+
+    @staticmethod
+    def scenario_constant_declaration_with_string_literal():
+        code = """
+            PROGRAM {{{0}}};                
+            CONST                                   
+            C1 = 'C';                                
+            C2 = 'C8C8C8C8';                         
+            BEGIN                                   
+            END.                                  
+        """
+        return code
+
+    @staticmethod
+    def scenario_constant_declaration_with_string_constant():
+        code = """
+            PROGRAM {{{0}}};                
+            CONST                                   
+            C1 = 'C';                                
+            C5 = C1;                                
+            C2 = 'C8C8C8C8';                         
+            C6 = C2;                         
+            BEGIN                                   
+            END.                                  
+        """
+        return code
+
+    @staticmethod
+    def scenario_constant_declaration_with_single_value():
         code = """
             PROGRAM {{{0}}};                
             CONST                                   
@@ -164,11 +211,58 @@ class PositiveLanguageTests:
             C4 = &HFF;                               
             C4a = &B10;                               
             C4b = &O12;                               
-            C5 = 'C';                                
-            C6 = 'C8C8C8C8';                         
             C7 = True;                               
             C8 = False;                              
-            C9 = Nil;                             
+            BEGIN                                   
+            END.                                  
+        """
+        return code
+
+    @staticmethod
+    def scenario_constant_declaration_with_value_based_expression():
+        code = """
+            PROGRAM {{{0}}};                
+            CONST                                   
+            C8 = False and False or not True;                              
+            C1 = 2 + 2;                                  
+            C1a = -1 - 1;                                 
+            C1b = +1 + 1;                                 
+            C2 = 1.0 / ( 1.0 + 1.0 - 1.0 * 1.0 + (1.0 * 1.0));                                
+            C2a = -1.0 / 1.0;                               
+            C2b = +1.0 / 1.0;                               
+            C3 = 1.0e-12 + 1.0e-12;                            
+            C3a = -1.0e+12 - 1.0e-12;                            
+            C3b = 1.0e12 / 1.0e-12;                            
+            C4 = &HFF + &HFF;                               
+            C4a = &B10 + &B10;                               
+            C4b = &O12 - &O12;                               
+            C7 = True and (False or not True) and (true and not (true or false));                               
+            BEGIN                                   
+            END.                                  
+        """
+        return code
+
+    @staticmethod
+    def scenario_constant_declaration_with_identifier_based_expression():
+        code = """
+            PROGRAM {{{0}}};                
+            CONST                                   
+            C1 = 2 + 2;                                  
+            C1a = -1 - C1;                                 
+            C1b = +1 + C1a;                                 
+            C2 = 1.0 / C1;                                
+            C2a = -1.0 / C2;                               
+            C2b = +1.0 / C2a;                               
+            C3 = 1.0e-12 + 1.0e-12;                            
+            C3a = -1.0e+12 - 1.0e-12;                            
+            C3b = 1.0e12 / 1.0e-12;                            
+            C4 = &HFF + &HFF;                               
+            C4a = &B10 + &B10;                               
+            C4b = &O12 - &O12;      
+            C6 = True;
+            C7 = False;                         
+            C8 = C6 and C7 or not C6;                               
+            C9 = C7 and C7 or not (C6 OR C7) and C8;                              
             BEGIN                                   
             END.                                  
         """
@@ -246,7 +340,8 @@ class PositiveLanguageTests:
                 V3  : REAL;                    
                 V4  : BOOLEAN;                 
                 V5  : CHAR;                    
-                V6  : STRING;                 
+                V6  : STRING;  
+                V6_b : STRING(255);               
                 V7  : TEXT;                   
             BEGIN                                 
             END.                                  
@@ -389,7 +484,7 @@ class PositiveLanguageTests:
              V9 : INTEGER;                             
              V10 : INTEGER;                           
              V12 : REAL;                             
-            BEGIN                                    
+            BEGIN                   
              V1 := -2;                                
              V2 := False;                             
              V3 := 'C';                              
@@ -399,32 +494,41 @@ class PositiveLanguageTests:
              V8 := &HFF;                             
              V9 := &B10;                             
              V10 := &O11;                            
-             V12 := -1.1E-23;                        
+             V12 := -1.1E-23;                         
             END.                                   
         """
         return code
-
 
     @staticmethod
     def scenario_variable_assignment_with_constant():
         code = """
             PROGRAM {{{0}}};                 
-            CONST C1 = NIL;
-                  C2 = 'C';                                
+            CONST C2 = 'C';                                
                   C3 = 'C8C8C8C8';                         
                   C4 = TRUE;
                   C5 = 123;
-            VAR V1 : ^INTEGER;
-                V2 : CHAR;
+            VAR V2 : CHAR;
                 V3 : STRING;
                 V4 : BOOLEAN;
                 V5 : INTEGER;                         
             BEGIN                                     
-             V1 := C1;
              V2 := C2;
              V3 := C3;
              V4 := C4;
              V5 := C5;
+            END.                                      
+        """
+        return code
+
+    @staticmethod
+    def scenario_pointer_variable_assignment_with_constant():
+        code = """
+            PROGRAM {{{0}}};                 
+            CONST C1 = NIL;
+            VAR V1 : ^INTEGER;
+            BEGIN                                     
+             V1 := C1;
+             V1 := NIL;
             END.                                      
         """
         return code
@@ -437,6 +541,28 @@ class PositiveLanguageTests:
             BEGIN                                     
              V1 := V1;
              V1 := V2;
+            END.                                      
+        """
+        return code
+
+    @staticmethod
+    def scenario_variable_assignment_with_pointer():
+        code = """
+            PROGRAM {{{0}}};                 
+            VAR V1 : ^INTEGER;
+                V2 : ^INTEGER;
+                V3 : INTEGER;
+                V4 : ^STRING(50);
+            BEGIN       
+             V1^:= 10;
+             V2^:= 20;
+             V3 := 30;
+             V4^ := 'ABCDEFE';
+             
+             V1 := V2;           
+                                           
+             V1^ := V2^;
+             V1^ := V3;
             END.                                      
         """
         return code
@@ -564,10 +690,10 @@ class PositiveLanguageTests:
     def scenario_for_to_loop_without_begin_end():
         code = """
             PROGRAM {{{0}}};                 
-            VAR V1 : INTEGER;                            
+            VAR V1, V2 : INTEGER;                            
             BEGIN                                        
                FOR V1 := 1 TO 10 DO                       
-                  WRITELN(V1);                                   
+                  V1 := V2;                                   
             END.                                       
         """
         return code
@@ -601,10 +727,10 @@ class PositiveLanguageTests:
     def scenario_for_downto_loop_without_begin_end():
         code = """
             PROGRAM {{{0}}};                 
-            VAR V1 : INTEGER;                            
+            VAR V1, V2 : INTEGER;                            
             BEGIN                                        
                FOR V1 := 1 TO 10 DO                       
-                  WRITELN(V1);                                   
+                  V1 := V2;                                   
             END.             
         """
         return code

@@ -1,7 +1,6 @@
 """
 PROJECT.......: Deft Pascal Reborn
 COPYRIGHT.....: Copyright (C) 2020- Andre L Ballista
-VERSION.......: 0.1
 DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original Deft Pascal compiler
 HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
@@ -49,7 +48,7 @@ class CEmitter(AbstractEmitter):
         """
         Just emits a single input string
         """
-        particle = "{0}"
+        particle = "{0} "
         self.emit(particle.format(a_generic_string))
 
     def emit_singleton_line(self, a_generic_string):
@@ -65,44 +64,48 @@ class CEmitter(AbstractEmitter):
         """
         self.emit_header_line("#include <stdio.h>")
         self.emit_header_line("#include <stdbool.h>")
+        self.emit_header_line("#include <string.h>")
 
-    def emit_constant_definition_part_string(self, in_name, in_type, in_value):
+    def emit_constant_definition_part_string(self, in_name, in_type, dimension, in_value):
         """
         CONSTANT_DEFINITION_PART
+        const type variable = expression;
         """
-        line = "const {0} {1} [255] = \"{2}\";"
-        self.emit_header_line(line.format(in_type, in_name, in_value))
+        line = "const {0} {1} [{2}] = {3}"
+        # line = "const {0} {1} [{2}] = "
+        self.emit_header(line.format(in_type, in_name, dimension + 1, in_value))
 
-    def emit_constant_definition_part_char(self, in_name, in_type, in_value):
+    def emit_constant_definition_part_char(self, in_name, in_type):
         """
         CONSTANT_DEFINITION_PART
-        const type variable = value;
+        const type variable = expression;
         """
-        line = "const {0} {1} = '{2}';"
-        self.emit_header_line(line.format(in_type, in_name, in_value))
+        line = "const {0} {1} = "
+        self.emit_header(line.format(in_type, in_name))
 
-    def emit_constant_definition_part_pointer(self, in_name, in_type, in_value):
+    def emit_constant_definition_part_pointer(self, in_name, in_type):
         """
         CONSTANT_DEFINITION_PART
-        const type variable = value;
+        const type variable = expression;
         """
-        line = "const {0} *{1} = {2};"
-        self.emit_header_line(line.format(in_type, in_name, in_value))
+        line = "const {0} *{1} = "
+        self.emit_header(line.format(in_type, in_name))
 
-    def emit_constant_definition_part_generic(self, in_name, in_type, in_value):
+    def emit_constant_definition_part_generic(self, in_name, in_type):
         """
         CONSTANT_DEFINITION_PART
-        const type variable = value;
+        const type variable = expression;
         """
-        line = "const {0} {1} = {2};"
-        self.emit_header_line(line.format(in_type, in_name, in_value))
+        line = "const {0} {1} = "
+        self.emit_header(line.format(in_type, in_name))
 
-    def emit_variable_declaration_part_string(self, in_type, in_name):
+
+    def emit_variable_declaration_part_string(self, in_type, in_name, in_dimension):
         """
         VARIABLE_DECLARATION_PART
         """
-        line = "{0} {1} [ ];"
-        self.emit_header_line(line.format(in_type, in_name))
+        line = "{0} {1} [{2}];"
+        self.emit_header_line(line.format(in_type, in_name, str(in_dimension)))
 
     def emit_variable_declaration_part_pointer(self, in_type, in_name):
         """
@@ -160,6 +163,14 @@ class CEmitter(AbstractEmitter):
         STATEMENT_TERMINATOR
         """
         particle = ";"
+        self.emit_line(particle)
+
+    def emit_assignment_string_left_side(self, in_variable):
+        particle = "strcpy({0},"
+        self.emit(particle.format(in_variable))
+
+    def emit_assignment_string_right_side(self):
+        particle = ");"
         self.emit_line(particle)
 
     def emit_closed_for_statement_control_variable(self, in_variable, in_operator):

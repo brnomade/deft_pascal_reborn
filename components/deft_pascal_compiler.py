@@ -1,7 +1,6 @@
 """
 PROJECT.......: Deft Pascal Reborn
 COPYRIGHT.....: Copyright (C) 2020- Andre L Ballista
-VERSION.......: 0.1
 DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original Deft Pascal compiler
 HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
@@ -9,14 +8,34 @@ HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 from lark import Tree, Token
 from components.deft_pascal_parser_3 import DeftPascalParser
 from components.symbol_table import SymbolTable
-from components.symbols import BaseSymbol, Operator, Constant, Identifier, Keyword, GenericExpression
-from components.symbols import BasicType, PointerType, PointerIdentifier, ProcedureIdentifier, BooleanConstant, NilConstant
+from components.symbols.base_symbols import BaseSymbol, BaseKeyword, BaseExpression
+from components.symbols.operator_symbols import Operator, BinaryOperator, UnaryOperator, NeutralOperator
+from components.symbols.identifier_symbols import Identifier, PointerIdentifier, ProcedureIdentifier, ConstantIdentifier
+from components.symbols.literals_symbols import Literal, BooleanLiteral, NilLiteral, NumericLiteral, StringLiteral
+from components.symbols.type_symbols import PointerType, BasicType, StringType
+from components.symbols.expression_symbols import ConstantExpression, IntegerExpression, BooleanExpression
 from components.intermediate_code import IntermediateCode
-from utils.compiler_utils import check_type_compatibility
+# from utils.compiler_utils import check_type_compatibility, token_is_an_operator
+import copy
 import logging
 from logging import ERROR, WARNING, INFO, DEBUG
 
-_MODULE_LOGGER = logging.getLogger(__name__)
+
+_LOG_ROLL_ = []
+
+
+class LogRequestsHandler(logging.Handler):
+    def emit(self, record):
+        """Record any errors raised by the compiler.
+        """
+        msg = record.getMessage()
+        if record.levelname.upper() == "ERROR":
+            _LOG_ROLL_.append(msg)
+
+
+_MODULE_LOGGER_ = logging.getLogger("deft_pascal_reborn")
+_MODULE_LOGGER_.addHandler(LogRequestsHandler())
+_MODULE_LOGGER_.setLevel(DEBUG)
 
 
 class DeftPascalCompiler:
@@ -30,6 +49,9 @@ class DeftPascalCompiler:
         self._parser = DeftPascalParser()
         self._ast = None
         self._symbol_table = SymbolTable()
+        self._symbol_table.increase_level("symbol_table_root")
+        self._operator_table = SymbolTable()
+        self._operator_table.increase_level("operator_table_root")
         self._ic = IntermediateCode(cmoc)
 
         self._context = 0
@@ -39,12 +61,14 @@ class DeftPascalCompiler:
         self._stack_begin = []
         self._stack_end = []
 
-        self._error_list = []
+        # self._error_list = []
 
         self._actions = {"PROGRAM_HEADING",
                          "LABEL_DECLARATION_PART",
                          "CONSTANT_DEFINITION_PART",
                          "CONSTANT_DEFINITION",
+                         "CONSTANT_EXPRESSION",
+                         "CONSTANT_ACCESS",
                          "TYPE_DEFINITION_PART",
                          "TYPE_DEFINITION",
                          "VARIABLE_DECLARATION_PART",
@@ -62,8 +86,6 @@ class DeftPascalCompiler:
                          "CLOSED_IF_STATEMENT"
                          }
 
-        #                "BOOLEAN_EXPRESSION": self._action_9,
-
 
     def check_syntax(self, input_program):
         error_list = self._parser.parse(input_program)
@@ -74,22 +96,17 @@ class DeftPascalCompiler:
         return error_list
 
     def compile(self, ast=None):
-        _MODULE_LOGGER.debug("start compile")
         if not ast and not self._ast:
-            self._error_list = ["empty AST provided as input"]
-            _MODULE_LOGGER.error(self._error_list[0])
-            return self._error_list
-        #
+            raise ValueError("AST is not yet defined")
+
         if not ast and self._ast:
             ast = self._ast
-        #
-        self._error_list = []
+
+        _LOG_ROLL_.clear()
         for i in ast.children:
-            self._internal_compile(i)
-        #
-        if not self._error_list:
-            self._error_list = None
-        return self._error_list
+            self._internal_compile(i, [])
+
+        return _LOG_ROLL_
 
     @property
     def ast(self):
@@ -105,25 +122,19 @@ class DeftPascalCompiler:
     def generate(self):
         return self._ic.generate()
 
-    @staticmethod
-    def _exception_raiser(exception):
-        raise exception
-
     def _log(self, log_type=INFO, log_info=""):
-        # retrieve current scope details from the stack
-        context_label = self._stack_scope[-1][0]
-        context_level = self._stack_scope[-1][1]
+        pass
         # emit log
-        msg = "[{0}/{1}] {2}".format(context_label, context_level, log_info)
-        if log_type == ERROR:
-            self._error_list.append(msg)
-            _MODULE_LOGGER.error(msg)
-        elif log_type == WARNING:
-            _MODULE_LOGGER.warning(msg)
-        elif log_type == INFO:
-            _MODULE_LOGGER.info(msg)
-        else:
-            _MODULE_LOGGER.debug(msg)
+        # msg = "[{0}/{1}] {2}".format(self._symbol_table.current_scope, self._symbol_table.current_level, log_info)
+        # if log_type == ERROR:
+        #     # self._error_list.append(msg)
+        #     _MODULE_LOGGER_.error(msg)
+        # elif log_type == WARNING:
+        #     _MODULE_LOGGER_.warning(msg)
+        # elif log_type == INFO:
+        #     _MODULE_LOGGER_.info(msg)
+        # else:
+        #     _MODULE_LOGGER_.debug(msg)
 
     def _compile_tree(self, a_tree, working_stack):
         action_name = a_tree.data.upper()
@@ -131,7 +142,8 @@ class DeftPascalCompiler:
             method_to_call = getattr(DeftPascalCompiler, "_" + action_name.lower())
             return method_to_call(self, action_name, a_tree.children, working_stack)
         else:
-            self._log(ERROR, "action '{0}' not yet implemented for tree {1}".format(a_tree.data.upper(), a_tree))
+            _MODULE_LOGGER_.error("action '{0}' not yet implemented for tree {1}".format(a_tree.data.upper(), a_tree))
+            return working_stack
 
 
     def _compile_token(self, a_token, working_stack):
@@ -140,105 +152,34 @@ class DeftPascalCompiler:
             method_to_call = getattr(DeftPascalCompiler, "_" + action_name.lower())
             return method_to_call(self, action_name, a_token, working_stack)
         else:
-            self._log(ERROR, "action '{0}' not yet implemented for token {1}".format(a_token.type.upper(), a_token.value.upper()))
+            _MODULE_LOGGER_.error("action '{0}' not yet implemented for token {1}".format(a_token.type.upper(), a_token.value.upper()))
+            return working_stack
 
 
-    def _internal_compile(self, ast, working_stack=[]):
+    def _internal_compile(self, ast, working_stack):
         if isinstance(ast, Tree):
             if len(ast.children) > 0:
                 return self._compile_tree(ast, working_stack)
         elif isinstance(ast, Token):
             return self._compile_token(ast, working_stack)
         else:
-            self._log(ERROR, 'Error - unknown AST object {0}'.format(ast))
+            _MODULE_LOGGER_.error('Error - unknown AST object {0}'.format(ast))
             raise TypeError
-
-
-    def _retrieve_global_boolean_constant(self, action_number, action_name, value):
-        a_symbol = BooleanConstant.from_value(value)
-        a_symbol.scope = self._stack_scope[-1][0]
-        a_symbol.level = self._stack_scope[-1][1]
-        if self._symbol_table.has_equal(a_symbol, equal_type=True, equal_level=False, equal_name=True):
-            a_symbol = self._symbol_table.get(a_symbol)
-        elif self._symbol_table.has_equal(a_symbol, equal_type=True, equal_level=False, equal_name=True):
-            a_symbol = self._symbol_table.get_from_lower_scope(a_symbol)
-        else:
-            msg = "[{0}] {1} - undeclared boolean system constant {2}"
-            self._log(ERROR, msg.format(action_number, action_name, a_symbol))
-            a_symbol = None
-        return a_symbol
-
-
-    def _get_declared_variable(self, action_number, action_name, a_variable):
-        # check variable exists
-        # scenarios:
-        # - identifier not declared
-        # - identifier declared on same scope
-        # - identifier declared on a lower scope
-
-        if self._symbol_table.has_equal(a_variable, equal_class=True, equal_type=False, equal_level=True, equal_name=True):
-            a_variable = self._symbol_table.get(a_variable)
-        elif self._symbol_table.has_equal(a_variable, equal_class=True, equal_type=False, equal_level=False, equal_name=True):
-            a_variable = self._symbol_table.get_from_lower_scope(a_variable)
-        else:
-            msg = "[{0}] {1} - Reference to undeclared symbol {2}"
-            self._log(ERROR, msg.format(action_number, action_name, a_variable))
-            a_variable = None
-        return a_variable
-
-
-    def _perform_type_check(self, action_name, expression):
-        """
-        expression - is a list of tokens.
-        """
-        compatible = check_type_compatibility(expression)
-        if compatible:
-            # instead of returning an instance of symbol, return only the type of that symbol.
-            compatible = compatible.type
-        else:
-            msg = "[{0}] incompatible types in expression: {1}"
-            self._log(ERROR, msg.format(action_name, expression))
-        return compatible
 
 
     def _increase_scope(self, scope_label=None):
         # retrieve current scope details from the stack
-        context_label = self._stack_scope[-1][0]
-        context_level = self._stack_scope[-1][1]
+        context_label = self._symbol_table.current_scope
 
         # increase scope
-        context_level = context_level + 1
         if scope_label:
             context_label = scope_label
-
-        # push the new scope into the scope stack
-        self._stack_scope.append((context_label, context_level))
+        self._symbol_table.increase_level(context_label)
 
 
     def _decrease_scope(self):
         # remove current scope details from the stack
-        context_label = self._stack_scope.pop()[0]
-        context_level = self._stack_scope.pop()[1]
-
-
-    def _token_action_0(self, action_number, action_name, token):
-        """
-        token -> IDENTIFIER
-        """
-        # retrieve the scope details from the stack
-        context_label = self._stack_scope[-1][0]
-        context_level = self._stack_scope[-1][1]
-
-        # retrieve the actual identifier from the symbol_table
-        identifier = self._symbol_table.retrieve_by_name(token.value, context_label, context_level, equal_level_only=False)
-        if identifier:
-
-            pass
-
-        else:
-
-            msg = "[{0}] {1} :  Unknown identifier '{2}' reference."
-            self._log(ERROR, msg.format(action_number, action_name, identifier))
+        self._symbol_table.decrease_level()
 
 
     def _program_heading(self, action_name, token_list, working_stack):
@@ -247,36 +188,49 @@ class DeftPascalCompiler:
         """
         # initialise the scope stack
         identifier = token_list[1].value
-        self._stack_scope.append((identifier, 0))
-
-        # retrieve the scope details from the stack
-        context_label = self._stack_scope[-1][0]
-        context_level = self._stack_scope[-1][1]
+        self._increase_scope(identifier)
 
         # add the system constants to the symbol table
-        self._symbol_table.append(BooleanConstant.true(context_label, context_level))
-        self._symbol_table.append(BooleanConstant.false(context_label, context_level))
-        self._symbol_table.append(NilConstant.nil(context_label, context_level))
+        self._symbol_table.append(BooleanLiteral.true())
+        self._symbol_table.append(BooleanLiteral.false())
+        self._symbol_table.append(NilLiteral.nil())
 
         # add the base types to the symbol table
-        self._symbol_table.append(BasicType.reserved_type_integer(context_label, context_level))
-        self._symbol_table.append(BasicType.reserved_type_real(context_label, context_level))
-        self._symbol_table.append(BasicType.reserved_type_boolean(context_label, context_level))
-        self._symbol_table.append(BasicType.reserved_type_char(context_label, context_level))
-        self._symbol_table.append(BasicType.reserved_type_string(context_label, context_level))
-        self._symbol_table.append(BasicType.reserved_type_text(context_label, context_level))
+        self._symbol_table.append(BasicType.reserved_type_integer())
+        self._symbol_table.append(BasicType.reserved_type_real())
+        self._symbol_table.append(BasicType.reserved_type_boolean())
+        self._symbol_table.append(BasicType.reserved_type_char())
+        self._symbol_table.append(StringType.reserved_type_string())
+        self._symbol_table.append(BasicType.reserved_type_text())
 
-        # add the in-built procedures to the symbol table - they are added twice, in lower and upper cases
-        for procedure in [ProcedureIdentifier.in_built_procedure_write,
-                          ProcedureIdentifier.in_built_procedure_writeln
-                          ]:
-            # lower case scenario
-            p = procedure(context_label, context_level)
-            self._symbol_table.append(p)
-            # upper case scenario
-            p = procedure(context_label, context_level)
-            p.name = p.name.upper()
-            self._symbol_table.append(p)
+        # add the in-built procedures to the symbol table
+        self._symbol_table.append(ProcedureIdentifier.in_built_procedure_write())
+        self._symbol_table.append(ProcedureIdentifier.in_built_procedure_writeln())
+
+        # add all operators to the operator table
+        self._operator_table.append(BinaryOperator.operator_multiply())
+        self._operator_table.append(BinaryOperator.operator_plus())
+        self._operator_table.append(BinaryOperator.operator_minus())
+        self._operator_table.append(BinaryOperator.operator_divide())
+        self._operator_table.append(BinaryOperator.operator_div())
+        self._operator_table.append(BinaryOperator.operator_assignment())
+        self._operator_table.append(BinaryOperator.operator_equal_to())
+        self._operator_table.append(BinaryOperator.operator_not_equal_to())
+        self._operator_table.append(BinaryOperator.operator_starstar())
+        self._operator_table.append(BinaryOperator.operator_in())
+        self._operator_table.append(BinaryOperator.operator_and())
+        self._operator_table.append(BinaryOperator.operator_or())
+        self._operator_table.append(BinaryOperator.operator_greater_than())
+        self._operator_table.append(BinaryOperator.operator_greater_or_equal_to())
+        self._operator_table.append(BinaryOperator.operator_less_than())
+        self._operator_table.append(BinaryOperator.operator_less_or_equal_to())
+        self._operator_table.append(UnaryOperator.operator_not())
+        self._operator_table.append(UnaryOperator.operator_abs())
+        self._operator_table.append(UnaryOperator.operator_arithmetic_negation())
+        self._operator_table.append(UnaryOperator.operator_arithmetic_neutral())
+        self._operator_table.append(UnaryOperator.operator_uparrow())
+        self._operator_table.append(NeutralOperator.operator_left_parentheses())
+        self._operator_table.append(NeutralOperator.operator_right_parentheses())
 
         # initialize the control stack for BEGIN and END
         self._stack_begin.append(self._GLB_MAIN_BEGIN)
@@ -290,13 +244,8 @@ class DeftPascalCompiler:
         self._ic.push(token_list[1])
         self._ic.flush()
 
-        self._log(DEBUG, "[{0}] : '{1}' - stack: {2} {3}".format(action_name,
-                                                                identifier,
-                                                                self._symbol_table,
-                                                                self._stack_scope))
-
         if len(token_list) > 2:
-            self._log(WARNING, "[{0}] variables detected - all will be ignored".format(action_name))
+            _MODULE_LOGGER_.warning("[{0}] variables detected - all will be ignored".format(action_name))
 
 
     def _compound_statement(self, action_name, input_list, working_stack):
@@ -305,7 +254,7 @@ class DeftPascalCompiler:
         input_list -> BEGIN Tree() Tree() Tree() ... END
         """
         while input_list:
-            self._internal_compile(input_list.pop(0))
+            self._internal_compile(input_list.pop(0), working_stack)
 
 
     def _reserved_structure_begin(self, action_name, input_token, working_stack):
@@ -322,8 +271,6 @@ class DeftPascalCompiler:
         self._ic.push(input_token)
         self._ic.flush()
 
-        self._log(DEBUG, "[{0}] : {1} {2}".format(action, self._symbol_table, self._stack_scope))
-
 
     def _reserved_structure_end(self, action_name, input_token, working_stack):
         """
@@ -335,18 +282,12 @@ class DeftPascalCompiler:
         self._ic.push(input_token)
         self._ic.flush()
 
-        self._log(DEBUG, "[{0}] : {1}".format(action, self._symbol_table))
-
 
     def _constant_definition_part(self, action_name, input_list, working_stack):
         """
         CONSTANT_DEFINITION_PART
         input_list -> [CONST Tree(constant_definition C1 = VALUE) Tree(constant_definition C2 = VALUE)]
         """
-        # retrieve the scope details from the stack
-        context_label = self._stack_scope[-1][0]
-        context_level = self._stack_scope[-1][1]
-
         # initialise the intermediate_code engine
         self._ic.init(action_name)
 
@@ -356,43 +297,105 @@ class DeftPascalCompiler:
         # process declarations
         for constant_definition in input_list:
 
-            self._internal_compile(constant_definition)
+            self._internal_compile(constant_definition, [])
 
         # generate the intermediate code
         self._ic.flush()
+
+        return working_stack
 
 
     def _constant_definition(self, action_name, input_list, working_stack):
         """
         CONSTANT_DEFINITION
-        input_list -> [C1 = VALUE]
+        input_list -> [
+                       Token(IDENTIFIER, 'C1'),
+                       Token(OPERATOR_EQUAL_TO, '='),
+                       Tree(constant_expression, [Token(CONSTANT_TRUE, 'True')])
+                      ]
         """
-        # retrieve the scope details from the stack
-        context_label = self._stack_scope[-1][0]
-        context_level = self._stack_scope[-1][1]
-
-        # the constant definition (declaration) has 3 parts: identifier, operator and constant
-        constant_identifier = input_list[0].value
-        constant_type = input_list[-1].type
-        constant_value = input_list[-1].value
+        # extract the identifier
+        constant_identifier = input_list.pop(0).value
 
         # identifier - it must not exist in the symbol_table yet
-        if self._symbol_table.contains_name(constant_identifier, context_label, context_level, equal_level_only=False):
-
-            self._log(ERROR, "[{0}] identifier '{1}' already declared ".format(action_name, constant_identifier))
+        if self._symbol_table.contains(constant_identifier, equal_level_only=False):
+            _MODULE_LOGGER_.error("[{0}] constant identifier '{1}' already declared ".format(action_name, constant_identifier))
 
         else:
+            # discard the operator =
+            input_list.pop(0)
 
-            new_constant = Constant(constant_identifier, context_label, context_level, constant_type, constant_value)
+            # process the constant_expression (literals)
+            stack = self._internal_compile(input_list.pop(0), [])
+            if stack:
+                expression = ConstantExpression.from_list(stack)
+                if expression is None:
+                    msg = "[{0}] incompatible types in expression: {1}"
+                    _MODULE_LOGGER_.error(msg.format(action_name, expression))
 
-            # push the new constant into the symbol_table
-            self._symbol_table.append(new_constant)
+                else:
+                    new_constant = ConstantIdentifier(constant_identifier, expression)
 
-            # push the new constant into the intermediate_code engine
-            self._ic.push(new_constant)
+                    # constant - its value must not exceed the types available in the target environment
+                    compliant = new_constant.complies_to_type_restrictions()
+                    if compliant is None:
+                        _MODULE_LOGGER_.warning("[{0}] constant expression '{1}' cannot be validated at compilation".format(action_name, constant_identifier))
+                        compliant = True
 
-            # log successful declaration
-            self._log(DEBUG, "[{0}] new identifier declared : {1}".format(action_name, new_constant))
+                    if compliant:
+                        # push the new constant into the symbol_table
+                        self._symbol_table.append(new_constant)
+
+                        # push the new constant into the intermediate_code engine
+                        self._ic.push(new_constant)
+
+                        # log successful declaration
+                        self._log(DEBUG, "[{0}] new constant declared : {1}".format(action_name, new_constant))
+
+                    else:
+                        _MODULE_LOGGER_.error("[{0}] constant '{1}' not compatible with type limitations".format(action_name, new_constant))
+
+            else:
+                _MODULE_LOGGER_.error("[{0}] invalid expression in definition of constant '{1}'".format(action_name, constant_identifier))
+
+        return working_stack
+
+
+    def _constant_expression(self, action_name, input_list, working_stack):
+        """
+        CONSTANT_EXPRESSION == 'AN EXPRESSION OF LITERALS'
+        process constant expressions
+        this is called from other actions and therefore it does not create its own action on the intermediate code
+        it also does not need to flush the intermediate code. this will be done in another action.
+        """
+        """
+        FreePascal rule: The compiler must be able to evaluate the expression in a constant declaration at compile time. 
+        This means that most of the functions in the Run-Time library cannot be used in a constant declaration. 
+        Operators such as +, -, *, /, not, and, or, div, mod, ord, chr, sizeof, pi, int, trunc, round, frac, odd can be 
+        used, however.
+        """
+        # TODO: Check the expression to ensure no PROCEDURE OR FUNCTION references are included.
+        return self._expression(action_name, input_list, working_stack)
+
+
+    def _constant_access(self, action_name, input_list, working_stack):
+        """
+        input_list -> [Token(IDENTIFIER, 'C2')]
+        This method will push the identifier to the expression stack and intermediate code stack
+        """
+        identifier_name = input_list[0].value
+
+        # identifier - it must exist in the symbol table
+        identifier_symbol = self._symbol_table.retrieve(identifier_name, equal_level_only=False)
+
+        if identifier_symbol:
+            working_stack.append(identifier_symbol)
+
+        else:
+            msg = "[{0}] :  Reference to undeclared constant '{1}'"
+            _MODULE_LOGGER_.error(msg.format(action_name, identifier_name))
+
+        return working_stack
 
 
     def _variable_declaration_part(self, action_name, input_list, working_stack):
@@ -400,10 +403,6 @@ class DeftPascalCompiler:
         VARIABLE_DECLARATION_PART
         input_list -> [VAR Tree(variable_declaration v1 v2 INTEGER) Tree(variable_declaration v3 REAL) Tree(variable_declaration V4 V5 ^ A_NEW_TYPE)...
         """
-        # retrieve the scope details from the stack
-        context_label = self._stack_scope[-1][0]
-        context_level = self._stack_scope[-1][1]
-
         # initialise the intermediate_code engine
         self._ic.init(action_name)
 
@@ -413,7 +412,7 @@ class DeftPascalCompiler:
         # process declarations
         for variable_declaration in input_list:
 
-            self._internal_compile(variable_declaration)
+            self._internal_compile(variable_declaration, [])
 
         # generate the intermediate code
         self._ic.flush()
@@ -422,29 +421,44 @@ class DeftPascalCompiler:
     def _variable_declaration(self, action_name, input_list, working_stack):
         """
         VARIABLE_DECLARATION
-        input_list -> [v1 v2 INTEGER]
+        input_list -> [v1 , v2 ^ STRING ( 60 ) ]
+                      [v1 , v2 INTEGER]
+                      [V1 , V2 ^ INTEGER]
+                      [v1 , v2 STRING ( 60 )]
+        there are 2 scenarios:
+        - (special case) the TYPE might be a string with a specific dimension. 
+            In this case, there are following tokens after type: '(' 'NUMBER' ')'
+            We detect the special case based on the '(' presence
+            pop the 3 of them and let the default case code continue.
+        - (default case) the TYPE is at the end of the input list. 
+            In this case, pop it out and collect the value.
         """
-        # retrieve the scope details from the stack
-        context_label = self._stack_scope[-1][0]
-        context_level = self._stack_scope[-1][1]
+        string_dimension = None
+        if input_list[-1].type == "RIGHT_PARENTHESES":    # handling the string with dimension special case
+            input_list.pop()    # discard the )
+            string_dimension = input_list.pop()
+            input_list.pop()    # discard the (
 
-        # the TYPE is always at the end of the input list. pop it out and collect the value.
         type_identifier = input_list.pop().value.upper()
 
-        # check if a pointer is being declared - if so, pop it out and adjust the class for the incoming identifiers
-        is_pointer = input_list[-1].type == "UPARROW"
-        if is_pointer:
+        # check if a pointer is being declared - if so, pop it out
+        is_pointer = False
+        if input_list[-1].type == "OPERATOR_UPARROW":
+            is_pointer = True
             input_list.pop()
 
-        # retrieve the actual type from the symbol_table
-        type_symbol = self._symbol_table.retrieve_by_name(type_identifier, context_label, context_level, equal_level_only=False)
+        type_symbol = self._symbol_table.retrieve(type_identifier, equal_level_only=False)
+
         if type_symbol:
 
-            # if the type_symbol is itself a pointer, than the variable being declared must be a pointer too
-            is_pointer = is_pointer or type_symbol.is_pointer
-            identifier_class = Identifier
+            if string_dimension:
+                type_symbol = copy.copy(type_symbol)
+                type_symbol.dimension = string_dimension
+
             if is_pointer:
-                identifier_class = PointerIdentifier
+                aux = type_symbol
+                type_symbol = PointerType.reserved_type_pointer()
+                type_symbol.type = aux
 
             # process each identifier for the given variable_type
             for token in input_list:
@@ -454,14 +468,14 @@ class DeftPascalCompiler:
                     identifier = token.value
 
                     # identifier - it must not exist in the symbol_table yet
-                    if self._symbol_table.contains_name(identifier, context_label, context_level, equal_level_only=False):
+                    if self._symbol_table.contains(identifier, equal_level_only=False):
 
                         msg = "[{0}] identifier '{1}' already declared."
-                        self._log(ERROR, msg.format(action_name, identifier))
+                        _MODULE_LOGGER_.error(msg.format(action_name, identifier))
 
                     else:
 
-                        new_variable = identifier_class(identifier, context_label, context_level, type_symbol.type, None)
+                        new_variable = Identifier(identifier, type_symbol, None)
 
                         # push the new variable into the symbol_table
                         self._symbol_table.append(new_variable)
@@ -475,32 +489,45 @@ class DeftPascalCompiler:
         else:
 
             msg = "[{0}] unknown type '{1}' reference in declaration."
-            self._log(ERROR, msg.format(action_name, type_identifier))
+            _MODULE_LOGGER_.error(msg.format(action_name, type_identifier))
 
 
     def _variable_access(self, action_name, input_list, working_stack):
         """
         VARIABLE_ACCESS
-        input_list -> [Token(IDENTIFIER, 'fahren')]
+        scenario 1 - non-pointer
+        input_list -> [Token(IDENTIFIER, 'V1')]
+        scenario 2 - pointer
+        input_list ->[ Tree(variable_access, [Token(IDENTIFIER, 'V1')]),
+                       Token(OPERATOR_UPARROW, '^')
+                    ]
 
         This method will push the identifier to the expression stack and intermediate code stack
         """
-        # retrieve the scope details from the stack
-        context_label = self._stack_scope[-1][0]
-        context_level = self._stack_scope[-1][1]
+        if len(input_list) == 1:    # scenario 1 - access to a non-pointer identifier
+            identifier_name = input_list[0].value
+            operator_symbol = None
 
-        # identifier - it must exist in the symbol table
-        identifier_name = input_list.pop(0).value
-        identifier_symbol = self._symbol_table.retrieve_by_name(identifier_name, context_label, context_level, equal_level_only=False)
-        if identifier_symbol:
-
-            working_stack.append(identifier_symbol)
-            # self._ic.push(identifier_symbol)
+        elif len(input_list) == 2:  # scenario 2 - access to a pointer identifier
+            identifier_name = input_list[0].children[0].value
+            operator_name = input_list[1].type
+            operator_symbol = self._operator_table.retrieve(operator_name, equal_level_only=False)
 
         else:
+            _MODULE_LOGGER_.error('Error - unknown AST object {0}'.format(input_list))
+            raise TypeError
 
+        # identifier - it must exist in the symbol table
+        identifier_symbol = self._symbol_table.retrieve(identifier_name, equal_level_only=False)
+
+        if identifier_symbol:
+            working_stack.append(identifier_symbol)
+            if operator_symbol:
+                working_stack.append(operator_symbol)
+
+        else:
             msg = "[{0}] :  Reference to undeclared variable '{1}'"
-            self._log(ERROR, msg.format(action_name, identifier_name))
+            _MODULE_LOGGER_.error(msg.format(action_name, identifier_name))
 
         return working_stack
 
@@ -509,7 +536,7 @@ class DeftPascalCompiler:
         """
         process LABEL_DECLARATION_PART
         """
-        self._log(WARNING, "[{0}] - all will be ignored".format(action_name))
+        _MODULE_LOGGER_.warning("[{0}] - all will be ignored".format(action_name))
 
 
     def _assignment_statement(self, action_name, input_list, working_stack):
@@ -518,88 +545,94 @@ class DeftPascalCompiler:
         [Tree(variable_access, [IDENTIFIER]), OPERATOR_ASSIGNMENT, Tree(expression, [Token(UNSIGNED_DECIMAL, '0')])])
         token_list -> identifier := expression
         """
-        # retrieve the scope details from the stack
-        context_label = self._stack_scope[-1][0]
-        context_level = self._stack_scope[-1][1]
-
         # process the identifier
         working_stack = self._internal_compile(input_list.pop(0), [])
-        identifier = working_stack[-1]
 
-        # check the identifier receiving the assignment is variable.
-        if isinstance(identifier, Constant):
-            self._log(ERROR, "[{0}] : Invalid assignment to constant '{1}'".format(action_name, working_stack))
+        if working_stack:
 
-        # consume the operator :=
-        token = input_list.pop(0)
-        operator = Operator(token.value, context_label, context_level, token.type, token.value)
-        working_stack.append(operator)
+            identifier = working_stack[-1]
 
-        # process the expression
-        expression_stack = self._internal_compile(input_list.pop(), [])
+            # check the identifier receiving the assignment is variable.
+            if isinstance(identifier, ConstantIdentifier):
+                _MODULE_LOGGER_.error("[{0}] : invalid assignment to constant '{1}'".format(action_name, working_stack))
 
-        # check type compatibility
-        self._perform_type_check(action_name, working_stack + expression_stack)
+            # consume the operator :=
+            token = input_list.pop(0)
+            operator = self._operator_table.retrieve(token.type, equal_level_only=False)
+            if not operator:
+                raise SystemError("Operator table not working correctly")
+            working_stack.append(operator)
 
-        # push the expression to the working stack
-        working_stack.append(GenericExpression.from_list(expression_stack))
+            # process the expression
+            expression_stack = self._internal_compile(input_list.pop(), [])
 
-        # generate the intermediate code
-        self._ic.init(action_name)
-        self._ic.push(working_stack)
-        self._ic.flush()
+            if expression_stack:
 
-        self._log(DEBUG, "[{0}] : {1}".format(action_name, working_stack))
+                expression = BaseExpression.from_list(working_stack + expression_stack)
+                if expression is None:
+                    msg = "[{0}] incompatible types in expression: {1}"
+                    _MODULE_LOGGER_.error(msg.format(action_name, expression))
+
+                else:
+                    expression = BaseExpression.from_list(expression_stack)
+                    # check type compatibility
+                    # expression_type = self._perform_type_check(action_name, working_stack + expression_stack)
+
+                    #TODO: if the assignment is to a string variable, need to check the string being assigned is compatible with the variable dimension.
+
+                    # push the expression to the working stack
+                    # g = BaseExpression.from_list(expression_stack)
+                    # g.type = expression_type
+                    working_stack.append(expression)
+
+                    # generate the intermediate code
+                    self._ic.init(action_name)
+                    self._ic.push(working_stack)
+                    self._ic.flush()
+
+                    self._log(DEBUG, "[{0}] : {1}".format(action_name, working_stack))
 
         return working_stack
 
 
     def _expression(self, action_name, token_list, working_stack):
-
         # process expressions in assignments
         # this is called from other actions and therefore it does not create its own action on the intermediate code
         # it also does not need to flush the intermediate code. this will be done in another action.
-
-        context_label = self._stack_scope[-1][0]
-        context_level = self._stack_scope[-1][1]
-
         for token in token_list:
             if isinstance(token, Tree):
-
                 working_stack = self._internal_compile(token, working_stack)
 
             elif isinstance(token, Token):
-
-                # assuming token is an identifier, attempt to retrieve from the symbol table at any level
-                a_symbol = self._symbol_table.retrieve_by_name(token.value, context_label, context_level, equal_level_only=False)
-
+                a_symbol = self._symbol_table.retrieve(token.value, equal_level_only=False)
                 if not a_symbol:
 
-                    # attempt to retrieve from the symbol table at any current level but based on token type
-                    a_symbol = self._symbol_table.retrieve_by_name(token.type, context_label, context_level, equal_level_only=False)
-
+                    a_symbol = self._symbol_table.retrieve(token.type, equal_level_only=False)
                     if not a_symbol:
 
-                        #  if still not present in the symbol table, token might be a constant
-                        if token.type in ["UNSIGNED_DECIMAL", "SIGNED_DECIMAL", "NUMBER_BINARY", "NUMBER_OCTAL",
-                                          "NUMBER_HEXADECIMAL", "CHARACTER", "STRING_VALUE", "UNSIGNED_REAL",
-                                          "SIGNED_REAL"
-                                          ]:
+                        a_symbol = self._operator_table.retrieve(token.type, equal_level_only=False)
+                        if not a_symbol:
 
-                            a_symbol = Constant(token.value, context_label, context_level, token.type, token.value)
+                            if token.type in ["UNSIGNED_DECIMAL", "SIGNED_DECIMAL", "NUMBER_BINARY", "NUMBER_OCTAL",
+                                              "NUMBER_HEXADECIMAL", "UNSIGNED_REAL", "SIGNED_REAL"]:
+                                a_symbol = NumericLiteral.from_token(token)
+                                if not a_symbol:
+                                    _MODULE_LOGGER_.error("[{0}] literal '{1}' not compatible with type limitations".format(action_name, token))
 
-                        else:
+                            elif token.type in ["CHARACTER", "STRING_VALUE"]:
+                                a_symbol = StringLiteral.from_token(token)
+                                if not a_symbol:
+                                    _MODULE_LOGGER_.error("[{0}] literal '{1}' not compatible with type limitations".format(action_name, token))
 
-                            a_symbol = BaseSymbol(token.value, context_label, context_level, token.type, token.value)
-                            if a_symbol.is_operator:
-                                a_symbol = Operator(token.value, context_label, context_level, token.type, token.value)
+                            else:
+                                msg = "[{0}] unknown symbol '{1}' used in expression"
+                                _MODULE_LOGGER_.error(msg.format(action_name, token.type))
 
-                working_stack.append(a_symbol)
-                # self._ic.push(a_symbol)
+                if a_symbol:
+                    working_stack.append(a_symbol)
 
             else:
-
-                self._exception_raiser(KeyError)
+                raise NotImplementedError("expected a Token or a Tree but received '{0}'".format(token))
 
         return working_stack
 
@@ -615,17 +648,12 @@ class DeftPascalCompiler:
             UNTIL
             expression	True
         """
-
-        # retrieve the scope details from the stack
-        context_label = self._stack_scope[-1][0]
-        context_level = self._stack_scope[-1][1]
-
         # generate the intermediate code
         self._ic.init(action_name)
         working_stack = []
 
         # process reserved word REPEAT
-        keyword = Keyword.from_token(input_list.pop(0), context_label, context_level)
+        keyword = BaseKeyword.from_token(input_list.pop(0))
         working_stack.append(keyword)
         self._ic.push(working_stack)
         self._ic.flush()
@@ -636,7 +664,7 @@ class DeftPascalCompiler:
         while True:
             token = input_list.pop(0)
             if isinstance(token, Token) and token.type == "RESERVED_STATEMENT_UNTIL":
-                keyword = Keyword.from_token(token, context_label, context_level)
+                keyword = BaseKeyword.from_token(token)
                 working_stack.append(keyword)
                 break
             else:
@@ -647,65 +675,23 @@ class DeftPascalCompiler:
 
         # process expression after UNTIL
         expression_stack = self._internal_compile(input_list.pop(0), [])
-        working_stack.append(GenericExpression.from_list(expression_stack))
+        expression = BooleanExpression.from_list(expression_stack)
 
-        # check type compatibility of the expression and ensure it returns a boolean type
-        generic_expression_type = self._perform_type_check(action_name, expression_stack)
-        if not generic_expression_type == "RESERVED_TYPE_BOOLEAN":
-            msg = "[{0}] expected BOOLEAN expression but found: {1}"
-            self._log(ERROR, msg.format(action_name, generic_expression_type))
+        if expression is None:
+            msg = "[{0}] expected boolean expression but found: {1}"
+            _MODULE_LOGGER_.error(msg.format(action_name, expression_stack))
 
-        # generate the intermediate code
-        self._ic.init(action_name)
-        self._ic.push(working_stack)
-        self._ic.flush()
-        self._log(DEBUG, "[{0}] {1}".format(action_name, working_stack))
+        else:
+            working_stack.append(expression)
+
+            # generate the intermediate code
+            self._ic.init(action_name)
+            self._ic.push(working_stack)
+            self._ic.flush()
+
+            self._log(DEBUG, "[{0}] {1}".format(action_name, working_stack))
 
         return working_stack
-
-
-    def _action_9(self, action_number, action_name, token_list):
-
-        context_label = self._stack_scope[-1][0]
-        context_level = self._stack_scope[-1][1]
-
-        stack_expression = []
-
-        token_list = token_list.children
-        for token in token_list:
-            # print(token.type, token.value)
-
-            if token.type in ["CONSTANT_TRUE", "CONSTANT_FALSE"]:
-
-                a_symbol = self._retrieve_global_boolean_constant(action_number, action_name, token.value)
-                stack_expression.append(a_symbol)
-
-            elif token.type == "IDENTIFIER":
-
-                a_symbol = Identifier(token.value, context_label, context_level)
-                a_symbol = self._get_declared_variable(action_number, action_name, a_symbol)
-                stack_expression.append(a_symbol)
-
-            elif token.type in ["UNSIGNED_DECIMAL", "SIGNED_DECIMAL", "NUMBER_BINARY", "NUMBER_OCTAL",
-                                "NUMBER_HEXADECIMAL", "CHARACTER", "STRING", "CONSTANT_TRUE", "CONSTANT_FALSE",
-                                "UNSIGNED_REAL", "SIGNED_REAL"
-                                ]:
-
-                a_symbol = Constant(token.value, context_label, context_level, token.type, token.value)
-                stack_expression.append(a_symbol)
-
-            else:
-
-                a_symbol = BaseSymbol(token.value, context_label, context_level, token.type, token.value)
-
-            if a_symbol:
-                # self._emiter.emit_action_9(a_symbol)
-                pass
-
-        for i in range(0, len(stack_expression) - 1):
-            self._perform_type_check(action_name, stack_expression[i], stack_expression[i+1])
-
-        self._log(DEBUG, "[{0}] {1} : {2}".format(action_number, action_name, stack_expression))
 
 
     def _closed_for_statement(self, action_name, input_list, working_stack):
@@ -715,14 +701,10 @@ class DeftPascalCompiler:
         expression is a Tree of multiple objects
         assignment_statement is a Tree of multiple objects
         """
-
-        # retrieve the scope details from the stack
-        context_label = self._stack_scope[-1][0]
-        context_level = self._stack_scope[-1][1]
         working_stack = []
 
         # process reserved word FOR
-        keyword = Keyword.from_token(input_list.pop(0), context_label, context_level)
+        keyword = BaseKeyword.from_token(input_list.pop(0))
         working_stack.append(keyword)
 
         # process the control variable (or expression)
@@ -731,30 +713,43 @@ class DeftPascalCompiler:
 
         # consume the operator :=
         token = input_list.pop(0)
-        operator = Operator(token.value, context_label, context_level, token.type, token.value)
+        operator = self._operator_table.retrieve(token.type, equal_level_only=False)
+        if not operator:
+            raise SystemError("Operator table not working correctly")
+
         control_variable_stack.append(operator)
         working_stack.append(operator)
 
         # process the 'initial_value' (or expression) on the for
         expression_stack = self._internal_compile(input_list.pop(0), [])
-        working_stack.append(GenericExpression.from_list(expression_stack))
+        expression = IntegerExpression.from_list(control_variable_stack + expression_stack)
 
-        # check type compatibility of the control_variable := expression(initial_value)
-        self._perform_type_check(action_name, control_variable_stack + expression_stack)
+        if expression is None:
+            msg = "[{0}] expected integer expression but found: {1}"
+            _MODULE_LOGGER_.error(msg.format(action_name, expression_stack))
+
+        else:
+            expression = IntegerExpression.from_list(expression_stack)
+            working_stack.append(expression)
 
         # emit reserved word to / downto
-        keyword = Keyword.from_token(input_list.pop(0), context_label, context_level)
+        keyword = BaseKeyword.from_token(input_list.pop(0))
         working_stack.append(keyword)
 
         # process the 'final_value' on the for
         expression_stack = self._internal_compile(input_list.pop(0), [])
-        working_stack.append(GenericExpression.from_list(expression_stack))
+        expression = IntegerExpression.from_list(control_variable_stack + expression_stack)
 
-        # check compatibility of the control_variable := expression(final_value)
-        self._perform_type_check(action_name, control_variable_stack + expression_stack)
+        if expression is None:
+            msg = "[{0}] expected integer expression but found: {1}"
+            _MODULE_LOGGER_.error(msg.format(action_name, expression_stack))
+
+        else:
+            expression = IntegerExpression.from_list(expression_stack)
+            working_stack.append(expression)
 
         # emit reserved word do
-        keyword = Keyword.from_token(input_list.pop(0), context_label, context_level)
+        keyword = BaseKeyword.from_token(input_list.pop(0))
         working_stack.append(keyword)
 
         # generate the intermediate code
@@ -774,28 +769,25 @@ class DeftPascalCompiler:
         expression is a Tree of multiple objects
         compound_statement is a Tree of multiple objects
         """
-
-        # retrieve the scope details from the stack
-        context_label = self._stack_scope[-1][0]
-        context_level = self._stack_scope[-1][1]
         working_stack = []
 
         # process reserved word WHILE
-        keyword = Keyword.from_token(input_list.pop(0), context_label, context_level)
+        keyword = BaseKeyword.from_token(input_list.pop(0))
         working_stack.append(keyword)
 
         # process control expression
         expression_stack = self._internal_compile(input_list.pop(0), [])
-        working_stack.append(GenericExpression.from_list(expression_stack))
+        expression = BooleanExpression.from_list(expression_stack)
 
-        # check type compatibility of the expression and ensure it returns a boolean type
-        generic_expression_type = self._perform_type_check(action_name, expression_stack)
-        if not generic_expression_type == "RESERVED_TYPE_BOOLEAN":
-            msg = "[{0}] expected BOOLEAN expression but found: {1}"
-            self._log(ERROR, msg.format(action_name, generic_expression_type))
+        if expression is None:
+            msg = "[{0}] expected boolean expression but found: {1}"
+            _MODULE_LOGGER_.error(msg.format(action_name, expression_stack))
+
+        else:
+            working_stack.append(expression)
 
         # emit reserved word do
-        keyword = Keyword.from_token(input_list.pop(0), context_label, context_level)
+        keyword = BaseKeyword.from_token(input_list.pop(0))
         working_stack.append(keyword)
 
         # generate the intermediate code
@@ -814,10 +806,6 @@ class DeftPascalCompiler:
 
         input_list -> TYPE  (T1 = INTEGER) (T2 = ^ REAL) (T3 = T1)
         """
-        # retrieve the scope details from the stack
-        context_label = self._stack_scope[-1][0]
-        context_level = self._stack_scope[-1][1]
-
         # initialise the intermediate code engine
         self._ic.init(action_name)
 
@@ -827,7 +815,7 @@ class DeftPascalCompiler:
         # process declarations
         for type_definition in input_list:
 
-            self._internal_compile(type_definition)
+            self._internal_compile(type_definition, [])
 
         # generate the intermediate code
         self._ic.flush()
@@ -835,15 +823,11 @@ class DeftPascalCompiler:
 
     def _type_definition(self, action_name, input_list, working_stack):
         """
-        VARIABLE_DECLARATION
-        input_list -> [v1 v2 INTEGER]
+        TYPE_DEFINITION
+        input_list -> [T1 = ^ INTEGER]
         """
-        # retrieve the scope details from the stack
-        context_label = self._stack_scope[-1][0]
-        context_level = self._stack_scope[-1][1]
-
         # check if this type declaration involves a pointer
-        is_pointer = input_list[2].type == "UPARROW"
+        is_pointer = input_list[2].type == "OPERATOR_UPARROW"
         """
         the type definition has 3 parts:
             identifier i.e. 'T1'
@@ -851,19 +835,18 @@ class DeftPascalCompiler:
             type_identifier, i.e. INTEGER
         """
         identifier = input_list[0].value
-        operator = Operator.from_token(input_list[1], context_label, context_level)
+        operator = Operator.from_token(input_list[1])
         type_identifier = input_list[-1].value
 
         # identifier - it must NOT exist in the symbol_table yet
-        if self._symbol_table.contains_name(identifier, context_label, context_level, equal_level_only=False):
-
-            msg = "[{0}] {1} :  Identifier '{2}' already declared in current scope"
-            self._log(ERROR, msg.format(action_name, identifier))
+        if self._symbol_table.contains(identifier, equal_level_only=False):
+            msg = "[{0}] identifier '{1}' already declared in current scope"
+            _MODULE_LOGGER_.error(msg.format(action_name, identifier))
 
         else:
 
             # type_identifier - it must exist in the symbol table
-            type_symbol = self._symbol_table.retrieve_by_name(type_identifier, context_label, context_level, equal_level_only=False)
+            type_symbol = self._symbol_table.retrieve(type_identifier, equal_level_only=False)
             if type_symbol:
 
                 # at this point we know:
@@ -872,12 +855,12 @@ class DeftPascalCompiler:
                 # the name for the type being declared
                 #
                 # if the type_symbol is itself a pointer, than the variable being declared must be a pointer too
-                is_pointer = is_pointer or type_symbol.is_pointer
+                is_pointer = is_pointer or isinstance(type_symbol, PointerType)
                 type_class = BasicType
                 if is_pointer:
                     type_class = PointerType
 
-                new_type_symbol = type_class(identifier, context_label, context_level, type_symbol.type, None)
+                new_type_symbol = type_class(identifier, type_symbol.type, None)
 
                 # push the new type to the symbol_table
                 self._symbol_table.append(new_type_symbol)
@@ -891,7 +874,7 @@ class DeftPascalCompiler:
             else:
 
                 msg = "[{0}] reference to unknown type '{1}'"
-                self._log(ERROR, msg.format(action_name, type_identifier))
+                _MODULE_LOGGER_.error(msg.format(action_name, type_identifier))
 
         return working_stack
 
@@ -900,17 +883,17 @@ class DeftPascalCompiler:
         PROCEDURE_CALL
         input_list -> [IDENTIFIER, LEFT_PARENTHESES, Tree(actual_parameter(Tree expression), COMMA, Tree(expression), ... RIGHT_PARENTHESES]
         """
-
-        # retrieve the scope details from the stack
-        context_label = self._stack_scope[-1][0]
-        context_level = self._stack_scope[-1][1]
         working_stack = []
 
         # retrieve the actual procedure identifier from the symbol_table
         token = input_list.pop(0)
-        identifier = self._symbol_table.retrieve_by_name(token.value, context_label, context_level, equal_level_only=False)
-        if identifier:
 
+        # ensure in built procedures use a lowercase name
+        if ProcedureIdentifier.name_is_reserved_for_in_built_procedure(token.value):
+            token.value = token.value.lower()
+
+        identifier = self._symbol_table.retrieve(token.value, equal_level_only=False)
+        if identifier:
             # push the identifier to the working stack
             working_stack.append(identifier)
 
@@ -921,63 +904,52 @@ class DeftPascalCompiler:
             # process each parameter expression, discard the commas used as separators
             parameters_counter = 0
             for token in input_list:
-
                 if isinstance(token, Token):
-
                     if not token.type == "COMMA":
-
                         msg = "[{0}] :  Unknown token '{1}' passed in procedure parameter."
-                        self._log(ERROR, msg.format(action_name, token))
+                        _MODULE_LOGGER_.error(msg.format(action_name, token))
 
                 elif isinstance(token, Tree):
-
                     parameters_counter = parameters_counter + 1
 
                     value_to_print_stack = self._internal_compile(token.children[0], [])
-                    field_width_stack = None
-                    decimal_field_width_stack = None
+                    expression_field_width = None
+                    expression_decimal_field = None
 
                     # type checking the expression passed as parameter
-                    generic_expression_type = self._perform_type_check(action_name, value_to_print_stack)
-
+                    expression_value_to_print = BaseExpression.from_list(value_to_print_stack)
                     # TODO: check if the expression type is compatible with the procedure parameter type definition
 
                     if token.data.upper() in ["BINARY_PARAMETER", "TERNARY_PARAMETER"]:
-
-                        field_width_stack = self._internal_compile(token.children[1], [])
-                        self._perform_type_check(action_name, field_width_stack)
+                        temp_stack = self._internal_compile(token.children[1], [])
+                        expression_field_width = IntegerExpression.from_list(temp_stack)
 
                     if token.data.upper() == "TERNARY_PARAMETER":
+                        temp_stack = self._internal_compile(token.children[2], [])
+                        expression_decimal_field = IntegerExpression.from_list(temp_stack)
 
-                        decimal_field_width_stack = self._internal_compile(token.children[2], [])
-                        self._perform_type_check(action_name, decimal_field_width_stack)
-
-                    if (field_width_stack or decimal_field_width_stack) and identifier.name.upper() not in ["WRITE", "WRITELN"]:
-
+                    if (expression_field_width or expression_decimal_field) and identifier.name.upper() not in ["WRITE", "WRITELN"]:
                         msg = "[{0}] formatting parameters incompatible with {1}}. Formatting will be ignored."
-                        self._log(WARNING, msg.format(action_name, identifier.name))
-                        field_width_stack = None
-                        decimal_field_width_stack = None
+                        _MODULE_LOGGER_.warning(msg.format(action_name, identifier.name))
+                        expression_field_width = None
+                        expression_decimal_field = None
 
                     # create the parameter as a generic expression
-                    generic_expression = GenericExpression.from_list((GenericExpression.from_list(value_to_print_stack),
-                                                                      GenericExpression.from_list(field_width_stack) if field_width_stack else None,
-                                                                      GenericExpression.from_list(decimal_field_width_stack) if decimal_field_width_stack else None
-                                                                      ))
-                    generic_expression.type = generic_expression_type
-
+                    generic_expression = BaseExpression.from_list([expression_value_to_print,
+                                                                   expression_field_width,
+                                                                   expression_decimal_field])
                     # push to the working stack
                     working_stack.append(generic_expression)
 
                 else:
 
                     msg = "[{0}] :  Unknown object '{1}' passed to procedure {2} parameter."
-                    self._log(ERROR, msg.format(action_name, token, identifier))
+                    _MODULE_LOGGER_.error(msg.format(action_name, token, identifier))
 
             if identifier.value and not identifier.parameter_counter == parameters_counter:
 
                 msg = "[{0}] :  '{1}' parameters passed to procedure {2} but '{3}' expected."
-                self._log(ERROR, msg.format(action_name, parameters_counter, identifier.name, identifier.parameter_counter))
+                _MODULE_LOGGER_.error(msg.format(action_name, parameters_counter, identifier.name, identifier.parameter_counter))
 
             # generate the intermediate code
             self._ic.init(action_name)
@@ -989,7 +961,7 @@ class DeftPascalCompiler:
         else:
 
             msg = "[{0}] {1} :  Unknown procedure '{1}' referenced."
-            self._log(ERROR, msg.format(action_name, token.value))
+            _MODULE_LOGGER_.error(msg.format(action_name, token.value))
 
         return working_stack
 
@@ -1004,27 +976,29 @@ class DeftPascalCompiler:
                         Tree(compound_statement, [...]
                       ]
         """
-        # retrieve the scope details from the stack
-        context_label = self._stack_scope[-1][0]
-        context_level = self._stack_scope[-1][1]
         working_stack = []
 
         # process reserved word IF
-        keyword = Keyword.from_token(input_list.pop(0), context_label, context_level)
+        keyword = BaseKeyword.from_token(input_list.pop(0))
         working_stack.append(keyword)
 
         # process boolean expression
         expression_stack = self._internal_compile(input_list.pop(0), [])
-        working_stack.append(GenericExpression.from_list(expression_stack))
+        expression = BaseExpression.from_list(expression_stack)
 
-        # check type compatibility of the expression and ensure it returns a boolean type
-        generic_expression_type = self._perform_type_check(action_name, expression_stack)
-        if not generic_expression_type == "RESERVED_TYPE_BOOLEAN":
-            msg = "[{0}] expected BOOLEAN expression but found: {1}"
-            self._log(ERROR, msg.format(action_name, generic_expression_type))
+        if expression is None:
+            msg = "[{0}] incompatible types in expression: {1}"
+            _MODULE_LOGGER_.error(msg.format(action_name, expression))
+
+        elif not expression.type == "RESERVED_TYPE_BOOLEAN":
+            msg = "[{0}] expected boolean expression but found: {1}"
+            _MODULE_LOGGER_.error(msg.format(action_name, expression.type))
+
+        else:
+            working_stack.append(expression)
 
         # process reserved word THEN
-        keyword = Keyword.from_token(input_list.pop(0), context_label, context_level)
+        keyword = BaseKeyword.from_token(input_list.pop(0))
         working_stack.append(keyword)
 
         # generate the intermediate code
@@ -1042,7 +1016,7 @@ class DeftPascalCompiler:
 
         # process reserved word ELSE
         working_stack = []
-        keyword = Keyword.from_token(input_list.pop(0), context_label, context_level)
+        keyword = BaseKeyword.from_token(input_list.pop(0))
         working_stack.append(keyword)
 
         # generate the intermediate code

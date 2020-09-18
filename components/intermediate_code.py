@@ -1,15 +1,20 @@
 """
 PROJECT.......: Deft Pascal Reborn
 COPYRIGHT.....: Copyright (C) 2020- Andre L Ballista
-VERSION.......: 0.1
 DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original Deft Pascal compiler
 HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
 from components.abstract_emiter import CEmitter, CMOCEmitter
-from components.symbols import BaseSymbol, Operator, Constant, Identifier, Keyword, PointerIdentifier, BasicType, PointerType
+from components.symbols.base_symbols import BaseSymbol, BaseKeyword, BaseType, BaseExpression
+from components.symbols.operator_symbols import Operator
+from components.symbols.type_symbols import PointerType, BasicType, StringType
+from components.symbols.identifier_symbols import Identifier, PointerIdentifier, ConstantIdentifier
+from components.symbols.literals_symbols import Literal
+from utils import compiler_utils
 import logging
 from logging import ERROR, WARNING, INFO
+import copy
 
 
 class IntermediateCode:
@@ -96,64 +101,136 @@ class IntermediateCode:
     #         print("Unknown type {0}".format(token))
     #     return cvalue
 
-    @staticmethod
-    def _translate_operator_token_to_c(token):
-        # translates a pascal operator to c
+    def _translate_operator_to_c(self, in_token):
+        token = copy.copy(in_token)
+        #
         if token.type == "OPERATOR_ASSIGNMENT":
+
             token.value = "="
-        elif token.type == "RESERVED_OPERATOR_AND":
+
+        elif token.type == "OPERATOR_AND":
+
             token.value = "&&"
-        else:
-            print("Unknown operator {0}".format(token))
 
-    @staticmethod
-    def _translate_identifier_token_to_c(token):
-        if token.type in ["RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING", "RESERVED_TYPE_TEXT"]:
-            token.type = "unsigned char"
-        elif token.type == "RESERVED_TYPE_INTEGER":
-            token.type = "int"
-        elif token.type == "RESERVED_TYPE_REAL":
-            token.type = "double"
-        elif token.type == "RESERVED_TYPE_BOOLEAN":
-            token.type = "_Bool"
-        else:
-            print("Unknown identifier {0}".format(token))
+        elif token.type == "OPERATOR_OR":
 
-    @staticmethod
-    def _translate_constant_token_to_c(token):
-        print(token.name)
-        if token.type in ["RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING"]:
-            token.type = "unsigned char"
-            token.value = token.value.strip("'").strip('"')
-        elif token.type in ["STRING_VALUE"]:
-            token.name = token.value.replace("'", '"')
-            token.type = "unsigned char"
-            token.value = token.value.strip("'").strip('"')
-        elif token.type == "RESERVED_TYPE_INTEGER":
-            if "&B" in token.value.upper():     # == "NUMBER_BINARY"
-                token.type = "unsigned short"
-                token.value = "0b{0}".format(token.value.upper().strip("&B"))
-            elif "&H" in token.value.upper():   # == "NUMBER_HEXADECIMAL"
-                token.type = "unsigned short"
-                token.value = "0x{0}".format(token.value.upper().strip("&H"))
-            elif "&O" in token.value.upper():   # == "NUMBER_OCTAL"
-                token.type = "unsigned short"
-                token.value = "0{0}".format(token.value.upper().strip("&O"))
-            elif int(token.value) >= 0:         # == "UNSIGNED_DECIMAL"
-                token.type = "unsigned int"
-            else:
-                token.type = "int"
-        elif token.type == "RESERVED_TYPE_REAL":
-            token.type = "float"
-        elif token.type == "RESERVED_TYPE_BOOLEAN":
-            token.type = "boolean"
-            token.value = "true" if token.type == "CONSTANT_TRUE" else "false"
-        elif token.type == "RESERVED_TYPE_POINTER":
-            token.type = "int"
-            token.value = "NULL"
-        else:
-            print("Unknown constant {0}".format(token))
+            token.value = "||"
 
+        elif token.type == "OPERATOR_NOT":
+
+            token.value = "!"
+
+        elif token.type == "OPERATOR_NOT_EQUAL_TO":
+
+            token.value = "!="
+
+        elif token.type == "OPERATOR_EQUAL_TO":
+
+            token.value = "=="
+
+        elif token.type == "OPERATOR_DIV":
+
+            token.value = "/"
+
+        else:
+
+            if token.type not in ["OPERATOR_PLUS", "OPERATOR_MULTIPLY", "OPERATOR_ARITHMETIC_NEGATION",
+                                  "OPERATOR_DIVIDE", "OPERATOR_GREATER_THAN", "OPERATOR_GREATER_OR_EQUAL_TO"
+                                  ]:    # this are the operators which are similar between pascal and c
+
+                self._log(WARNING, "translation for operator '{0}' not yet implemented".format(token))
+
+        return token
+
+    # def _translate_type_to_c_type(self, in_token):
+    #     token = copy.copy(in_token)
+    #     #
+    #     if token.type in ["RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING", "RESERVED_TYPE_TEXT"]:
+    #
+    #         token.type = "unsigned char"
+    #
+    #     elif token.type == "RESERVED_TYPE_INTEGER":
+    #
+    #         token.type = "int"
+    #
+    #     elif token.type == "RESERVED_TYPE_REAL":
+    #
+    #         token.type = "double"
+    #
+    #     elif token.type == "RESERVED_TYPE_BOOLEAN":
+    #
+    #         token.type = "_Bool"
+    #
+    #     else:
+    #
+    #         self._log(WARNING, "translation for operator '{0}' not yet implemented".format(token))
+    #
+    #     return token
+
+
+    # def _translate_constant_to_c(self, in_token):
+    #     token = copy.copy(in_token)
+    #     #
+    #     if token.type in ["RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING"]:
+    #
+    #         token.type = "unsigned char"
+    #         token.value = token.value.strip("'").strip('"')
+    #
+    #     elif token.type in ["STRING_VALUE"]:
+    #
+    #         raise NotImplementedError
+    #
+    #         # token.name = token.value.replace("'", '"')
+    #         # token.type = "unsigned char"
+    #         # token.value = token.value.strip("'").strip('"')
+    #
+    #     elif token.type == "RESERVED_TYPE_INTEGER":
+    #
+    #         if "&B" in token.value.upper():     # == "NUMBER_BINARY"
+    #
+    #             token.type = "unsigned short"
+    #             token.value = "0b{0}".format(token.value.upper().strip("&B"))
+    #
+    #         elif "&H" in token.value.upper():   # == "NUMBER_HEXADECIMAL"
+    #
+    #             token.type = "unsigned short"
+    #             token.value = "0x{0}".format(token.value.upper().strip("&H"))
+    #
+    #         elif "&O" in token.value.upper():   # == "NUMBER_OCTAL"
+    #
+    #             token.type = "unsigned short"
+    #             token.value = "0{0}".format(token.value.upper().strip("&O"))
+    #
+    #         elif int(token.value) >= 0:         # == "UNSIGNED_DECIMAL"
+    #
+    #             token.type = "unsigned short"
+    #
+    #         else:
+    #
+    #             token.type = "short"
+    #
+    #     elif token.type == "RESERVED_TYPE_REAL":
+    #
+    #         token.type = "float"
+    #
+    #     elif token.type == "RESERVED_TYPE_BOOLEAN":
+    #
+    #         token.type = "bool"
+    #         token.value = "true" if token.value else "false"
+    #
+    #         if token.name in ["CONSTANT_TRUE", "CONSTANT_FALSE"]:
+    #             token.name = "true" if token.value else "false"
+    #
+    #     elif token.type == "RESERVED_TYPE_POINTER":
+    #
+    #         token.type = "int"
+    #         token.value = "NULL"
+    #
+    #     else:
+    #
+    #         self._log(WARNING, "translation for constant '{0}' not yet implemented".format(token))
+    #
+    #     return token
 
     def init(self, action_name):
         self._i_stack[self._top] = {"action_name": action_name,
@@ -199,29 +276,41 @@ class IntermediateCode:
             self._emiter = CEmitter(token_list[1].value)
         self._emiter.emit_program_heading()
 
+
     def _constant_definition_part(self, token_list):
         """
         CONSTANT_DEFINITION_PART
-        example: 'CONSTANT_DEFINITION_PART', 'token_list': [Constant('C1'|RESERVED_TYPE_INTEGER|2|scenario_constant_declaration|0|[])
+        example:
+        [ ConstantIdentifier('C1'|BasicType(RESERVED_TYPE_INTEGER)|GenericExpression('GENERIC_EXPRESSION'|BasicType(RESERVED_TYPE_INTEGER)|[NumericLiteral('&B00'|BasicType(RESERVED_TYPE_INTEGER)|&B00|[])]|[])|[]),
+          ConstantIdentifier('C2'|BasicType(RESERVED_TYPE_INTEGER)|GenericExpression('GENERIC_EXPRESSION'|BasicType(RESERVED_TYPE_INTEGER)|[NumericLiteral('&b11'|BasicType(RESERVED_TYPE_INTEGER)|&b11|[])]|[])|[]),
+          ConstantIdentifier('C1'|BasicType(RESERVED_TYPE_CHAR)|GenericExpression[StringLiteral('C')]),
+          ConstantIdentifier('C3'|StringType(RESERVED_TYPE_STRING[80])|GenericExpression[StringLiteral('C')|BinaryOperator(OPERATOR_PLUS)|StringLiteral('B')]),
+          ConstantIdentifier('C5'|StringType(RESERVED_TYPE_STRING[80])|GenericExpression[ConstantIdentifier(C1)|BinaryOperator(OPERATOR_PLUS)|ConstantIdentifier(C3)])
+        ]
         """
         for token in token_list:
-            if isinstance(token, Constant):
-                if token.type in ["RESERVED_TYPE_STRING"]:
-                    action = self._emiter.emit_constant_definition_part_string
-                    # line = "const {0} {1} [ ] = \"{2}\";"
-                elif token.type in ["RESERVED_TYPE_CHAR"]:
-                    action = self._emiter.emit_constant_definition_part_char
-                    # line = "const {0} {1} = '{2}';"
-                elif token.type in ["RESERVED_TYPE_POINTER"]:
-                    action = self._emiter.emit_constant_definition_part_pointer
-                    # line = "const {0} *{1} = {2};"
-                else:
-                    action = self._emiter.emit_constant_definition_part_generic
-                    # line = "const {0} {1} = {2};"
+            assert token.category == "ConstantIdentifier", "ConstantIdentifier expected but found {0}".format(token)
+
+            inner_type = token.type.type
+            inner_c_type = token.type.type_to_c
+
+            if inner_type in ["RESERVED_TYPE_STRING"]:
+                inner_literal = token.to_literal()
+                self._emiter.emit_constant_definition_part_string(token.name, inner_c_type, inner_literal.type.dimension, inner_literal.value_to_c)
+
+            elif inner_type in ["RESERVED_TYPE_CHAR"]:
+                self._emiter.emit_constant_definition_part_char(token.name, inner_c_type)
+                self._expression(token.value)
+
+            elif inner_type in ["RESERVED_TYPE_POINTER"]:
+                self._emiter.emit_constant_definition_part_pointer(token.name, inner_c_type)
+                self._expression(token.value)
+
             else:
-                raise NotImplementedError
-            self._translate_constant_token_to_c(token)
-            action(token.name, token.type, token.value)
+                self._emiter.emit_constant_definition_part_generic(token.name, inner_c_type)
+                self._expression(token.value)
+
+            self._emiter.emit_statement_terminator()
 
     def _type_definition_part(self, token_list):
         """
@@ -244,37 +333,33 @@ class IntermediateCode:
                     line = "typedef {0} {1}[ ];"
                 else:
                     line = "typedef {0} {1};"
-                self._translate_identifier_token_to_c(token)
-                self._emiter.emit_header_line(line.format(token.type, token.name))
+                # token = self._translate_type_to_c_type(token)
+                self._emiter.emit_header_line(line.format(token.type.type_to_c, token.name))
             elif isinstance(token, PointerType):
                 if token.type in ["RESERVED_TYPE_STRING"]:
                     line = "typedef {0} *{1}[ ];"
                 else:
                     line = "typedef {0} *{1};"
-                self._translate_identifier_token_to_c(token)
-                self._emiter.emit_header_line(line.format(token.type, token.name))
+                # token = self._translate_type_to_c_type(token)
+                self._emiter.emit_header_line(line.format(token.type.type_to_c, token.name))
 
 
     def _variable_declaration_part(self, token_list):
         """
         VARIABLE_DECLARATION_PART
-        example: 'VARIABLE_DECLARATION_PART', 'token_list': [Identifier('V1' | RESERVED_TYPE_INTEGER | None | scenario_variable_declaration_with_base_types | 0 | []),
+        example: 'VARIABLE_DECLARATION_PART', 'token_list': [ Identifier('V1'|BasicType(RESERVED_TYPE_INTEGER)|None),
+                                                              Identifier('V2'|BasicType(RESERVED_TYPE_INTEGER)|None)
+                                                            ]
+
         """
         for token in token_list:
             if isinstance(token, Identifier):
-                if token.type in ["RESERVED_TYPE_STRING"]:
-                    action = self._emiter.emit_variable_declaration_part_string
-                    # line = "{0} {1} [ ];"
+                if isinstance(token.type, StringType):
+                    self._emiter.emit_variable_declaration_part_string(token.type.type_to_c, token.name, token.type.dimension)
                 else:
-                    action = self._emiter.emit_variable_declaration_part_generic
-                    # line = "{0} {1};"
-                self._translate_identifier_token_to_c(token)
-                action(token.type, token.name)
+                    self._emiter.emit_variable_declaration_part_generic(token.type.type_to_c, token.name)
             elif isinstance(token, PointerIdentifier):
-                # line = "{0} *{1};"
-                self._translate_identifier_token_to_c(token)
-                self._emiter.emit_variable_declaration_part_pointer(token.type, token.name)
-                # self._emiter.emit_header_line(line.format(token.type, token.name))
+                self._emiter.emit_variable_declaration_part_pointer(token.type.type_to_c, token.name)
             else:
                 raise NotImplementedError
 
@@ -311,49 +396,80 @@ class IntermediateCode:
                        GenericExpression('GENERIC_EXPRESSION'|GENERIC_EXPRESSION|[Constant('0'|RESERVED_TYPE_INTEGER|0|scenario_fahrenheit_to_celsius_converter|0|[]), Operator('+'|OPERATOR_PLUS|+|scenario_fahrenheit_to_celsius_converter|0|[]), Constant('1'|RESERVED_TYPE_INTEGER|1|scenario_fahrenheit_to_celsius_converter|0|[]), Operator('+'|OPERATOR_PLUS|+|scenario_fahrenheit_to_celsius_converter|0|[]), Identifier('fahren'|int|None|scenario_fahrenheit_to_celsius_converter|0|[])]|None|None|[])
         """
 
-        # particle = "{0}"
+        """
+        #include <stdio.h>
+        #include <string.h>
+
+        int main() {
+            char str1[20] = "C programming";
+            char str2[20];
+            // copying str1 to str2
+            strcpy(str2, str1);
+        """
 
         # emit identifier
         identifier = input_list.pop(0)
-        self._emiter.emit_singleton(identifier.name)
 
-        # emit operator ':='
-        operator = input_list.pop(0)
-        self._translate_operator_token_to_c(operator)
-        # self._emiter.emit(particle.format(operator.value))
-        self._emiter.emit_singleton(operator.value)
+        if identifier.type == "RESERVED_TYPE_STRING":
 
-        # emit expression
-        self._expression(input_list.pop(0))
+            self._emiter.emit_assignment_string_left_side(identifier.name)
 
-        # emit line terminator
-        self._emiter.emit_statement_terminator()
+            # discard operator ':='
+            operator = input_list.pop(0)
+
+            # emit expression
+            self._expression(input_list.pop(0))
+
+            # emit statement terminator
+            self._emiter.emit_assignment_string_right_side()
+
+        else:
+
+            self._emiter.emit_singleton(identifier.name)
+
+            # emit operator ':='
+            operator = input_list.pop(0)
+            operator = self._translate_operator_to_c(operator)
+            self._emiter.emit_singleton(operator.value)
+
+            # emit expression
+            self._expression(input_list.pop(0))
+
+            # emit line terminator
+            self._emiter.emit_statement_terminator()
+
 
     def _expression(self, a_generic_expression):
-        # EXPRESSION
-
+        # Process the incoming generic EXPRESSION
         while a_generic_expression.value:
             token = a_generic_expression.value.pop(0)
-            # particle = "{0} "
-            if isinstance(token, Keyword):
+            if isinstance(token, BaseKeyword):
+
                 self._log(ERROR, "Incorrect keyword '{0}' received.".format(token))
+
             if isinstance(token, Operator):
-                # if token.type == "OPERATOR_MINUS":
-                #    particle = "{0}"
-                self._translate_operator_token_to_c(token)
-                # self._emiter.emit(particle.format(token.value))
+
+                token = self._translate_operator_to_c(token)
                 self._emiter.emit_singleton(token.value)
-            elif isinstance(token, Constant):
-                self._translate_constant_token_to_c(token)
-                self._emiter.emit_singleton(token.name)
-                # self._emiter.emit(particle.format(token.name))
+
+            elif isinstance(token, Literal):
+
+                # token = self._translate_constant_to_c(token)
+                # self._emiter.emit_singleton(token.name)
+                self._emiter.emit_singleton(token.value_to_c)
+
             elif isinstance(token, Identifier):
+
                 self._emiter.emit_singleton(token.name)
-                # self._emiter.emit(particle.format(token.name))
+
             elif isinstance(token, BaseSymbol):
+
                 self._emiter.emit_singleton(token.name)
+
             else:
-                raise NotImplementedError(token)
+
+                self._log(WARNING, "expression action for token '{0}' not yet implemented".format(token))
+
 
     def _repeat_statement(self, input_list):
         """
@@ -393,7 +509,7 @@ class IntermediateCode:
         """
         # process keyword 'for'
         token = input_list.pop(0)
-        if not isinstance(token, Keyword):
+        if not isinstance(token, BaseKeyword):
             self._log(ERROR, "Unknown symbol '{0}' received. Keyword expected.".format(token))
 
         # get control_variable
@@ -406,7 +522,7 @@ class IntermediateCode:
 
         # emit part of the for statement
         # self._emiter.emit("for ( {0} = ".format(control_variable.name))
-        self._translate_operator_token_to_c(token)
+        token = self._translate_operator_to_c(token)
         self._emiter.emit_closed_for_statement_control_variable(control_variable.name, token.value)
 
         # extract 'start_value' expression and send it to processing
@@ -415,7 +531,7 @@ class IntermediateCode:
 
         # process keyword 'to' or 'downto' - first part
         token = input_list.pop(0)
-        if not isinstance(token, Keyword):
+        if not isinstance(token, BaseKeyword):
             self._log(ERROR, "Unknown symbol '{0}' received. Keyword expected.".format(token))
         direction = token.type == "RESERVED_STATEMENT_TO"
         if direction:
@@ -450,12 +566,12 @@ class IntermediateCode:
         """
         # process keyword 'while'
         token = input_list.pop(0)
-        if not isinstance(token, Keyword):
+        if not isinstance(token, BaseKeyword):
             self._log(ERROR, "Unknown symbol '{0}' received. Keyword expected.".format(token))
 
         self._emiter.emit_closed_while_statement()
 
-        # extract 'start_value' expression and send it to processing
+        # extract expression and send it to processing
         generic_expression = input_list.pop(0)
         self._expression(generic_expression)
 
@@ -590,7 +706,7 @@ class IntermediateCode:
         """
         # process keyword 'if'
         token = input_list.pop(0)
-        if not isinstance(token, Keyword):
+        if not isinstance(token, BaseKeyword):
             self._log(ERROR, "Unknown symbol '{0}' received. Keyword expected.".format(token))
         self._emiter.emit_closed_if_statement()
 
@@ -600,7 +716,7 @@ class IntermediateCode:
 
         # process keyword 'then'
         token = input_list.pop(0)
-        if not isinstance(token, Keyword):
+        if not isinstance(token, BaseKeyword):
             self._log(ERROR, "Unknown symbol '{0}' received. Keyword expected.".format(token))
         self._emiter.emit_closed_if_statement_then()
 
@@ -614,7 +730,7 @@ class IntermediateCode:
         """
         # process keyword 'ELSE'
         token = input_list.pop(0)
-        if not isinstance(token, Keyword):
+        if not isinstance(token, BaseKeyword):
             self._log(ERROR, "Unknown symbol '{0}' received. Keyword expected.".format(token))
         self._emiter.emit_closed_if_statement_else()
 
