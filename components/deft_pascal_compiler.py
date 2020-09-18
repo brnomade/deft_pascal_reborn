@@ -28,7 +28,6 @@ class LogRequestsHandler(logging.Handler):
     def emit(self, record):
         """Record any errors raised by the compiler.
         """
-        # msg = "[{0}] {1} - {2}".format(record.levelname.upper(), record.funcName.upper().lstrip("_"), record.getMessage())
         msg = record.getMessage()
         if record.levelname.upper() == "ERROR":
             _LOG_ROLL_.append(msg)
@@ -245,8 +244,6 @@ class DeftPascalCompiler:
         self._ic.push(token_list[1])
         self._ic.flush()
 
-        _MODULE_LOGGER_.debug("[{0}] : '{1}' - stack: {2} {3}".format(action_name, identifier, self._symbol_table, self._stack_scope))
-
         if len(token_list) > 2:
             _MODULE_LOGGER_.warning("[{0}] variables detected - all will be ignored".format(action_name))
 
@@ -274,8 +271,6 @@ class DeftPascalCompiler:
         self._ic.push(input_token)
         self._ic.flush()
 
-        _MODULE_LOGGER_.debug("[{0}] : {1} {2}".format(action, self._symbol_table, self._stack_scope))
-
 
     def _reserved_structure_end(self, action_name, input_token, working_stack):
         """
@@ -286,8 +281,6 @@ class DeftPascalCompiler:
         self._ic.init(action)
         self._ic.push(input_token)
         self._ic.flush()
-
-        _MODULE_LOGGER_.debug("[{0}] : {1}".format(action, self._symbol_table))
 
 
     def _constant_definition_part(self, action_name, input_list, working_stack):

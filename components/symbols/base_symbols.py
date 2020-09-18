@@ -49,7 +49,7 @@ class BaseSymbol:
         self._name = a_name
         self._type = a_type
         self._value = a_value
-        self._reference_stack = []
+        # self._reference_stack = []
 
 
     def __str__(self):
@@ -89,16 +89,16 @@ class BaseSymbol:
     def category(self):
         return type(self).__name__
 
-    @property
-    def references(self):
-        return self._reference_stack
+    #@property
+    #def references(self):
+    #    return self._reference_stack
 
-    @property
-    def has_references(self):
-        if self._reference_stack:
-            return True
-        else:
-            return False
+    #@property
+    #def has_references(self):
+    #    if self._reference_stack:
+    #        return True
+    #    else:
+    #        return False
 
     @name.setter
     def name(self, new_name):

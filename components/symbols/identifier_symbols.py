@@ -6,6 +6,10 @@ HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
 from components.symbols.base_symbols import BaseIdentifier
+import logging
+
+
+_MODULE_LOGGER = logging.getLogger(__name__)
 
 
 class Identifier(BaseIdentifier):
@@ -95,20 +99,11 @@ class ProcedureIdentifier(BaseIdentifier):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._parameter_counter = 0
+        self._parameter_list = []
 
     @classmethod
     def name_is_reserved_for_in_built_procedure(cls, name):
         return True if name.upper() in ["WRITE", "WRITELN"] else False
-
-    @property
-    def parameter_counter(self):
-        return self._parameter_counter
-
-    @parameter_counter.setter
-    def parameter_counter(self, new_counter):
-        if not isinstance(new_counter, int):
-            raise ValueError("parameter_counter expects an integer value")
-        self._parameter_counter = new_counter
 
     @classmethod
     def unlimited_parameters_list_size(cls):
@@ -125,3 +120,22 @@ class ProcedureIdentifier(BaseIdentifier):
         write = cls.in_built_procedure_write()
         write.name = "writeln"
         return write
+
+    @property
+    def parameter_counter(self):
+        return self._parameter_counter
+
+    @parameter_counter.setter
+    def parameter_counter(self, new_counter):
+        if not isinstance(new_counter, int):
+            raise ValueError("parameter_counter expects an integer value")
+        self._parameter_counter = new_counter
+
+    def add_parameter_expression(self, an_expression):
+        if (self._parameter_counter == self.unlimited_parameters_list_size()) or (len(self._parameter_list) < self._parameter_counter):
+            self._parameter_list.append(an_expression)
+            return True
+            #TODO - type check of the incoming expression against what is expected by the procedure parameter
+        else:
+            _MODULE_LOGGER.error("PrcedureIdentifier accepts only '{0}' parameters. Received '{1}'".format(self.parameter_counter, an_expression))
+            return False

@@ -19,7 +19,7 @@ class ConfigurationForTestTDD:
 
     @classmethod
     def tdd_tests_to_run(cls):
-        return [(NegativeLanguageTests, "scenario_large_binary_number_raises_compiler_error", NegativeLanguageTests.scenario_large_binary_number_raises_compiler_error)]
+        return [(PascalExamples, "example_hello_world", PascalExamples.example_hello_world)]
 
 
 class TestTDD(TestCase):
@@ -95,6 +95,7 @@ class TestTDD(TestCase):
         if error_log:
             print(error_log)
         self.assertEqual([], error_log)
+        print(compiler.intermediate_code)
 
 
     def _execute_tdd_test(self, source_code):
