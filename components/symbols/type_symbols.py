@@ -111,7 +111,7 @@ class BasicType(BaseType):
         return self.type
 
 
-class StringType(BasicType):
+class StringType(BaseType):
 
     def __str__(self):
         return "{0}({1}[{2}])".format(self.category, self.type, self.dimension)

@@ -15,16 +15,8 @@ _MODULE_LOGGER = logging.getLogger(__name__)
 
 class Operator(BaseOperator):
 
-    def __init__(self, *args, **kwargs):
-        #
-        super().__init__(*args, **kwargs)
-        self._compatible = None
-
-    def __str__(self):
-        return "{0}({1})".format(self.category, self.type)
-
-    def __repr__(self):
-        return "{0}({1})".format(self.category, self.type)
+    def do_nothing(self):
+        pass
 
 
 class NeutralOperator(Operator):
@@ -209,6 +201,7 @@ class BinaryOperator(Operator):
         operator = cls("OPERATOR_DIV", 'OPERATOR_DIV', "DIV")
         operator._compatible = [(0,0,0),(1,1,0),(0,1,0),(1,0,0)]
         # operator._as_type = lambda l, r, c: [t for t in c if t[0] == l.index and t[1] == r.index]
+        operator._as_c = "/"
         return operator
 
     @classmethod
@@ -224,6 +217,7 @@ class BinaryOperator(Operator):
         operator = cls("OPERATOR_ASSIGNMENT", "OPERATOR_ASSIGNMENT", ":=")
         operator._compatible = [(0,0,0),(1,1,1),(2,2,2),(3,3,3),(4,4,4),(5,5,5),(6,6,6),(7,7,7),(8,8,8),(6,9,6)]
         # operator._as_type = lambda l, r, c: [t for t in c if t[0] == l.index and t[1] == r.index]
+        operator._as_c = "="
         return operator
 
     @classmethod
@@ -239,6 +233,7 @@ class BinaryOperator(Operator):
         operator = cls("OPERATOR_EQUAL_TO", "OPERATOR_EQUAL_TO", "=")
         operator._compatible = [(0,0,5),(1,1,5),(2,2,5),(3,3,5),(4,4,5),(5,5,5),(6,6,5),(7,7,5),(8,8,5),(6,9,5)]
         # operator._as_type = lambda l, r, c: [t for t in c if t[0] == l.index and t[1] == r.index]
+        operator._as_c = "=="
         return operator
 
     @classmethod
@@ -254,6 +249,7 @@ class BinaryOperator(Operator):
         operator = cls("OPERATOR_NOT_EQUAL_TO", "OPERATOR_NOT_EQUAL_TO", "<>")
         operator._compatible = [(0,0,5),(1,1,5),(2,2,5),(3,3,5),(4,4,5),(5,5,5),(6,6,5),(7,7,5),(8,8,5),(6,9,5)]
         # operator._as_type = lambda l, r, c: [t for t in c if t[0] == l.index and t[1] == r.index]
+        operator._as_c = "!="
         return operator
 
     @classmethod
@@ -299,6 +295,7 @@ class BinaryOperator(Operator):
         operator = cls("OPERATOR_AND", "OPERATOR_AND", "AND")
         operator._compatible = [(0,0,0),(5,5,5)]
         # operator._as_type = lambda l, r, c: [t for t in c if t[0] == l.index and t[1] == r.index]
+        operator._as_c = "&&"
         return operator
 
     @classmethod
@@ -314,6 +311,7 @@ class BinaryOperator(Operator):
         operator = cls("OPERATOR_OR", "OPERATOR_OR", "OR")
         operator._compatible = [(0,0,0),(5,5,5)]
         # operator._as_type = lambda l, r, c: [t for t in c if t[0] == l.index and t[1] == r.index]
+        operator._as_c = "||"
         return operator
 
     @classmethod
@@ -491,6 +489,7 @@ class UnaryOperator(Operator):
         #                       0     1     2     3     4     5     6     7     8     9
         #                       INT   REAL  SET   CHAR  STR   BOOL  POINT TEXT  ARRAY NIL
         operator._compatible = [None, None, None, None, None, 5  ,  None, None, None, None]
+        operator._as_c = "!"
         return operator
 
     @classmethod

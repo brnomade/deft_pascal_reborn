@@ -9,7 +9,7 @@ from components.abstract_emiter import CEmitter, CMOCEmitter
 from components.symbols.base_symbols import BaseSymbol, BaseKeyword, BaseType, BaseExpression
 from components.symbols.operator_symbols import Operator
 from components.symbols.type_symbols import PointerType, BasicType, StringType
-from components.symbols.identifier_symbols import Identifier, PointerIdentifier, ConstantIdentifier
+from components.symbols.identifier_symbols import Identifier, PointerIdentifier, TypeIdentifier, ConstantIdentifier
 from components.symbols.literals_symbols import Literal
 from utils import compiler_utils
 import logging
@@ -101,46 +101,46 @@ class IntermediateCode:
     #         print("Unknown type {0}".format(token))
     #     return cvalue
 
-    def _translate_operator_to_c(self, in_token):
-        token = copy.copy(in_token)
-        #
-        if token.type == "OPERATOR_ASSIGNMENT":
-
-            token.value = "="
-
-        elif token.type == "OPERATOR_AND":
-
-            token.value = "&&"
-
-        elif token.type == "OPERATOR_OR":
-
-            token.value = "||"
-
-        elif token.type == "OPERATOR_NOT":
-
-            token.value = "!"
-
-        elif token.type == "OPERATOR_NOT_EQUAL_TO":
-
-            token.value = "!="
-
-        elif token.type == "OPERATOR_EQUAL_TO":
-
-            token.value = "=="
-
-        elif token.type == "OPERATOR_DIV":
-
-            token.value = "/"
-
-        else:
-
-            if token.type not in ["OPERATOR_PLUS", "OPERATOR_MULTIPLY", "OPERATOR_ARITHMETIC_NEGATION",
-                                  "OPERATOR_DIVIDE", "OPERATOR_GREATER_THAN", "OPERATOR_GREATER_OR_EQUAL_TO"
-                                  ]:    # this are the operators which are similar between pascal and c
-
-                self._log(WARNING, "translation for operator '{0}' not yet implemented".format(token))
-
-        return token
+    # def _translate_operator_to_c(self, in_token):
+    #     token = copy.copy(in_token)
+    #     #
+    #     if token.type == "OPERATOR_ASSIGNMENT":
+    #
+    #         token.value = "="
+    #
+    #     elif token.type == "OPERATOR_AND":
+    #
+    #         token.value = "&&"
+    #
+    #     elif token.type == "OPERATOR_OR":
+    #
+    #         token.value = "||"
+    #
+    #     elif token.type == "OPERATOR_NOT":
+    #
+    #         token.value = "!"
+    #
+    #     elif token.type == "OPERATOR_NOT_EQUAL_TO":
+    #
+    #         token.value = "!="
+    #
+    #     elif token.type == "OPERATOR_EQUAL_TO":
+    #
+    #         token.value = "=="
+    #
+    #     elif token.type == "OPERATOR_DIV":
+    #
+    #         token.value = "/"
+    #
+    #     else:
+    #
+    #         if token.type not in ["OPERATOR_PLUS", "OPERATOR_MULTIPLY", "OPERATOR_ARITHMETIC_NEGATION",
+    #                               "OPERATOR_DIVIDE", "OPERATOR_GREATER_THAN", "OPERATOR_GREATER_OR_EQUAL_TO"
+    #                               ]:    # this are the operators which are similar between pascal and c
+    #
+    #             self._log(WARNING, "translation for operator '{0}' not yet implemented".format(token))
+    #
+    #     return token
 
     # def _translate_type_to_c_type(self, in_token):
     #     token = copy.copy(in_token)
@@ -232,6 +232,7 @@ class IntermediateCode:
     #
     #     return token
 
+
     def init(self, action_name):
         self._i_stack[self._top] = {"action_name": action_name,
                                     "token_list": None
@@ -315,10 +316,17 @@ class IntermediateCode:
     def _type_definition_part(self, token_list):
         """
         TYPE_DEFINITION_PART
-        example: 'TYPE_DEFINITION_PART', 'token_list': [BasicType('T1'|RESERVED_TYPE_INTEGER|None|scenario_type_declaration_with_base_types|0|[]),
+        example: 'TYPE_DEFINITION_PART', 'token_list': [ TypeIdentifier(T6|BasicType(RESERVED_TYPE_INTEGER)),
+                                                         TypeIdentifier(T7|BasicType(RESERVED_TYPE_REAL)),
+                                                         TypeIdentifier(T8|BasicType(RESERVED_TYPE_CHAR)),
+                                                         TypeIdentifier(T9|StringType(RESERVED_TYPE_STRING[80])),
+                                                         TypeIdentifier(T10|BasicType(RESERVED_TYPE_BOOLEAN))
+                                                       ]
         """
         for token in token_list:
-            if isinstance(token, BasicType):
+            self._emiter.emit_type_definition()
+
+            if isinstance(token.type, BasicType):
                 """
                 typedef, can be used to give a type a new name. 
                 example: typedef unsigned char BYTE;
@@ -329,19 +337,14 @@ class IntermediateCode:
                 Example for strings:
                 typedef char ItemType[10];
                 """
-                if token.type in ["RESERVED_TYPE_STRING"]:
-                    line = "typedef {0} {1}[ ];"
-                else:
-                    line = "typedef {0} {1};"
-                # token = self._translate_type_to_c_type(token)
-                self._emiter.emit_header_line(line.format(token.type.type_to_c, token.name))
-            elif isinstance(token, PointerType):
-                if token.type in ["RESERVED_TYPE_STRING"]:
-                    line = "typedef {0} *{1}[ ];"
-                else:
-                    line = "typedef {0} *{1};"
-                # token = self._translate_type_to_c_type(token)
-                self._emiter.emit_header_line(line.format(token.type.type_to_c, token.name))
+                self._emiter.emit_variable_declaration_part_generic(token.type.type_to_c, token.name)
+            elif isinstance(token.type, StringType):
+                self._emiter.emit_variable_declaration_part_string(token.type.type_to_c, token.name, token.type.dimension)
+            elif isinstance(token.type, PointerType):
+                self._emiter.emit_variable_declaration_part_pointer(token.type.type_to_c, token.name)
+            else:
+                line = "{0}".format(token)
+                self._emiter.emit_header_line(line)
 
 
     def _variable_declaration_part(self, token_list):
@@ -353,9 +356,15 @@ class IntermediateCode:
 
         """
         for token in token_list:
+            # TODO: Need to separate better the instances that are arriving here:
+            # They could be Identifiers subclass? Currently a TypeIdentifier could be received
+            # They could also be BaseTypes? Or specific Types like StringType and PointerType
+
             if isinstance(token, Identifier):
                 if isinstance(token.type, StringType):
                     self._emiter.emit_variable_declaration_part_string(token.type.type_to_c, token.name, token.type.dimension)
+                elif isinstance(token.type, TypeIdentifier):
+                    self._emiter.emit_variable_declaration_part_generic(token.type.name, token.name)
                 else:
                     self._emiter.emit_variable_declaration_part_generic(token.type.type_to_c, token.name)
             elif isinstance(token, PointerIdentifier):
@@ -410,7 +419,7 @@ class IntermediateCode:
         # emit identifier
         identifier = input_list.pop(0)
 
-        if identifier.type == "RESERVED_TYPE_STRING":
+        if isinstance(identifier.type, StringType):
 
             self._emiter.emit_assignment_string_left_side(identifier.name)
 
@@ -429,8 +438,8 @@ class IntermediateCode:
 
             # emit operator ':='
             operator = input_list.pop(0)
-            operator = self._translate_operator_to_c(operator)
-            self._emiter.emit_singleton(operator.value)
+            #operator = self._translate_operator_to_c(operator)
+            self._emiter.emit_singleton(operator.to_c)
 
             # emit expression
             self._expression(input_list.pop(0))
@@ -441,6 +450,8 @@ class IntermediateCode:
 
     def _expression(self, a_generic_expression):
         # Process the incoming generic EXPRESSION
+        assert isinstance(a_generic_expression, BaseExpression)
+
         while a_generic_expression.value:
             token = a_generic_expression.value.pop(0)
             if isinstance(token, BaseKeyword):
@@ -449,8 +460,8 @@ class IntermediateCode:
 
             if isinstance(token, Operator):
 
-                token = self._translate_operator_to_c(token)
-                self._emiter.emit_singleton(token.value)
+                #token = self._translate_operator_to_c(token)
+                self._emiter.emit_singleton(token.to_c)
 
             elif isinstance(token, Literal):
 
@@ -522,8 +533,8 @@ class IntermediateCode:
 
         # emit part of the for statement
         # self._emiter.emit("for ( {0} = ".format(control_variable.name))
-        token = self._translate_operator_to_c(token)
-        self._emiter.emit_closed_for_statement_control_variable(control_variable.name, token.value)
+        #token = self._translate_operator_to_c(token)
+        self._emiter.emit_closed_for_statement_control_variable(control_variable.name, token.to_c)
 
         # extract 'start_value' expression and send it to processing
         generic_expression = input_list.pop(0)
@@ -582,9 +593,8 @@ class IntermediateCode:
     def _procedure_call_write(self, input_list):
         """
         CUSTOM PROCEDURE_CALL FOR HANDLING WRITE AND WRITELN
-        input_list ->  [ProcedureIdentifier('writeln'|RESERVED_TYPE_POINTER|writeln|scenario_fahrenheit_to_celsius_converter|0|[]),
-                        GenericExpression('GENERIC_EXPRESSION'|GENERIC_EXPRESSION|[Constant(''Fahrenheit     Celsius''|STRING_VALUE|'Fahrenheit     Celsius'|scenario_fahrenheit_to_celsius_converter|0|[])]|None|None|[]),
-                        GenericExpression('GENERIC_EXPRESSION'|GENERIC_EXPRESSION|[Constant(''another''|STRING_VALUE|'another'|scenario_fahrenheit_to_celsius_converter|0|[])]|None|None|[])
+        input_list ->   [ ProcedureIdentifier('writeln'|RESERVED_TYPE_POINTER|None),
+                          ActualParameter([StringLiteral('HELLO WORLD'|StringType(RESERVED_TYPE_STRING[80])|HELLO WORLD)]:None:None)
                         ]
         C syntax -> "printf"
         Pascal syntax -> write/writeln( A : B : C, ... ) :: A = value to print; B = field_width; C = decimal_field_width
@@ -594,65 +604,57 @@ class IntermediateCode:
         # self._emiter.emit("printf(")
         self._emiter.emit_procedure_call_write()
 
-        for token in input_list:
-            format_counter = 2 - token.value.count(None)
-            #
-            if format_counter == 2:
+        for actual_parameter in input_list:
+
+            if actual_parameter.cardinality == 3:
                 action = self._emiter.emit_procedure_call_write_with_2_format
                 # particle = "%*.*{0}\\t"
-            elif format_counter == 1:
+            elif actual_parameter.cardinality == 2:
                 # particle = "%*{0}\\t"
                 action = self._emiter.emit_procedure_call_write_with_1_format
             else:
                 # particle = "%{0}\\t"
                 action = self._emiter.emit_procedure_call_write_with_no_format
-            #
-            if token.type == "RESERVED_TYPE_INTEGER":
+
+            if actual_parameter.value.type == "RESERVED_TYPE_INTEGER":
                 action("d")
-            elif token.type == "RESERVED_TYPE_REAL":
+            elif actual_parameter.value.type == "RESERVED_TYPE_REAL":
                 action("f")
             else:
                 action("s")
-        #
+
         if identifier.name.upper() == "WRITELN":
             self._emiter.emit_procedure_call_write_format_close_with_new_line()
-            # self._emiter.emit('\\n", ')
         else:
             self._emiter.emit_procedure_call_write_format_close()
-            # self._emiter.emit('", ')
-        #
+
         while True:
-            token = input_list.pop(0)
-            #
-            value_to_print_stack = token.value[0]
-            field_width_stack = token.value[1]
-            decimal_field_width_stack = token.value[2]
-            #
-            format_counter = 2 - token.value.count(None)
-            #
-            if format_counter == 2:
-                self._expression(field_width_stack)
+            actual_parameter = input_list.pop(0)
+
+            if actual_parameter.cardinality == 3:
+                field_width_expression = actual_parameter.field_width
+                self._expression(field_width_expression)
                 self._emiter.emit_procedure_call_parameter_separator()
-                # self._emiter.emit(", ")
-                self._expression(decimal_field_width_stack)
+
+                decimal_field_width_expression = actual_parameter.decimal_paces.value
+                self._expression(decimal_field_width_expression)
                 self._emiter.emit_procedure_call_parameter_separator()
-                # self._emiter.emit(", ")
-            elif format_counter == 1:
-                self._expression(field_width_stack)
+
+            elif actual_parameter.cardinality == 2:
+                field_width_expression = actual_parameter.field_width
+                self._expression(field_width_expression)
                 self._emiter.emit_procedure_call_parameter_separator()
-                # self._emiter.emit(", ")
-            #
-            self._expression(value_to_print_stack)
-            #
+
+            value_to_print_expression = actual_parameter.value
+            self._expression(value_to_print_expression)
+
             if not input_list:
                 break
             else:
                 self._emiter.emit_procedure_call_parameter_separator()
-                # self._emiter.emit(", ")
 
         self._emiter.emit_procedure_call_closure()
         self._emiter.emit_statement_terminator()
-        # self._emiter.emit_line(") ;")
 
 
     def _procedure_call(self, input_list):

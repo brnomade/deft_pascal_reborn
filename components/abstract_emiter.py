@@ -28,10 +28,12 @@ class AbstractEmitter:
         self.code += input_source + '\n'
 
     def emit_header(self, input_source):
+        # self.header += input_source
         self.code += input_source
 
     def emit_header_line(self, input_source):
-        self.header += input_source + '\n'
+        # self.header += input_source + '\n'
+        self.code += input_source + '\n'
 
     @property
     def output_code(self):
@@ -65,6 +67,10 @@ class CEmitter(AbstractEmitter):
         self.emit_header_line("#include <stdio.h>")
         self.emit_header_line("#include <stdbool.h>")
         self.emit_header_line("#include <string.h>")
+
+    def emit_type_definition(self):
+        line = "typedef "
+        self.emit_header(line)
 
     def emit_constant_definition_part_string(self, in_name, in_type, dimension, in_value):
         """

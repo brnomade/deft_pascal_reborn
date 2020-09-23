@@ -5,7 +5,7 @@ DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original D
 HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
-from components.symbols.base_symbols import BaseIdentifier
+from components.symbols.base_symbols import BaseIdentifier, BaseExpression, BaseType
 import logging
 
 
@@ -18,9 +18,27 @@ class Identifier(BaseIdentifier):
         pass
 
 
+class TypeIdentifier(BaseIdentifier):
+
+    def __init__(self, a_name, a_type):
+        if not (isinstance(a_type, BaseType) or isinstance(a_type, TypeIdentifier)):
+            raise ValueError("TypeIdentifier expects an instance of BaseType or TypeIdentifier")
+        super().__init__(a_name,
+                         a_type if isinstance(a_type, BaseType) else a_type.type,
+                         None)
+
+    def __str__(self):
+        return "{0}({1}|{2})".format(self.category, self.name, self.type)
+
+    def __repr__(self):
+        return "{0}({1}|{2})".format(self.category, self.name, self.type)
+
+
 class ConstantIdentifier(BaseIdentifier):
 
     def __init__(self, a_name, an_expression):
+        if not isinstance(an_expression, BaseExpression):
+            raise ValueError("ConstantIdentifier expects an instance of BaseExpression")
         super().__init__(a_name, None, an_expression)
 
     @property
@@ -135,7 +153,7 @@ class ProcedureIdentifier(BaseIdentifier):
         if (self._parameter_counter == self.unlimited_parameters_list_size()) or (len(self._parameter_list) < self._parameter_counter):
             self._parameter_list.append(an_expression)
             return True
-            #TODO - type check of the incoming expression against what is expected by the procedure parameter
+            # TODO - type check of the incoming expression against what is expected by the procedure parameter
         else:
-            _MODULE_LOGGER.error("PrcedureIdentifier accepts only '{0}' parameters. Received '{1}'".format(self.parameter_counter, an_expression))
+            _MODULE_LOGGER.error("ProcedureIdentifier accepts only '{0}' parameters. Received '{1}'".format(self.parameter_counter, an_expression))
             return False

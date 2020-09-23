@@ -10,11 +10,12 @@ from components.deft_pascal_parser_3 import DeftPascalParser
 from components.symbol_table import SymbolTable
 from components.symbols.base_symbols import BaseSymbol, BaseKeyword, BaseExpression
 from components.symbols.operator_symbols import Operator, BinaryOperator, UnaryOperator, NeutralOperator
-from components.symbols.identifier_symbols import Identifier, PointerIdentifier, ProcedureIdentifier, ConstantIdentifier
+from components.symbols.identifier_symbols import Identifier, TypeIdentifier, PointerIdentifier, ProcedureIdentifier, ConstantIdentifier
 from components.symbols.literals_symbols import Literal, BooleanLiteral, NilLiteral, NumericLiteral, StringLiteral
 from components.symbols.type_symbols import PointerType, BasicType, StringType
 from components.symbols.expression_symbols import ConstantExpression, IntegerExpression, BooleanExpression
 from components.intermediate_code import IntermediateCode
+from components.parameters import ActualParameter
 # from utils.compiler_utils import check_type_compatibility, token_is_an_operator
 import copy
 import logging
@@ -844,11 +845,9 @@ class DeftPascalCompiler:
             _MODULE_LOGGER_.error(msg.format(action_name, identifier))
 
         else:
-
             # type_identifier - it must exist in the symbol table
             type_symbol = self._symbol_table.retrieve(type_identifier, equal_level_only=False)
             if type_symbol:
-
                 # at this point we know:
                 # the type being declared is pointer or not
                 # the type being declared references a custom or a basic type
@@ -860,7 +859,10 @@ class DeftPascalCompiler:
                 if is_pointer:
                     type_class = PointerType
 
-                new_type_symbol = type_class(identifier, type_symbol.type, None)
+                # TODO: Address the pointer type definition
+
+                new_type_symbol = TypeIdentifier(identifier, type_symbol)
+                # new_type_symbol = type_class(identifier, type_symbol.type, None)
 
                 # push the new type to the symbol_table
                 self._symbol_table.append(new_type_symbol)
@@ -912,13 +914,14 @@ class DeftPascalCompiler:
                 elif isinstance(token, Tree):
                     parameters_counter = parameters_counter + 1
 
+                    # type checking the expression passed as parameter
+                    # TODO: check if the expression type is compatible with the procedure parameter type definition
+
                     value_to_print_stack = self._internal_compile(token.children[0], [])
+                    expression_value_to_print = BaseExpression.from_list(value_to_print_stack)
+
                     expression_field_width = None
                     expression_decimal_field = None
-
-                    # type checking the expression passed as parameter
-                    expression_value_to_print = BaseExpression.from_list(value_to_print_stack)
-                    # TODO: check if the expression type is compatible with the procedure parameter type definition
 
                     if token.data.upper() in ["BINARY_PARAMETER", "TERNARY_PARAMETER"]:
                         temp_stack = self._internal_compile(token.children[1], [])
@@ -929,25 +932,22 @@ class DeftPascalCompiler:
                         expression_decimal_field = IntegerExpression.from_list(temp_stack)
 
                     if (expression_field_width or expression_decimal_field) and identifier.name.upper() not in ["WRITE", "WRITELN"]:
-                        msg = "[{0}] formatting parameters incompatible with {1}}. Formatting will be ignored."
+                        msg = "[{0}] Formatting parameters incompatible with {1}}. Formatting will be ignored."
                         _MODULE_LOGGER_.warning(msg.format(action_name, identifier.name))
                         expression_field_width = None
                         expression_decimal_field = None
 
-                    # create the parameter as a generic expression
-                    generic_expression = BaseExpression.from_list([expression_value_to_print,
-                                                                   expression_field_width,
-                                                                   expression_decimal_field])
+                    # create the actual parameter
+                    parameter = ActualParameter(expression_value_to_print, expression_field_width, expression_decimal_field)
+
                     # push to the working stack
-                    working_stack.append(generic_expression)
+                    working_stack.append(parameter)
 
                 else:
-
-                    msg = "[{0}] :  Unknown object '{1}' passed to procedure {2} parameter."
+                    msg = "[{0}] :  Unknown parameter '{1}' passed to procedure {2}"
                     _MODULE_LOGGER_.error(msg.format(action_name, token, identifier))
 
             if identifier.value and not identifier.parameter_counter == parameters_counter:
-
                 msg = "[{0}] :  '{1}' parameters passed to procedure {2} but '{3}' expected."
                 _MODULE_LOGGER_.error(msg.format(action_name, parameters_counter, identifier.name, identifier.parameter_counter))
 

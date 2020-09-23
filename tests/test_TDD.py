@@ -19,7 +19,7 @@ class ConfigurationForTestTDD:
 
     @classmethod
     def tdd_tests_to_run(cls):
-        return [(PascalExamples, "example_hello_world", PascalExamples.example_hello_world)]
+        return [(TDD, "example_fahrenheit_to_celsius_converter", PascalExamples.example_fahrenheit_to_celsius_converter)]
 
 
 class TestTDD(TestCase):

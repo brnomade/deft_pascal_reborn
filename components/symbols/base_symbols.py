@@ -127,8 +127,20 @@ class BaseIdentifier(BaseSymbol):
 
 class BaseOperator(BaseSymbol):
 
-    def do_nothing(self):
-        pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._compatible = None
+        self._as_c = None
+
+    def __str__(self):
+        return "{0}({1})".format(self.category, self.type)
+
+    def __repr__(self):
+        return "{0}({1})".format(self.category, self.type)
+
+    @property
+    def to_c(self):
+        return self._as_c if self._as_c else self.value
 
 
 class BaseType(BaseSymbol):
