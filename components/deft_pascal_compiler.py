@@ -458,8 +458,8 @@ class DeftPascalCompiler:
 
             if is_pointer:
                 aux = type_symbol
-                type_symbol = PointerType.reserved_type_pointer()
-                type_symbol.type = aux
+                type_symbol = PointerType.for_type(type_symbol)
+                # type_symbol.type = aux
 
             # process each identifier for the given variable_type
             for token in input_list:
@@ -551,7 +551,9 @@ class DeftPascalCompiler:
 
         if working_stack:
 
-            identifier = working_stack[-1]
+            # the working stack can contain only the variable or variable and dereference operator.
+            # the identifier is always at position 0
+            identifier = working_stack[0]
 
             # check the identifier receiving the assignment is variable.
             if isinstance(identifier, ConstantIdentifier):

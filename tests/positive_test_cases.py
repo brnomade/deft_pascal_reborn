@@ -375,13 +375,11 @@ class PositiveLanguageTests:
                 T5 = STRING;
                 T6 = TEXT;
             VAR V1   : T1;                 
-                V3   : T2;                    
-                V4   : T3;                 
-                V5   : T4;                    
-                V6   : T5;                 
-                V7   : T6;                         
-                V8   : ^T1;               
-                V9   : ^T2;
+                V2   : T2;                    
+                V3   : T3;                 
+                V4   : T4;                    
+                V5   : T5;                 
+                V6   : T6;                         
             BEGIN                                 
             END.                                  
         """
@@ -398,13 +396,13 @@ class PositiveLanguageTests:
                 T4 = CHAR;
                 T5 = STRING;
                 T6 = TEXT;
-            VAR V1  : ^T1;                 
-                _V4 : ^T2;                    
-                _V5 : ^T3;                 
-                _V6 : ^T4;                    
-                _V7 : ^T5;                 
-                _V8 : ^T6;                         
-            BEGIN                                 
+            VAR _V1 : ^T1;     
+                _V2 : ^T2;                    
+                _V3 : ^T3;                 
+                _V4 : ^T4;                    
+                _V5 : ^T5;                 
+                _V6 : ^T6;                         
+            BEGIN        
             END.                                  
         """
         return code
@@ -554,13 +552,11 @@ class PositiveLanguageTests:
                 V3 : INTEGER;
                 V4 : ^STRING(50);
             BEGIN       
-             V1^:= 10;
-             V2^:= 20;
+             V1^ := 10;
+             V2^ := 20;
              V3 := 30;
              V4^ := 'ABCDEFE';
-             
-             V1 := V2;           
-                                           
+             V1 := V2;                        
              V1^ := V2^;
              V1^ := V3;
             END.                                      

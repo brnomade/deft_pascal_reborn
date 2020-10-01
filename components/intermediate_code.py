@@ -7,7 +7,7 @@ HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 
 from components.abstract_emiter import CEmitter, CMOCEmitter
 from components.symbols.base_symbols import BaseSymbol, BaseKeyword, BaseType, BaseExpression
-from components.symbols.operator_symbols import Operator
+from components.symbols.operator_symbols import Operator, UnaryOperator
 from components.symbols.type_symbols import PointerType, BasicType, StringType
 from components.symbols.identifier_symbols import Identifier, PointerIdentifier, TypeIdentifier, ConstantIdentifier
 from components.symbols.literals_symbols import Literal
@@ -365,6 +365,8 @@ class IntermediateCode:
                     self._emiter.emit_variable_declaration_part_string(token.type.type_to_c, token.name, token.type.dimension)
                 elif isinstance(token.type, TypeIdentifier):
                     self._emiter.emit_variable_declaration_part_generic(token.type.name, token.name)
+                elif isinstance(token.type, PointerType):
+                    self._emiter.emit_variable_declaration_part_pointer(token.type.type_to_c, token.name)
                 else:
                     self._emiter.emit_variable_declaration_part_generic(token.type.type_to_c, token.name)
             elif isinstance(token, PointerIdentifier):
@@ -434,7 +436,14 @@ class IntermediateCode:
 
         else:
 
-            self._emiter.emit_singleton(identifier.name)
+            if input_list[0].category == "UnaryOperator" and input_list[0].type == "OPERATOR_UPARROW":
+                # if isinstance(identifier.type, PointerType):
+                self._emiter.emit_assignment_pointer_left_side(identifier.name)
+                # discard uparrow operator
+                input_list.pop(0)
+
+            else:
+                self._emiter.emit_singleton(identifier.name)
 
             # emit operator ':='
             operator = input_list.pop(0)
@@ -450,7 +459,7 @@ class IntermediateCode:
 
     def _expression(self, a_generic_expression):
         # Process the incoming generic EXPRESSION
-        assert isinstance(a_generic_expression, BaseExpression)
+        assert isinstance(a_generic_expression, BaseExpression), a_generic_expression
 
         while a_generic_expression.value:
             token = a_generic_expression.value.pop(0)

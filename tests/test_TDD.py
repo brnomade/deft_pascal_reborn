@@ -19,7 +19,7 @@ class ConfigurationForTestTDD:
 
     @classmethod
     def tdd_tests_to_run(cls):
-        return [(TDD, "example_fahrenheit_to_celsius_converter", PascalExamples.example_fahrenheit_to_celsius_converter)]
+        return [(TDD, "scenario_variable_assignment_with_pointer", PositiveLanguageTests.scenario_variable_assignment_with_pointer)]
 
 
 class TestTDD(TestCase):
@@ -61,6 +61,7 @@ class TestTDD(TestCase):
         if error_log:
             print(error_log)
         self.assertEqual([], error_log)
+        print(compiler.ast.pretty())
         #
         error_log = compiler.compile()
         if error_log:

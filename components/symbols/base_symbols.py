@@ -112,11 +112,11 @@ class BaseSymbol:
     def value(self, new_value):
         self._value = new_value
 
-    def push_reference(self, reference):
-        self._reference_stack.append(reference)
+    #def push_reference(self, reference):
+    #    self._reference_stack.append(reference)
 
-    def pop_reference(self):
-        return self._reference_stack.pop()
+    #def pop_reference(self):
+    #    return self._reference_stack.pop()
 
 
 class BaseIdentifier(BaseSymbol):

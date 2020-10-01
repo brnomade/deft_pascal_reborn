@@ -179,6 +179,10 @@ class CEmitter(AbstractEmitter):
         particle = ");"
         self.emit_line(particle)
 
+    def emit_assignment_pointer_left_side(self, in_variable):
+        particle = "*{0} "
+        self.emit(particle.format(in_variable))
+
     def emit_closed_for_statement_control_variable(self, in_variable, in_operator):
 
         particle = "for ({0} {1} "

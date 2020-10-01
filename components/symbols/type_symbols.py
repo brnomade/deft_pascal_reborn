@@ -15,6 +15,12 @@ class PointerType(BaseType):
         a_type = cls('POINTER', 'RESERVED_TYPE_POINTER', 'POINTER')
         return a_type
 
+    @classmethod
+    def for_type(cls, a_type_symbol):
+        assert isinstance(a_type_symbol, BaseType) or a_type_symbol.category == "TypeIdentifier", "PointerType must refer to subclasses of BaseType"
+        # return cls("^{0}".format(a_type_symbol.name), a_type_symbol.type, None)
+        return cls("^{0}".format(a_type_symbol.name), a_type_symbol, None)
+
     @property
     def index(self):
         return 6
@@ -38,49 +44,49 @@ class BasicType(BaseType):
 
     @classmethod
     def reserved_type_integer(cls):
-        a_type = cls('INTEGER', 'RESERVED_TYPE_INTEGER', 'INTEGER')
+        a_type = cls('INTEGER', 'RESERVED_TYPE_INTEGER', None)
         a_type.index = 0
         return a_type
 
     @classmethod
     def reserved_type_real(cls):
-        a_type = cls('REAL', 'RESERVED_TYPE_REAL', 'REAL')
+        a_type = cls('REAL', 'RESERVED_TYPE_REAL', None)
         a_type.index = 1
         return a_type
 
     @classmethod
     def reserved_type_set(cls):
-        a_type = cls('SET', 'RESERVED_TYPE_SET', 'SET')
+        a_type = cls('SET', 'RESERVED_TYPE_SET', None)
         a_type.index = 2
         return a_type
 
     @classmethod
     def reserved_type_char(cls):
-        a_type = cls('CHAR', 'RESERVED_TYPE_CHAR', 'CHAR')
+        a_type = cls('CHAR', 'RESERVED_TYPE_CHAR', None)
         a_type.index = 3
         return a_type
 
     @classmethod
     def reserved_type_boolean(cls):
-        a_type = cls('BOOLEAN', 'RESERVED_TYPE_BOOLEAN', 'BOOLEAN')
+        a_type = cls('BOOLEAN', 'RESERVED_TYPE_BOOLEAN', None)
         a_type.index = 5
         return a_type
 
     @classmethod
     def reserved_type_text(cls):
-        a_type = cls('TEXT', 'RESERVED_TYPE_TEXT', 'TEXT')
+        a_type = cls('TEXT', 'RESERVED_TYPE_TEXT', None)
         a_type.index = 7
         return a_type
 
     @classmethod
     def reserved_type_array(cls):
-        a_type = cls('ARRAY', 'RESERVED_TYPE_ARRAY', 'ARRAY')
+        a_type = cls('ARRAY', 'RESERVED_TYPE_ARRAY', None)
         a_type.index = 8
         return a_type
 
     @classmethod
     def reserved_type_null(cls):
-        a_type = cls('NULL', 'NULL', 'NULL')
+        a_type = cls('NULL', 'NULL', None)
         a_type.index = 9
         return a_type
 
