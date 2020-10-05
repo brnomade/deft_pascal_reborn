@@ -25,7 +25,8 @@ class DeftPascalReborn:
         self._arguments = self._initialise_arguments_parser()
         self._splash_screen()
         self._present_script_settings()
-        self._validate_arguments()
+        if not self._validate_arguments():
+            exit(1)
         self._compiler = None
 
     def _initialise_arguments_parser(self):
@@ -73,15 +74,18 @@ class DeftPascalReborn:
     def _validate_arguments(self):
         msg = "{0} does not exist or cannot be found at {1}"
         if not os.path.isfile(self._arguments.input_file):
-            print(msg.format("Input file"), self._arguments.input_file)
+            print(msg.format("Input file", self._arguments.input_file))
+            return False
 
         if not os.path.isfile(self._arguments.compiler_executable):
             print(msg.format("Compiler executable", self._arguments.compiler_executable))
+            return False
 
         if self._arguments.output_path:
             if not os.path.isdir(self._arguments.output_path):
-                print(msg.format("Output folder"), self._arguments.output_path)
-
+                print(msg.format("Output folder", self._arguments.output_path))
+                return False
+        return True
 
     def _adjust_verbosity(self):
         default_level = 4
@@ -233,7 +237,6 @@ def setup_logging():
     _MAIN_LOGGER.addHandler(console_handler)
     _MAIN_LOGGER.setLevel(logging.DEBUG)
     _MAIN_LOGGER.propagate = False
-    _MAIN_LOGGER.info('finished logging setup!')
 
 
 if __name__ == "__main__":
