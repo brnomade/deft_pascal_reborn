@@ -787,4 +787,122 @@ class PositiveLanguageTests:
         """
         return code
 
+    @staticmethod
+    def scenario_procedure_declaration_without_parameters_without_directive():
+        code = """
+            PROGRAM {{{0}}};                   
+                PROCEDURE first_procedure;
+                BEGIN
+                END;
+            BEGIN             
+            END.                                         
+        """
+        return code
 
+    @staticmethod
+    def scenario_procedure_declaration_with_single_parameter_without_directive():
+        code = """
+            PROGRAM {{{0}}};                   
+                PROCEDURE first_procedure( p1 : INTEGER );
+                BEGIN
+                END;
+            BEGIN             
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_procedure_declaration_with_multiple_parameter_without_directive():
+        code = """
+            PROGRAM {{{0}}};                   
+                PROCEDURE first_procedure( p1 : INTEGER; p2 : BOOLEAN; p3 : REAL; p4: STRING; p5 : CHAR );
+                BEGIN
+                END;
+            BEGIN             
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_procedure_declaration_with_multiple_parameter_same_type_without_directive():
+        code = """
+            PROGRAM {{{0}}};                   
+                PROCEDURE first_procedure(p1, p2, p3, p4, p5 : INTEGER);
+                BEGIN
+                END;
+            BEGIN             
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_procedure_declaration_with_multiple_parameter_same_type_mixed_without_directive():
+        code = """
+            PROGRAM {{{0}}};                   
+                PROCEDURE first_procedure(p1, p2: INTEGER; p3, p4, p5 : BOOLEAN);
+                BEGIN
+                END;
+            BEGIN             
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_procedure_declaration_without_parameters_with_directive_forward():
+        code = """
+            PROGRAM {{{0}}};                   
+                PROCEDURE first_procedure; forward;
+            BEGIN             
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_procedure_declaration_with_single_parameter_with_directive_forward():
+        code = """
+            PROGRAM {{{0}}};                   
+                PROCEDURE first_procedure( p1 : integer); forward;
+            BEGIN             
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_procedure_declaration_with_multiple_parameter_with_directive_forward():
+        code = """
+            PROGRAM {{{0}}};                   
+                PROCEDURE first_procedure( p1 : integer; p2 : BOOLEAN; p3 : REAL; p4: STRING; p5 : CHAR ); forward;
+            BEGIN             
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_procedure_declaration_without_parameters_with_directive_external():
+        code = """
+            PROGRAM {{{0}}};                   
+                PROCEDURE first_procedure; external;
+            BEGIN             
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_procedure_declaration_with_single_parameter_with_directive_external():
+        code = """
+            PROGRAM {{{0}}};                   
+                PROCEDURE first_procedure( p1 : integer); external;
+            BEGIN             
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_procedure_declaration_with_multiple_parameter_with_directive_external():
+        code = """
+            PROGRAM {{{0}}};                   
+                PROCEDURE first_procedure( p1 : integer; p2 : BOOLEAN; p3 : REAL; p4: STRING; p5 : CHAR ); external;
+            BEGIN             
+            END.                                         
+        """
+        return code
