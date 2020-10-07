@@ -793,6 +793,7 @@ class PositiveLanguageTests:
             PROGRAM {{{0}}};                   
                 PROCEDURE first_procedure;
                 BEGIN
+                    writeln('test');
                 END;
             BEGIN             
             END.                                         
@@ -805,6 +806,7 @@ class PositiveLanguageTests:
             PROGRAM {{{0}}};                   
                 PROCEDURE first_procedure( p1 : INTEGER );
                 BEGIN
+                    writeln('test');
                 END;
             BEGIN             
             END.                                         
@@ -817,6 +819,7 @@ class PositiveLanguageTests:
             PROGRAM {{{0}}};                   
                 PROCEDURE first_procedure( p1 : INTEGER; p2 : BOOLEAN; p3 : REAL; p4: STRING; p5 : CHAR );
                 BEGIN
+                    writeln('test');
                 END;
             BEGIN             
             END.                                         
@@ -829,6 +832,7 @@ class PositiveLanguageTests:
             PROGRAM {{{0}}};                   
                 PROCEDURE first_procedure(p1, p2, p3, p4, p5 : INTEGER);
                 BEGIN
+                    writeln('test');
                 END;
             BEGIN             
             END.                                         
@@ -841,6 +845,7 @@ class PositiveLanguageTests:
             PROGRAM {{{0}}};                   
                 PROCEDURE first_procedure(p1, p2: INTEGER; p3, p4, p5 : BOOLEAN);
                 BEGIN
+                    writeln('test');
                 END;
             BEGIN             
             END.                                         
