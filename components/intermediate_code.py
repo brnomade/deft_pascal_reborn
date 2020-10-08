@@ -44,6 +44,7 @@ class IntermediateCode:
                          "CLOSED_FOR_STATEMENT",
                          "CLOSED_WHILE_STATEMENT",
                          "PROCEDURE_CALL",
+                         "PROCEDURE_DECLARATION",
                          "CLOSED_IF_STATEMENT",
                          "CLOSED_IF_STATEMENT_ELSE"
                          }
@@ -704,6 +705,19 @@ class IntermediateCode:
 
             self._emiter.emit_procedure_call_closure()
             # self._emiter.emit_line(")")
+
+    def _procedure_declaration(self, input_list):
+        """
+        'PROCEDURE_DECLARATION'
+        input_list -> [ ProcedureIdentifier('first_procedure'|RESERVED_TYPE_POINTER|None)
+                     ]
+        Syntax: Pascal -> C
+        return_type function_name( parameter list ) {
+                                                        body of the function
+                                                    }
+        """
+        token = input_list[0]
+        self._emiter.emit_procedure_declaration(token.name)
 
     def _closed_if_statement(self, input_list):
         """

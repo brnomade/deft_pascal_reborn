@@ -252,8 +252,11 @@ def compile_in_gcc(input_c, remove_file_after_test=True):
     #
     if platform.system() == "Windows":
         os.chdir(mig_dir)
-    #
-    subprocess.run(c_env, shell=True)
+        env_variables = os.environ.copy()
+        env_variables["PATH"] = mig_dir + ";" + env_variables["PATH"]
+        subprocess.run(c_env, shell=True, env=env_variables)
+    else:
+        subprocess.run(c_env, shell=True)
     #
     if platform.system() == "Windows":
         os.chdir(home_dir)

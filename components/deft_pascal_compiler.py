@@ -264,10 +264,15 @@ class DeftPascalCompiler:
         RESERVED_STRUCTURE_BEGIN
         currently implemented as a token.
         """
-        action = self._stack_begin.pop(-1)
-        self._stack_begin.append(self._GLB_BLOCK_BEGIN)
-        if not action == self._GLB_MAIN_BEGIN:
-            self._stack_end.append(self._GLB_BLOCK_END)
+        if self._symbol_table.current_level == 2:
+            action = self._GLB_MAIN_BEGIN
+        else:
+            action = self._GLB_BLOCK_BEGIN
+
+        #action = self._stack_begin.pop(-1)
+        #self._stack_begin.append(self._GLB_BLOCK_BEGIN)
+        #if not action == self._GLB_MAIN_BEGIN:
+        #    self._stack_end.append(self._GLB_BLOCK_END)
 
         self._ic.init(action)
         self._ic.push(input_token)
@@ -279,7 +284,12 @@ class DeftPascalCompiler:
         RESERVED_STRUCTURE_END
         currently implemented as a token.
         """
-        action = self._stack_end.pop(-1)
+        if self._symbol_table.current_level == 2:
+            action = self._GLB_MAIN_END
+        else:
+            action = self._GLB_BLOCK_END
+
+        # action = self._stack_end.pop(-1)
         self._ic.init(action)
         self._ic.push(input_token)
         self._ic.flush()
@@ -978,12 +988,7 @@ class DeftPascalCompiler:
         """
         # process declarations
         for procedure_declaration in input_list:
-            # self._symbol_table.increase_level(procedure_declaration.data)
-            #TODO: This is wrong. I can't increase level before declaring the procedure. otherwise the procedure will be unknown in the main body.
-            #self._stack_begin.append(self._GLB_BLOCK_BEGIN)
-            #self._stack_end.append(self._GLB_BLOCK_END)
             self._internal_compile(procedure_declaration, [])
-            # self._symbol_table.decrease_level()
 
         return working_stack
 

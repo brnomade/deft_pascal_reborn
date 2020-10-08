@@ -19,7 +19,7 @@ class ConfigurationForTestTDD:
 
     @classmethod
     def tdd_tests_to_run(cls):
-        return [(12, "scenario_procedure_declaration_without_parameters_without_directive_nested", PositiveLanguageTests.scenario_procedure_declaration_without_parameters_without_directive_nested)]
+        return [(123, "scenario_procedure_declaration_without_parameters_without_directive_nested", PositiveLanguageTests.scenario_procedure_declaration_without_parameters_without_directive_nested)]
 
 
 class TestTDD(TestCase):
