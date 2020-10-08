@@ -8,18 +8,17 @@ HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 from lark import Tree, Token
 from components.deft_pascal_parser_3 import DeftPascalParser
 from components.symbol_table import SymbolTable
-from components.symbols.base_symbols import BaseSymbol, BaseKeyword, BaseExpression
+from components.symbols.base_symbols import BaseKeyword, BaseExpression
 from components.symbols.operator_symbols import Operator, BinaryOperator, UnaryOperator, NeutralOperator
-from components.symbols.identifier_symbols import Identifier, TypeIdentifier, PointerIdentifier, ProcedureIdentifier, ConstantIdentifier
-from components.symbols.literals_symbols import Literal, BooleanLiteral, NilLiteral, NumericLiteral, StringLiteral
+from components.symbols.identifier_symbols import Identifier, TypeIdentifier, ProcedureIdentifier, ConstantIdentifier
+from components.symbols.literals_symbols import BooleanLiteral, NilLiteral, NumericLiteral, StringLiteral
 from components.symbols.type_symbols import PointerType, BasicType, StringType
 from components.symbols.expression_symbols import ConstantExpression, IntegerExpression, BooleanExpression
 from components.intermediate_code import IntermediateCode
 from components.parameters import ActualParameter
-# from utils.compiler_utils import check_type_compatibility, token_is_an_operator
+
 import copy
 import logging
-from logging import ERROR, WARNING, INFO, DEBUG
 
 
 _LOG_ROLL_ = []
@@ -36,7 +35,7 @@ class LogRequestsHandler(logging.Handler):
 
 _MODULE_LOGGER_ = logging.getLogger("deft_pascal_reborn")
 _MODULE_LOGGER_.addHandler(LogRequestsHandler())
-_MODULE_LOGGER_.setLevel(DEBUG)
+_MODULE_LOGGER_.setLevel(logging.DEBUG)
 
 
 class DeftPascalCompiler:
@@ -79,6 +78,8 @@ class DeftPascalCompiler:
                          "RESERVED_STRUCTURE_END",
                          "ASSIGNMENT_STATEMENT",
                          "PROCEDURE_CALL",
+                         "PROCEDURE_AND_FUNCTION_DECLARATION_PART",
+                         "PROCEDURE_DECLARATION",
                          "EXPRESSION",
                          "CLOSED_FOR_STATEMENT",
                          "CLOSED_WHILE_STATEMENT",
@@ -123,8 +124,8 @@ class DeftPascalCompiler:
     def generate(self):
         return self._ic.generate()
 
-    def _log(self, log_type=INFO, log_info=""):
-        pass
+    #def _log(self, log_type=INFO, log_info=""):
+    #    pass
         # emit log
         # msg = "[{0}/{1}] {2}".format(self._symbol_table.current_scope, self._symbol_table.current_level, log_info)
         # if log_type == ERROR:
@@ -351,7 +352,7 @@ class DeftPascalCompiler:
                         self._ic.push(new_constant)
 
                         # log successful declaration
-                        self._log(DEBUG, "[{0}] new constant declared : {1}".format(action_name, new_constant))
+                        _MODULE_LOGGER_.debug("[{0}] new constant declared : {1}".format(action_name, new_constant))
 
                     else:
                         _MODULE_LOGGER_.error("[{0}] constant '{1}' not compatible with type limitations".format(action_name, new_constant))
@@ -485,7 +486,7 @@ class DeftPascalCompiler:
                         self._ic.push(new_variable)
 
                         # log successful declaration
-                        self._log(DEBUG, "[{0}] new identifier declared : {1}".format(action_name, new_variable))
+                        _MODULE_LOGGER_.debug("[{0}] new identifier declared : {1}".format(action_name, new_variable))
 
         else:
 
@@ -593,7 +594,7 @@ class DeftPascalCompiler:
                     self._ic.push(working_stack)
                     self._ic.flush()
 
-                    self._log(DEBUG, "[{0}] : {1}".format(action_name, working_stack))
+                    _MODULE_LOGGER_.debug("[{0}] : {1}".format(action_name, working_stack))
 
         return working_stack
 
@@ -660,7 +661,7 @@ class DeftPascalCompiler:
         working_stack.append(keyword)
         self._ic.push(working_stack)
         self._ic.flush()
-        self._log(DEBUG, "[{0}] {1}".format(action_name, working_stack))
+        _MODULE_LOGGER_.debug("[{0}] {1}".format(action_name, working_stack))
 
         # process statements
         working_stack = []
@@ -692,7 +693,7 @@ class DeftPascalCompiler:
             self._ic.push(working_stack)
             self._ic.flush()
 
-            self._log(DEBUG, "[{0}] {1}".format(action_name, working_stack))
+            _MODULE_LOGGER_.debug("[{0}] {1}".format(action_name, working_stack))
 
         return working_stack
 
@@ -760,7 +761,7 @@ class DeftPascalCompiler:
         self._ic.push(working_stack)
         self._ic.flush()
 
-        self._log(DEBUG, "[{0}] {1}".format(action_name, working_stack))
+        _MODULE_LOGGER_.debug("[{0}] {1}".format(action_name, working_stack))
 
         # process statements nested inside the for
         return self._internal_compile(input_list.pop(0), [])
@@ -798,7 +799,7 @@ class DeftPascalCompiler:
         self._ic.push(working_stack)
         self._ic.flush()
 
-        self._log(DEBUG, "[{0}] {1}".format(action_name, working_stack))
+        _MODULE_LOGGER_.debug("[{0}] {1}".format(action_name, working_stack))
 
         # process statements nested inside the while
         return self._internal_compile(input_list.pop(0), [])
@@ -873,7 +874,7 @@ class DeftPascalCompiler:
                 self._ic.push(new_type_symbol)
 
                 # log successful declaration
-                self._log(DEBUG, "[{0}] new type defined {1}".format(action_name, new_type_symbol))
+                _MODULE_LOGGER_.debug("[{0}] new type defined {1}".format(action_name, new_type_symbol))
 
             else:
 
@@ -958,7 +959,7 @@ class DeftPascalCompiler:
             self._ic.push(working_stack)
             self._ic.flush()
 
-            self._log(DEBUG, "[{0}] {1} {2} {3}".format(action_name, identifier, parameters_counter, working_stack))
+            _MODULE_LOGGER_.debug("[{0}] {1} {2} {3}".format(action_name, identifier, parameters_counter, working_stack))
 
         else:
 
@@ -966,6 +967,73 @@ class DeftPascalCompiler:
             _MODULE_LOGGER_.error(msg.format(action_name, token.value))
 
         return working_stack
+
+
+    def _procedure_and_function_declaration_part(self, action_name, input_list, working_stack):
+        """
+        input_List -> [ Tree(procedure_declaration, [declaration 1]),
+                        Tree(procedure_declaration, [declaration 2]),
+                        ...
+                     ]
+        """
+        # process declarations
+        for procedure_declaration in input_list:
+            # self._symbol_table.increase_level(procedure_declaration.data)
+            #TODO: This is wrong. I can't increase level before declaring the procedure. otherwise the procedure will be unknown in the main body.
+            #self._stack_begin.append(self._GLB_BLOCK_BEGIN)
+            #self._stack_end.append(self._GLB_BLOCK_END)
+            self._internal_compile(procedure_declaration, [])
+            # self._symbol_table.decrease_level()
+
+        return working_stack
+
+    def _procedure_declaration(self, action_name, input_list, working_stack):
+        """
+        input_list -> [Token(RESERVED_DECLARATION_PROCEDURE, 'PROCEDURE'),
+                       Token(IDENTIFIER, 'first_procedure'),
+                       Tree(procedure_block, [])
+                      ]
+
+        """
+        # initialise the intermediate code engine
+        self._ic.init(action_name)
+
+        # discard the reserved word PROCEDURE
+        input_list.pop(0)
+
+        # retrieve the identifier for the new procedure
+        identifier = input_list.pop(0).value
+
+        # identifier - it must NOT exist in the symbol_table yet
+        if self._symbol_table.contains(identifier, equal_level_only=False):
+            msg = "[{0}] procedure identifier '{1}' already declared"
+            _MODULE_LOGGER_.error(msg.format(action_name, identifier))
+
+        else:
+            # push the new type to the symbol_table
+            pi = ProcedureIdentifier(identifier, 'RESERVED_TYPE_POINTER', None)
+            self._symbol_table.append(pi)
+
+            # push the new procedure declaration into the intermediate_code engine
+            self._ic.push(pi)
+            self._ic.flush()
+
+            # log successful declaration
+            _MODULE_LOGGER_.debug("[{0}] new procedure defined {1}".format(action_name, pi))
+
+            self._increase_scope(pi.name)
+
+            self._stack_begin.append(self._GLB_BLOCK_BEGIN)
+            self._stack_end.append(self._GLB_BLOCK_END)
+
+            # process the procedure body
+            for ast in input_list[0].children:
+                self._internal_compile(ast, [])
+
+            self._decrease_scope()
+
+        return working_stack
+
 
     def _closed_if_statement(self, action_name, input_list, working_stack):
         """
@@ -1007,7 +1075,7 @@ class DeftPascalCompiler:
         self._ic.init(action_name)
         self._ic.push(working_stack)
         self._ic.flush()
-        self._log(DEBUG, "[{0}] {1}".format(action_name, working_stack))
+        _MODULE_LOGGER_.debug("[{0}] {1}".format(action_name, working_stack))
 
         # process statements after IF and before ELSE
         token = input_list.pop(0)
@@ -1025,11 +1093,10 @@ class DeftPascalCompiler:
         self._ic.init(action_name)
         self._ic.push(working_stack)
         self._ic.flush()
-        self._log(DEBUG, "[{0}] {1}".format(action_name, working_stack))
+        _MODULE_LOGGER_.debug("[{0}] {1}".format(action_name, working_stack))
 
         # process statements after ELSE
         token = input_list.pop(0)
         self._internal_compile(token, [])
 
         return working_stack
-

@@ -56,19 +56,52 @@ class SymbolTable:
         return result
 
 
-    def retrieve(self, name, equal_level_only=True):
-        if self.current_level not in self._symbol_table:
+    def _retrieve_from_level(self, name, level):
+        if level not in self._symbol_table:
             result = None
-        elif name not in self._symbol_table[self.current_level]:
-            if equal_level_only:
-                result = None
-            else:
-                result = self._get_from_lower_scope(name)
+        elif name not in self._symbol_table[level]:
+            result = None
         else:
-            result = self._symbol_table[self.current_level][name]
-        #
+            result = self._symbol_table[level][name]
         return result
 
+
+    def _recursive_retrieve(self, name, level):
+        result = self._retrieve_from_level(name, level)
+        if not result and level > 0:
+            result = self._recursive_retrieve(name, level - 1)
+        return result
+
+
+    def retrieve(self, name, equal_level_only=True):
+        if equal_level_only:
+            return self._retrieve_from_level(name, self.current_level)
+        else:
+            return self._recursive_retrieve(name, self.current_level)
+        #                 if self.current_level not in self._symbol_table:
+        #                 result = None
+        #             elif name not in self._symbol_table[self.current_level]:
+        #                 result = None
+        #             else:
+        #                 result = self._symbol_table[self.current_level][name]
+        #         else:
+        #             if self.current_level not in self._symbol_table:
+        #                 result = self._get_from_lower_scope(name)
+        #
+        #                 if name not in self._symbol_table[self.current_level]:
+        #
+        #         if self.current_level not in self._symbol_table:
+        #             result = None
+        #         elif name not in self._symbol_table[self.current_level]:
+        #             if equal_level_only:
+        #                 result = None
+        #             else:
+        #                 result = self._get_from_lower_scope(name)
+        #         else:
+        #             result = self._symbol_table[self.current_level][name]
+        #         #
+        #         return result
+        #
 
     def _get_from_lower_scope(self, name):
         for i in range(self.current_level - 1, -1, -1):
@@ -115,6 +148,7 @@ class SymbolTable:
 
     def decrease_level(self):
         if self._current_level > 0:
+            self.purge_all_from_current_scope()
             self._stack_scope.pop()
             self._current_level = self._current_level - 1
             return self._stack_scope[-1]

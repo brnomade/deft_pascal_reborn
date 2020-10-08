@@ -793,9 +793,50 @@ class PositiveLanguageTests:
             PROGRAM {{{0}}};                   
                 PROCEDURE first_procedure;
                 BEGIN
-                    writeln('test');
+                    writeln('inside first_procedure');
                 END;
             BEGIN             
+                writeln('inside main block');
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_procedure_declaration_without_parameters_without_directive_multiple_declarations_at_same_level():
+        code = """
+            PROGRAM {{{0}}};                   
+                PROCEDURE first_procedure;
+                BEGIN
+                    writeln('inside first_procedure');
+                END;
+                PROCEDURE second_procedure;
+                BEGIN
+                    writeln('inside second_procedure');
+                END;
+                PROCEDURE third_procedure;
+                BEGIN
+                    writeln('inside third_procedure');
+                END;
+            BEGIN             
+                writeln('inside main block');
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_procedure_declaration_without_parameters_without_directive_nested():
+        code = """
+            PROGRAM {{{0}}};                   
+                PROCEDURE outer_procedure;
+                    PROCEDURE inner_procedure;
+                    BEGIN
+                        writeln('inner_procedure');
+                    END;
+                BEGIN
+                    writeln('outer_procedure');
+                END;
+            BEGIN             
+                writeln('main program');
             END.                                         
         """
         return code
@@ -857,6 +898,31 @@ class PositiveLanguageTests:
         code = """
             PROGRAM {{{0}}};                   
                 PROCEDURE first_procedure; forward;
+            BEGIN             
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_procedure_declaration_without_parameters_with_directive_forward_multiple_list():
+        code = """
+            PROGRAM {{{0}}};                   
+                PROCEDURE first_procedure; forward;
+                PROCEDURE second_procedure; forward;
+                PROCEDURE third_procedure; forward;
+            BEGIN             
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_procedure_declaration_without_parameters_with_directive_forward_multiple_mixed_list():
+        code = """
+            PROGRAM {{{0}}};                   
+                PROCEDURE first_procedure; forward;
+                PROCEDURE second_procedure; external;
+                PROCEDURE third_procedure; forward;
+                PROCEDURE fourth_procedure; external;
             BEGIN             
             END.                                         
         """

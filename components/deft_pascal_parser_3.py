@@ -145,27 +145,27 @@ class DeftPascalParser:
 
         // PROCEDURE AND FUNCTION DECLARATIONS
 
-        procedure_and_function_declaration_part : proc_or_func_declaration_list _SEMICOLON
+        procedure_and_function_declaration_part : _proc_or_func_declaration_list _SEMICOLON
                                                 |
 
-        proc_or_func_declaration_list : proc_or_func_declaration_list _SEMICOLON proc_or_func_declaration
-                                      | proc_or_func_declaration
+        _proc_or_func_declaration_list : _proc_or_func_declaration_list _SEMICOLON _proc_or_func_declaration
+                                       | _proc_or_func_declaration
  
-        proc_or_func_declaration : procedure_declaration
-                                 | function_declaration
+        _proc_or_func_declaration : procedure_declaration
+                                  | function_declaration
 
         proc_or_func_directive : RESERVED_STATEMENT_FORWARD 
                                | RESERVED_STATEMENT_EXTERNAL 
 
         // PROCEDURE DECLARATIONS
 
-        procedure_declaration : procedure_heading _SEMICOLON proc_or_func_directive
-                              | procedure_heading _SEMICOLON procedure_block
+        procedure_declaration : _procedure_heading _SEMICOLON proc_or_func_directive
+                              | _procedure_heading _SEMICOLON procedure_block
  
-        procedure_heading : procedure_identification
-                          | procedure_identification formal_parameter_list
+        _procedure_heading : _procedure_identification
+                           | _procedure_identification formal_parameter_list
 
-        procedure_identification : RESERVED_DECLARATION_PROCEDURE IDENTIFIER 
+        _procedure_identification : RESERVED_DECLARATION_PROCEDURE IDENTIFIER 
 
         formal_parameter_list : LEFT_PARENTHESES formal_parameter_section_list RIGHT_PARENTHESES 
 
@@ -181,7 +181,7 @@ class DeftPascalParser:
 
         variable_parameter_specification : RESERVED_DECLARATION_VAR _identifier_list _COLON IDENTIFIER
 
-        procedural_parameter_specification : procedure_heading 
+        procedural_parameter_specification : _procedure_heading 
 
         functional_parameter_specification : function_heading 
 
@@ -444,8 +444,8 @@ class DeftPascalParser:
         // regular expressions
              
         IDENTIFIER: /[_A-Za-z]+[A-Za-z0-9_]*/
-        CHARACTER : /\'[\ A-Za-z0-9!\"#$%^&\'()*+,\-.\/:;<=>?@\[\]]\'/
-        STRING_VALUE : /\'[\ A-Za-z0-9!\"#$%^&()*+,\-.\/:;<=>?@\[\]]{2,}\'/
+        CHARACTER : /\'[\ A-Za-z0-9!\"#$%^&\'()*+,\-._\/:;<=>?@\[\]]\'/
+        STRING_VALUE : /\'[\ A-Za-z0-9!\"#$%^&()*+,\-._\/:;<=>?@\[\]]{2,}\'/
         SIGNED_DECIMAL : /[+-]\d+/
         UNSIGNED_DECIMAL : /\d+/
         SIGNED_REAL : /[+-]\d+[.]\d+([Ee][+-]?\d+)?/

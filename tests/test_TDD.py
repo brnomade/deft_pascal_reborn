@@ -19,43 +19,42 @@ class ConfigurationForTestTDD:
 
     @classmethod
     def tdd_tests_to_run(cls):
-        return [(TDD, "scenario_variable_assignment_with_pointer", PositiveLanguageTests.scenario_variable_assignment_with_pointer)]
+        return [(12, "scenario_procedure_declaration_without_parameters_without_directive_nested", PositiveLanguageTests.scenario_procedure_declaration_without_parameters_without_directive_nested)]
 
 
 class TestTDD(TestCase):
 
     def test_run(self):
         for t in ConfigurationForTestTDD.tdd_tests_to_run():
-            if t[0] == PositiveLanguageTests:
-                print("running Positive Test")
+            print("\nTesting: '{0}'".format(t[1]))
+            if t[0] == 1:
                 source_code = t[2]()
                 if "{{{0}}}" in source_code:
                     source_code = source_code.replace("{{{0}}}", t[1])
-                self._execute_positive_test(source_code)
-            elif t[0] == NegativeLanguageTests:
-                print("running Negative Test")
+                self._execute_step_1(source_code)
+            elif t[0] == -1:
                 i = t[2]()
                 message = i[0]
                 source_code = i[1]
                 if "{{{0}}}" in source_code:
                     source_code = source_code.replace("{{{0}}}", t[1])
                 self._execute_negative_test(message, source_code)
-            elif t[0] == PascalExamples:
-                print("running Example Test")
+            elif t[0] == 12:
                 source_code = t[2]()
                 if "{{{0}}}" in source_code:
                     source_code = source_code.replace("{{{0}}}", t[1])
-                self._execute_examples_test(source_code)
-            elif t[0] == TDD:
-                print("running TDD Test")
+                self._execute_step_1_2(source_code)
+            elif t[0] == 123:
                 source_code = t[2]()
                 if "{{{0}}}" in source_code:
                     source_code = source_code.replace("{{{0}}}", t[1])
-                self._execute_tdd_test(source_code)
+                self._execute_step_1_2_3(source_code)
             else:
                 raise ModuleNotFoundError("Unknown Test Class")
 
-    def _execute_positive_test(self, source_code):
+
+    def _execute_step_1(self, source_code):
+        print("Running syntax and semantic check")
         compiler = DeftPascalCompiler()
         error_log = compiler.check_syntax(source_code)
         if error_log:
@@ -70,6 +69,7 @@ class TestTDD(TestCase):
 
 
     def _execute_negative_test(self, message, source_code):
+        print("Running negative test cases")
         compiler = DeftPascalCompiler()
         error_log = compiler.check_syntax(source_code)
         if error_log:
@@ -84,8 +84,8 @@ class TestTDD(TestCase):
         else:
             self.assertNotEqual([], error_log)
 
-
-    def _execute_examples_test(self, source_code):
+    def _execute_step_1_2(self, source_code):
+        print("Running syntax check, semantic check and generating intermediate code")
         compiler = DeftPascalCompiler()
         error_log = compiler.check_syntax(source_code)
         if error_log:
@@ -98,8 +98,8 @@ class TestTDD(TestCase):
         self.assertEqual([], error_log)
         print(compiler.intermediate_code)
 
-
-    def _execute_tdd_test(self, source_code):
+    def _execute_step_1_2_3(self, source_code):
+        print("Running syntax check, semantic check, generating intermediate code, generating c code and compiling in gcc")
         compiler = DeftPascalCompiler()
 
         # test syntax check
@@ -140,4 +140,5 @@ class TestTDD(TestCase):
         output = compile_in_gcc(filename, False)
         self.assertNotIn("error", output)
         self.assertNotIn("warning", output)
-        #
+
+

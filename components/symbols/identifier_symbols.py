@@ -129,6 +129,11 @@ class ProcedureIdentifier(BaseIdentifier):
 
     @classmethod
     def in_built_procedure_write(cls):
+
+        # TODO: Revisit the use of type POINTER for procedures.
+        # TODO: probably procedures need to be of a NULL type so that they cannot be mixed in expressions.
+        # TODO: the default "type" could be initialised in the class constructor instead of passing by parameter here.
+
         write = cls('write', 'RESERVED_TYPE_POINTER', None)
         write.parameter_counter = cls.unlimited_parameters_list_size()
         return write
