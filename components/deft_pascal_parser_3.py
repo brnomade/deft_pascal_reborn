@@ -36,8 +36,8 @@ class DeftPascalParser:
                       
         _program_block : _block
         
-        _block : label_declaration_part constant_definition_part type_definition_part variable_declaration_part procedure_and_function_declaration_part _statement_part  
-                      
+        _block : label_declaration_part constant_definition_part type_definition_part variable_declaration_part procedure_and_function_declaration_part _statement_part
+                             
         // LABEL DECLARATIONS
         
         label_declaration_part : RESERVED_DECLARATION_LABEL _label_list _SEMICOLON
@@ -185,8 +185,8 @@ class DeftPascalParser:
 
         functional_parameter_specification : function_heading 
 
-
         procedure_block : _block 
+        // procedure_block : label_declaration_part constant_definition_part type_definition_part variable_declaration_part _statement_part
 
         // FUNCTION DECLARATIONS
 

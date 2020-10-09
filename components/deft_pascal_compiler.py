@@ -21,7 +21,11 @@ import copy
 import logging
 
 
-_LOG_ROLL_ = []
+_LOG_ROLL_ = {"ERROR": [],
+              "WARNING": [],
+              "INFO": [],
+              "DEBUG": []
+              }
 
 
 class LogRequestsHandler(logging.Handler):
@@ -29,8 +33,10 @@ class LogRequestsHandler(logging.Handler):
         """Record any errors raised by the compiler.
         """
         msg = record.getMessage()
-        if record.levelname.upper() == "ERROR":
-            _LOG_ROLL_.append(msg)
+        _LOG_ROLL_[record.levelname.upper()].append(msg)
+
+        #if record.levelname.upper() == "ERROR":
+        #    _LOG_ROLL_["error"].append(msg)
 
 
 _MODULE_LOGGER_ = logging.getLogger("deft_pascal_reborn")
@@ -58,8 +64,8 @@ class DeftPascalCompiler:
 
         self._stack_emiter = []
         self._stack_scope = []
-        self._stack_begin = []
-        self._stack_end = []
+        #self._stack_begin = []
+        #self._stack_end = []
 
         # self._error_list = []
 
@@ -95,7 +101,15 @@ class DeftPascalCompiler:
             self._ast = self._parser.ast
         else:
             self._ast = None
-        return error_list
+
+        _LOG_ROLL_["ERROR"].clear()
+        _LOG_ROLL_["WARNING"].clear()
+        _LOG_ROLL_["DEBUG"].clear()
+        _LOG_ROLL_["INFO"].clear()
+
+        _LOG_ROLL_["ERROR"] = error_list
+
+        return _LOG_ROLL_
 
     def compile(self, ast=None):
         if not ast and not self._ast:
@@ -104,7 +118,12 @@ class DeftPascalCompiler:
         if not ast and self._ast:
             ast = self._ast
 
-        _LOG_ROLL_.clear()
+        _LOG_ROLL_["ERROR"].clear()
+        _LOG_ROLL_["WARNING"].clear()
+        _LOG_ROLL_["DEBUG"].clear()
+        _LOG_ROLL_["INFO"].clear()
+
+        # _LOG_ROLL_.clear()
         for i in ast.children:
             self._internal_compile(i, [])
 
@@ -235,8 +254,8 @@ class DeftPascalCompiler:
         self._operator_table.append(NeutralOperator.operator_right_parentheses())
 
         # initialize the control stack for BEGIN and END
-        self._stack_begin.append(self._GLB_MAIN_BEGIN)
-        self._stack_end.append(self._GLB_MAIN_END)
+        #self._stack_begin.append(self._GLB_MAIN_BEGIN)
+        #self._stack_end.append(self._GLB_MAIN_END)
 
         # initialise the intermediate_code engine
         self._ic.init(action_name)
@@ -1028,12 +1047,16 @@ class DeftPascalCompiler:
 
             self._increase_scope(pi.name)
 
-            self._stack_begin.append(self._GLB_BLOCK_BEGIN)
-            self._stack_end.append(self._GLB_BLOCK_END)
+            #self._stack_begin.append(self._GLB_BLOCK_BEGIN)
+            #self._stack_end.append(self._GLB_BLOCK_END)
 
             # process the procedure body
             for ast in input_list[0].children:
-                self._internal_compile(ast, [])
+                if ast.data == "procedure_and_function_declaration_part":
+                    msg = "nested procedure or function definition is currently not supported. '{0}' will be ignored."
+                    _MODULE_LOGGER_.warning(msg.format(ast.children[0].children[1]))
+                else:
+                    self._internal_compile(ast, [])
 
             self._decrease_scope()
 

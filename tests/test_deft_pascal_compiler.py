@@ -54,17 +54,15 @@ class TestCompilerPositiveScenarios(TestCase):
             source_code = source_code.replace("{{{0}}}", name)
         #
         compiler = DeftPascalCompiler()
-        error_log = compiler.check_syntax(source_code)
-        if error_log:
-            print(error_log)
-        self.assertEqual([], error_log)
-        #
-        # GLB_LOGGER.debug(compiler.ast.pretty())
-        #
-        error_log = compiler.compile()
-        if error_log:
-            print(error_log)
-        self.assertEqual([], error_log)
+        log = compiler.check_syntax(source_code)
+        if log["ERROR"]:
+            print(log["ERROR"])
+        self.assertEqual([], log["ERROR"])
+
+        log = compiler.compile()
+        if log["ERROR"]:
+            print(log["ERROR"])
+        self.assertEqual([], log["ERROR"])
 
 
 class TestCompilerNegativeScenarios(TestCase):
@@ -81,23 +79,37 @@ class TestCompilerNegativeScenarios(TestCase):
     @parameterized.expand(ConfigurationForTestDeftPascalCompiler.negative_tests_to_run())
     def test_negative(self, name, function_callable):
         i = function_callable()
-        message = i[0]
-        source_code = i[1]
+        error_message = i[0]
+        warning_message = i[1]
+        source_code = i[2]
         if "{{{0}}}" in source_code:
             source_code = source_code.replace("{{{0}}}", name)
-        #
+
         compiler = DeftPascalCompiler()
-        error_log = compiler.check_syntax(source_code)
-        if error_log:
-            print(error_log)
-        self.assertEqual([], error_log)
-        #
-        error_log = compiler.compile()
-        self.assertNotEqual([], error_log)
-        #
-        # print(error_log)
-        if message:
-            self.assertIn(message, error_log[0])
+        log = compiler.check_syntax(source_code)
+        self.assertEqual([], log["ERROR"])
+
+        log = compiler.compile()
+
+        # if the compilation is expected to return an error message, the test confirms that.
+        if error_message == "":
+            self.assertEqual([], log["ERROR"])
+        else:
+            # log["ERROR"] is a list and could contain multiple messages. We are assuming the unit tests
+            # are constructed to produce a single message and therefore the list will always be unary
+            # if this is not the case than the unit test scenario needs to be revised.
+            # self.assertEqual(1, len(log["ERROR"]))
+            self.assertIn(error_message, log["ERROR"][0])
+
+        # if the compilation is expected to return a warning message, the test confirms that.
+        if warning_message == "":
+            self.assertEqual([], log["WARNING"])
+        else:
+            # log["WARNING"] is a list and could contain multiple messages. We are assuming the unit tests
+            # are constructed to produce a single message and therefore the list will always be unary
+            # if this is not the case than the unit test scenario needs to be revised.
+            # self.assertEqual(1, len(log["WARNING"]))
+            self.assertIn(warning_message, log["WARNING"][0])
 
 
 class TestCompilerExampleScenarios(TestCase):
@@ -118,17 +130,17 @@ class TestCompilerExampleScenarios(TestCase):
             source_code = source_code.replace("{{{0}}}", name)
         #
         compiler = DeftPascalCompiler()
-        error_log = compiler.check_syntax(source_code)
-        if error_log:
-            print(error_log)
-        self.assertEqual([], error_log)
+        log = compiler.check_syntax(source_code)
+        if log["ERROR"]:
+            print(log["ERROR"])
+        self.assertEqual([], log["ERROR"])
         #
         # GLB_LOGGER.debug(compiler.ast.pretty())
         #
-        error_log = compiler.compile()
-        if error_log:
-            print(error_log)
-        self.assertEqual([], error_log)
+        log = compiler.compile()
+        if log["ERROR"]:
+            print(log["ERROR"])
+        self.assertEqual([], log["ERROR"])
 
 
 class TestParser(TestCase):

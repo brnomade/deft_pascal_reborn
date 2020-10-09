@@ -824,24 +824,6 @@ class PositiveLanguageTests:
         return code
 
     @staticmethod
-    def scenario_procedure_declaration_without_parameters_without_directive_nested():
-        code = """
-            PROGRAM {{{0}}};                   
-                PROCEDURE outer_procedure;
-                    PROCEDURE inner_procedure;
-                    BEGIN
-                        writeln('inner_procedure');
-                    END;
-                BEGIN
-                    writeln('outer_procedure');
-                END;
-            BEGIN             
-                writeln('main program');
-            END.                                         
-        """
-        return code
-
-    @staticmethod
     def scenario_procedure_declaration_with_single_parameter_without_directive():
         code = """
             PROGRAM {{{0}}};                   
