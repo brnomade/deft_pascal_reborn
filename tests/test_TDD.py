@@ -19,7 +19,7 @@ class ConfigurationForTestTDD:
 
     @classmethod
     def tdd_tests_to_run(cls):
-        return [(123, "scenario_procedure_declaration_without_parameters_without_directive_nested", PositiveLanguageTests.scenario_procedure_declaration_without_parameters_without_directive_nested)]
+        return [(123, "scenario_procedure_declaration_without_parameters_with_directive_forward_multiple_mixed_list", PositiveLanguageTests.scenario_procedure_declaration_without_parameters_with_directive_forward_multiple_mixed_list)]
 
 
 class TestTDD(TestCase):
@@ -33,12 +33,7 @@ class TestTDD(TestCase):
                     source_code = source_code.replace("{{{0}}}", t[1])
                 self._execute_step_1(source_code)
             elif t[0] == -1:
-                i = t[2]()
-                message = i[0]
-                source_code = i[1]
-                if "{{{0}}}" in source_code:
-                    source_code = source_code.replace("{{{0}}}", t[1])
-                self._execute_negative_test(message, source_code)
+                self._execute_negative_test(t[1], t[2]())
             elif t[0] == 12:
                 source_code = t[2]()
                 if "{{{0}}}" in source_code:
@@ -68,24 +63,43 @@ class TestTDD(TestCase):
         self.assertEqual([], error_log)
 
 
-    def _execute_negative_test(self, message, source_code):
-        print("Running negative test cases")
+    def _execute_negative_test(self, name, inbound):
+        print("Run negative test '{0}'".format(name))
+        error_message = inbound[0]
+        warning_message = inbound[1]
+        source_code = inbound[2]
+        if "{{{0}}}" in source_code:
+            source_code = source_code.replace("{{{0}}}", name)
+
         compiler = DeftPascalCompiler()
-        error_log = compiler.check_syntax(source_code)
-        if error_log:
-            print(error_log)
-        self.assertEqual([], error_log)
-        #
-        error_log = compiler.compile()
-        if error_log:
-            print(error_log)
-        if message:
-            self.assertIn(message, error_log[0])
+        log = compiler.check_syntax(source_code)
+        self.assertEqual([], log["ERROR"])
+
+        log = compiler.compile()
+
+        # if the compilation is expected to return an error message, the test confirms that.
+        if error_message == "":
+            self.assertEqual([], log["ERROR"])
         else:
-            self.assertNotEqual([], error_log)
+            # log["ERROR"] is a list and could contain multiple messages. We are assuming the unit tests
+            # are constructed to produce a single message and therefore the list will always be unary
+            # if this is not the case than the unit test scenario needs to be revised.
+            # self.assertEqual(1, len(log["ERROR"]))
+            self.assertIn(error_message, log["ERROR"][0])
+
+        # if the compilation is expected to return a warning message, the test confirms that.
+        if warning_message == "":
+            self.assertEqual([], log["WARNING"])
+        else:
+            # log["WARNING"] is a list and could contain multiple messages. We are assuming the unit tests
+            # are constructed to produce a single message and therefore the list will always be unary
+            # if this is not the case than the unit test scenario needs to be revised.
+            # self.assertEqual(1, len(log["WARNING"]))
+            self.assertIn(warning_message, log["WARNING"][0])
+
 
     def _execute_step_1_2(self, source_code):
-        print("Running syntax check, semantic check and generating intermediate code")
+        print("Run syntax check, semantic check and generating intermediate code")
         compiler = DeftPascalCompiler()
         error_log = compiler.check_syntax(source_code)
         if error_log:
@@ -99,27 +113,28 @@ class TestTDD(TestCase):
         print(compiler.intermediate_code)
 
     def _execute_step_1_2_3(self, source_code):
-        print("Running syntax check, semantic check, generating intermediate code, generating c code and compiling in gcc")
+        print("Run syntax check, semantic check, generating intermediate code, generating c code and compiling in gcc")
         compiler = DeftPascalCompiler()
 
         # test syntax check
-        error_log = compiler.check_syntax(source_code)
-        if error_log:
-            print(error_log)
+        log = compiler.check_syntax(source_code)
+        if log["ERROR"]:
+            print(log["ERROR"])
         else:
             print(compiler.ast.pretty())
-        self.assertEqual([], error_log)
+        self.assertEqual([], log["ERROR"])
 
         # test compilation
         try:
-            error_log = compiler.compile()
+            log = compiler.compile()
         except:
-            error_log = "EXCEPTION RAISED"
+            print("EXCEPTION RAISED")
+            exit(1)
 
-        if error_log:
-            print(error_log)
+        if log["ERROR"]:
+            print(log["ERROR"])
         print(compiler.intermediate_code)
-        self.assertEqual([], error_log)
+        self.assertEqual([], log["ERROR"])
 
         # test code generation
         output_code = compiler.generate()

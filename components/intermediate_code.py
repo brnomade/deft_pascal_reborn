@@ -9,7 +9,7 @@ from components.abstract_emiter import CEmitter, CMOCEmitter
 from components.symbols.base_symbols import BaseSymbol, BaseKeyword, BaseType, BaseExpression
 from components.symbols.operator_symbols import Operator, UnaryOperator
 from components.symbols.type_symbols import PointerType, BasicType, StringType
-from components.symbols.identifier_symbols import Identifier, PointerIdentifier, TypeIdentifier, ConstantIdentifier
+from components.symbols.identifier_symbols import Identifier, PointerIdentifier, TypeIdentifier, ProcedureForwardIdentifier, ProcedureExternalIdentifier, ProcedureIdentifier
 from components.symbols.literals_symbols import Literal
 from utils import compiler_utils
 import logging
@@ -717,7 +717,13 @@ class IntermediateCode:
                                                     }
         """
         token = input_list[0]
-        self._emiter.emit_procedure_declaration(token.name)
+        if isinstance(token, ProcedureForwardIdentifier):
+            self._emiter.emit_procedure_forward_declaration(token.name)
+        elif isinstance(token, ProcedureExternalIdentifier):
+            self._emiter.emit_procedure_external_declaration(token.name)
+        else:
+            self._emiter.emit_procedure_declaration(token.name)
+
 
     def _closed_if_statement(self, input_list):
         """

@@ -313,6 +313,13 @@ class CEmitter(AbstractEmitter):
         particle = "void {0} ( )"
         self.emit_line(particle.format(procedure_name))
 
+    def emit_procedure_forward_declaration(self, procedure_name):
+        particle = "void {0} ( );"
+        self.emit_line(particle.format(procedure_name))
+
+    def emit_procedure_external_declaration(self, procedure_name):
+        particle = "extern void {0} ( );"
+        self.emit_line(particle.format(procedure_name))
 
 class CMOCEmitter(CEmitter):
 

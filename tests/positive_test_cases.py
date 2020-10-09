@@ -880,6 +880,10 @@ class PositiveLanguageTests:
         code = """
             PROGRAM {{{0}}};                   
                 PROCEDURE first_procedure; forward;
+                PROCEDURE first_procedure;
+                BEGIN
+                    writeln('first_procedure resolved');
+                END;
             BEGIN             
             END.                                         
         """
@@ -892,6 +896,18 @@ class PositiveLanguageTests:
                 PROCEDURE first_procedure; forward;
                 PROCEDURE second_procedure; forward;
                 PROCEDURE third_procedure; forward;
+                PROCEDURE first_procedure;
+                BEGIN
+                    writeln('first_procedure resolved');
+                END;
+                PROCEDURE second_procedure;
+                BEGIN
+                    writeln('second_procedure resolved');
+                END;
+                PROCEDURE third_procedure;
+                BEGIN
+                    writeln('third_procedure resolved');
+                END;
             BEGIN             
             END.                                         
         """
@@ -905,6 +921,14 @@ class PositiveLanguageTests:
                 PROCEDURE second_procedure; external;
                 PROCEDURE third_procedure; forward;
                 PROCEDURE fourth_procedure; external;
+                PROCEDURE first_procedure;
+                BEGIN
+                    writeln('first_procedure resolved');
+                END;
+                PROCEDURE third_procedure;
+                BEGIN
+                    writeln('third_procedure resolved');
+                END;
             BEGIN             
             END.                                         
         """

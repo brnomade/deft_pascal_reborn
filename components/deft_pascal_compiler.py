@@ -10,7 +10,7 @@ from components.deft_pascal_parser_3 import DeftPascalParser
 from components.symbol_table import SymbolTable
 from components.symbols.base_symbols import BaseKeyword, BaseExpression
 from components.symbols.operator_symbols import Operator, BinaryOperator, UnaryOperator, NeutralOperator
-from components.symbols.identifier_symbols import Identifier, TypeIdentifier, ProcedureIdentifier, ConstantIdentifier
+from components.symbols.identifier_symbols import Identifier, TypeIdentifier, ProcedureIdentifier, ProcedureExternalIdentifier, ProcedureForwardIdentifier, ConstantIdentifier
 from components.symbols.literals_symbols import BooleanLiteral, NilLiteral, NumericLiteral, StringLiteral
 from components.symbols.type_symbols import PointerType, BasicType, StringType
 from components.symbols.expression_symbols import ConstantExpression, IntegerExpression, BooleanExpression
@@ -84,7 +84,6 @@ class DeftPascalCompiler:
                          "RESERVED_STRUCTURE_END",
                          "ASSIGNMENT_STATEMENT",
                          "PROCEDURE_CALL",
-                         "PROCEDURE_AND_FUNCTION_DECLARATION_PART",
                          "PROCEDURE_DECLARATION",
                          "EXPRESSION",
                          "CLOSED_FOR_STATEMENT",
@@ -308,10 +307,13 @@ class DeftPascalCompiler:
         else:
             action = self._GLB_BLOCK_END
 
-        # action = self._stack_end.pop(-1)
         self._ic.init(action)
         self._ic.push(input_token)
         self._ic.flush()
+
+        if action == self._GLB_MAIN_END:
+            for i in self._symbol_table.instances_of(ProcedureForwardIdentifier):
+                _MODULE_LOGGER_.error("unresolved forward reference to '{0}' detected".format(i))
 
 
     def _constant_definition_part(self, action_name, input_list, working_stack):
@@ -997,25 +999,26 @@ class DeftPascalCompiler:
 
         return working_stack
 
-
-    def _procedure_and_function_declaration_part(self, action_name, input_list, working_stack):
-        """
-        input_List -> [ Tree(procedure_declaration, [declaration 1]),
-                        Tree(procedure_declaration, [declaration 2]),
-                        ...
-                     ]
-        """
-        # process declarations
-        for procedure_declaration in input_list:
-            self._internal_compile(procedure_declaration, [])
-
-        return working_stack
+    # def _procedure_and_function_declaration_part(self, action_name, input_list, working_stack):
+    #     """
+    #     input_List -> [ Tree(procedure_declaration, [declaration 1]),
+    #                     Tree(procedure_declaration, [declaration 2]),
+    #                     ...
+    #                  ]
+    #     """
+    #     # process declarations
+    #     for procedure_declaration in input_list:
+    #         self._internal_compile(procedure_declaration, [])
+    #
+    #     return working_stack
 
     def _procedure_declaration(self, action_name, input_list, working_stack):
         """
         input_list -> [Token(RESERVED_DECLARATION_PROCEDURE, 'PROCEDURE'),
                        Token(IDENTIFIER, 'first_procedure'),
                        Tree(procedure_block, [])
+                       OR proc_or_func_directive	forward
+                       OR proc_or_func_directive	external
                       ]
 
         """
@@ -1028,33 +1031,50 @@ class DeftPascalCompiler:
         # retrieve the identifier for the new procedure
         identifier = input_list.pop(0).value
 
-        # identifier - it must NOT exist in the symbol_table yet
-        if self._symbol_table.contains(identifier, equal_level_only=False):
-            msg = "[{0}] procedure identifier '{1}' already declared"
-            _MODULE_LOGGER_.error(msg.format(action_name, identifier))
+        # the procedure declaration in hand can be an external, a forward or a standard one
+        # this is identified by the token after the identifier. it can be a proc_or_func_directive or a procedure_block
+        if input_list[0].data.upper() == "PROC_OR_FUNC_DIRECTIVE":
+
+            if input_list[0].children[0].value.upper() == "FORWARD":
+                pi_class = ProcedureForwardIdentifier
+            elif input_list[0].children[0].value.upper() == "EXTERNAL":
+                pi_class = ProcedureExternalIdentifier
+            else:
+                raise KeyError("unexpected keyword '{0}' in proc_or_func_directive".format(input_list[0].value))
+
+        elif input_list[0].data.upper() == "PROCEDURE_BLOCK":
+
+            pi_class = ProcedureIdentifier
 
         else:
-            # push the new type to the symbol_table
-            pi = ProcedureIdentifier(identifier, 'RESERVED_TYPE_POINTER', None)
+            raise KeyError("unexpected procedure declaration '{0}' ".format(input_list[0].data))
+
+        pi = pi_class(identifier, 'RESERVED_TYPE_POINTER', None)
+        symbol = self._symbol_table.retrieve(identifier, equal_level_only=False)
+        if not symbol:
             self._symbol_table.append(pi)
-
-            # push the new procedure declaration into the intermediate_code engine
-            self._ic.push(pi)
-            self._ic.flush()
-
-            # log successful declaration
             _MODULE_LOGGER_.debug("[{0}] new procedure defined {1}".format(action_name, pi))
 
-            self._increase_scope(pi.name)
+        elif isinstance(symbol, ProcedureForwardIdentifier):
+            # replace in the symbol_table a forward declaration with the actual declaration
+            self._symbol_table.replace(identifier, pi)
+            _MODULE_LOGGER_.debug("[{0}] forward procedure '{1}' resolved".format(action_name, identifier))
 
-            #self._stack_begin.append(self._GLB_BLOCK_BEGIN)
-            #self._stack_end.append(self._GLB_BLOCK_END)
+        else:
+            msg = "[{0}] identifier '{1}' already declared"
+            _MODULE_LOGGER_.error(msg.format(action_name, identifier))
+
+        self._ic.push(pi)
+        self._ic.flush()
+
+        if pi_class == ProcedureIdentifier:
+            self._increase_scope(pi.name)
 
             # process the procedure body
             for ast in input_list[0].children:
-                if ast.data == "procedure_and_function_declaration_part":
+                if ast.data.upper() == "PROCEDURE_DECLARATION" and len(ast.children) > 0:
                     msg = "nested procedure or function definition is currently not supported. '{0}' will be ignored."
-                    _MODULE_LOGGER_.warning(msg.format(ast.children[0].children[1]))
+                    _MODULE_LOGGER_.warning(msg.format(ast.children[1]))
                 else:
                     self._internal_compile(ast, [])
 

@@ -162,3 +162,24 @@ class ProcedureIdentifier(BaseIdentifier):
         else:
             _MODULE_LOGGER.error("ProcedureIdentifier accepts only '{0}' parameters. Received '{1}'".format(self.parameter_counter, an_expression))
             return False
+
+
+class ProcedureForwardIdentifier(ProcedureIdentifier):
+
+    @classmethod
+    def in_built_procedure_write(cls):
+        raise TypeError("in built procedure not compatible with forward procedure type")
+
+    @classmethod
+    def in_built_procedure_writeln(cls):
+        raise TypeError("in built procedure not compatible with forward procedure type")
+
+
+class ProcedureExternalIdentifier(ProcedureIdentifier):
+    @classmethod
+    def in_built_procedure_write(cls):
+        raise TypeError("in built procedure not compatible with forward procedure type")
+
+    @classmethod
+    def in_built_procedure_writeln(cls):
+        raise TypeError("in built procedure not compatible with forward procedure type")

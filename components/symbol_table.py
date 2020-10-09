@@ -24,6 +24,16 @@ class SymbolTable:
         result = self.retrieve(name, equal_level_only)
         return result is not None
 
+    def instances_of(self, a_class):
+        """
+        returns a list containing all the names of objects that are instances of a_class
+        """
+        result = []
+        for level_dictionary in self._symbol_table.values():
+            for symbol in level_dictionary.values():
+                if isinstance(symbol, a_class):
+                    result.append(symbol.name)
+        return result
 
     def append(self, a_symbol):
         """
@@ -123,6 +133,16 @@ class SymbolTable:
             raise KeyError("symbol '{0}' not present at level '{0}-{1}'".format(self.current_level, self.current_scope))
         #
         return self._symbol_table[self.current_level].pop(name)
+
+
+    def replace(self, name, symbol):
+        """
+        The incoming symbol will replace an already present symbol identified by name at the current level
+        """
+        if not self.contains(name, equal_level_only=True):
+            raise KeyError("symbol '{0}' not present at level '{1}'".format(name, self.current_level))
+        else:
+            self._symbol_table[self.current_level][name] = symbol
 
 
     @property

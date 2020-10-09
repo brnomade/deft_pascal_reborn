@@ -38,6 +38,18 @@ class NegativeLanguageTests:
         return code
 
     @staticmethod
+    def scenario_unresolved_forward_procedure_declaration_raises_error():
+        code = ("unresolved forward reference", "", """
+            PROGRAM {{{0}}};                   
+                PROCEDURE outer_procedure; forward;
+            BEGIN             
+                writeln('main program');
+            END.                                         
+        """)
+        return code
+
+
+    @staticmethod
     def scenario_nested_procedure_declaration_raises_warning():
         code = ("", "nested procedure or function definition is currently not supported", """
             PROGRAM {{{0}}};                   
