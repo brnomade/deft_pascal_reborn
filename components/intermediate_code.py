@@ -718,11 +718,25 @@ class IntermediateCode:
         """
         token = input_list[0]
         if isinstance(token, ProcedureForwardIdentifier):
-            self._emiter.emit_procedure_forward_declaration(token.name)
+            self._emiter.emit_procedure_forward_declaration_left(token.name)
         elif isinstance(token, ProcedureExternalIdentifier):
-            self._emiter.emit_procedure_external_declaration(token.name)
+            self._emiter.emit_procedure_external_declaration_left(token.name)
         else:
-            self._emiter.emit_procedure_declaration(token.name)
+            self._emiter.emit_procedure_declaration_left(token.name)
+
+        separator_counter = token.argument_counter - 1
+        for argument in token.arguments:
+            self._emiter.emit_procedure_declaration_argument(argument.type.type_to_c, argument.name)
+            if separator_counter > 0:
+                self._emiter.emit_procedure_declaration_argument_separator()
+                separator_counter = separator_counter - 1
+
+        if isinstance(token, ProcedureForwardIdentifier):
+            self._emiter.emit_procedure_forward_declaration_right()
+        elif isinstance(token, ProcedureExternalIdentifier):
+            self._emiter.emit_procedure_external_declaration_right()
+        else:
+            self._emiter.emit_procedure_declaration_right()
 
 
     def _closed_if_statement(self, input_list):

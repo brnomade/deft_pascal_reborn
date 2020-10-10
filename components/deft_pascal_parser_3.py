@@ -167,12 +167,12 @@ class DeftPascalParser:
 
         _procedure_identification : RESERVED_DECLARATION_PROCEDURE IDENTIFIER 
 
-        formal_parameter_list : LEFT_PARENTHESES formal_parameter_section_list RIGHT_PARENTHESES 
+        formal_parameter_list : LEFT_PARENTHESES _formal_parameter_section_list RIGHT_PARENTHESES 
 
-        formal_parameter_section_list : formal_parameter_section_list _SEMICOLON formal_parameter_section
-                                      | formal_parameter_section
+        _formal_parameter_section_list : _formal_parameter_section_list _SEMICOLON _formal_parameter_section
+                                      | _formal_parameter_section
 
-        formal_parameter_section : value_parameter_specification
+        _formal_parameter_section : value_parameter_specification
                                  | variable_parameter_specification
                                  | procedural_parameter_specification
                                  | functional_parameter_specification

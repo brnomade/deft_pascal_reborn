@@ -19,7 +19,10 @@ class ConfigurationForTestTDD:
 
     @classmethod
     def tdd_tests_to_run(cls):
-        return [(123, "scenario_procedure_declaration_without_parameters_with_directive_forward_multiple_mixed_list", PositiveLanguageTests.scenario_procedure_declaration_without_parameters_with_directive_forward_multiple_mixed_list)]
+        return [(123,
+                 "scenario_procedure_declaration_with_multiple_parameter_same_type_mixed_with_directive",
+                 PositiveLanguageTests.scenario_procedure_declaration_with_multiple_parameter_same_type_mixed_with_directive)
+                ]
 
 
 class TestTDD(TestCase):

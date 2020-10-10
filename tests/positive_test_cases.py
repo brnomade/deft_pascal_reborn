@@ -983,3 +983,17 @@ class PositiveLanguageTests:
             END.                                         
         """
         return code
+
+    @staticmethod
+    def scenario_procedure_declaration_with_multiple_parameter_same_type_mixed_with_directive():
+        code = """
+            PROGRAM {{{0}}};                   
+                PROCEDURE first_procedure(p1, p2: INTEGER; p3, p4, p5 : BOOLEAN; p6 : REAL); forward;
+                PROCEDURE first_procedure(p1, p2: INTEGER; p3, p4, p5 : BOOLEAN; p6 : REAL); 
+                BEGIN
+                    writeln('first_procedure');
+                END;
+            BEGIN             
+            END.                                         
+        """
+        return code

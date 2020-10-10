@@ -118,6 +118,7 @@ class ProcedureIdentifier(BaseIdentifier):
         super().__init__(*args, **kwargs)
         self._parameter_counter = 0
         self._parameter_list = []
+        self._argument_list = []
 
     @classmethod
     def name_is_reserved_for_in_built_procedure(cls, name):
@@ -160,8 +161,20 @@ class ProcedureIdentifier(BaseIdentifier):
             return True
             # TODO - type check of the incoming expression against what is expected by the procedure parameter
         else:
-            _MODULE_LOGGER.error("ProcedureIdentifier accepts only '{0}' parameters. Received '{1}'".format(self.parameter_counter, an_expression))
+            _MODULE_LOGGER.error("ProcedureIdentifier accepts only '{0}' arguments. Received '{1}'".format(self.argument_counter, an_expression))
             return False
+
+    def add_argument(self, a_symbol):
+        assert type(a_symbol).__name__ == "FormalParameter"
+        self._argument_list.append(a_symbol)
+
+    @property
+    def arguments(self):
+        return self._argument_list
+
+    @property
+    def argument_counter(self):
+        return len(self._argument_list)
 
 
 class ProcedureForwardIdentifier(ProcedureIdentifier):

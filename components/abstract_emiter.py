@@ -309,17 +309,38 @@ class CEmitter(AbstractEmitter):
         particle = "else"
         self.emit_line(particle)
 
-    def emit_procedure_declaration(self, procedure_name):
-        particle = "void {0} ( )"
-        self.emit_line(particle.format(procedure_name))
+    def emit_procedure_declaration_left(self, procedure_name):
+        particle = "void {0}("
+        self.emit(particle.format(procedure_name))
 
-    def emit_procedure_forward_declaration(self, procedure_name):
-        particle = "void {0} ( );"
-        self.emit_line(particle.format(procedure_name))
+    def emit_procedure_declaration_argument(self, in_type, in_name):
+        particle = "{0} {1}"
+        self.emit(particle.format(in_type, in_name))
 
-    def emit_procedure_external_declaration(self, procedure_name):
-        particle = "extern void {0} ( );"
-        self.emit_line(particle.format(procedure_name))
+    def emit_procedure_declaration_argument_separator(self):
+        particle = ", "
+        self.emit(particle)
+
+    def emit_procedure_declaration_right(self):
+        particle = ")"
+        self.emit(particle)
+
+    def emit_procedure_forward_declaration_left(self, procedure_name):
+        particle = "void {0}("
+        self.emit(particle.format(procedure_name))
+
+    def emit_procedure_forward_declaration_right(self):
+        particle = ");"
+        self.emit_line(particle)
+
+    def emit_procedure_external_declaration_left(self, procedure_name):
+        particle = "extern void {0}("
+        self.emit(particle.format(procedure_name))
+
+    def emit_procedure_external_declaration_right(self):
+        particle = ");"
+        self.emit_line(particle)
+
 
 class CMOCEmitter(CEmitter):
 

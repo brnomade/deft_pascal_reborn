@@ -306,3 +306,9 @@ class BaseExpression(BaseSymbol):
     @property
     def native_type(self):
         return self._type
+
+
+class BaseParameter(BaseSymbol):
+
+    def do_nothing(self):
+        pass

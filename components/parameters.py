@@ -6,16 +6,9 @@ HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
 import logging
-from components.symbols.base_symbols import BaseIdentifier, BaseExpression
+from components.symbols.base_symbols import BaseParameter, BaseExpression
 
 _MODULE_LOGGER_ = logging.getLogger("deft_pascal_reborn")
-
-
-class BaseParameter:
-
-    @property
-    def category(self):
-        return type(self).__name__
 
 
 class ActualParameter(BaseParameter):

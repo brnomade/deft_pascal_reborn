@@ -15,7 +15,7 @@ from components.symbols.literals_symbols import BooleanLiteral, NilLiteral, Nume
 from components.symbols.type_symbols import PointerType, BasicType, StringType
 from components.symbols.expression_symbols import ConstantExpression, IntegerExpression, BooleanExpression
 from components.intermediate_code import IntermediateCode
-from components.parameters import ActualParameter
+from components.parameters import ActualParameter, FormalParameter
 
 import copy
 import logging
@@ -313,7 +313,7 @@ class DeftPascalCompiler:
 
         if action == self._GLB_MAIN_END:
             for i in self._symbol_table.instances_of(ProcedureForwardIdentifier):
-                _MODULE_LOGGER_.error("unresolved forward reference to '{0}' detected".format(i))
+                _MODULE_LOGGER_.error("unresolved forward reference to '{0}'".format(i))
 
 
     def _constant_definition_part(self, action_name, input_list, working_stack):
@@ -981,9 +981,9 @@ class DeftPascalCompiler:
                     msg = "[{0}] :  Unknown parameter '{1}' passed to procedure {2}"
                     _MODULE_LOGGER_.error(msg.format(action_name, token, identifier))
 
-            if identifier.value and not identifier.parameter_counter == parameters_counter:
+            if identifier.value and not identifier.argument_counter == parameters_counter:
                 msg = "[{0}] :  '{1}' parameters passed to procedure {2} but '{3}' expected."
-                _MODULE_LOGGER_.error(msg.format(action_name, parameters_counter, identifier.name, identifier.parameter_counter))
+                _MODULE_LOGGER_.error(msg.format(action_name, parameters_counter, identifier.name, identifier.argument_counter))
 
             # generate the intermediate code
             self._ic.init(action_name)
@@ -1033,23 +1033,21 @@ class DeftPascalCompiler:
 
         # the procedure declaration in hand can be an external, a forward or a standard one
         # this is identified by the token after the identifier. it can be a proc_or_func_directive or a procedure_block
-        if input_list[0].data.upper() == "PROC_OR_FUNC_DIRECTIVE":
-
-            if input_list[0].children[0].value.upper() == "FORWARD":
+        if input_list[-1].data.upper() == "PROC_OR_FUNC_DIRECTIVE":
+            if input_list[-1].children[0].value.upper() == "FORWARD":
                 pi_class = ProcedureForwardIdentifier
-            elif input_list[0].children[0].value.upper() == "EXTERNAL":
+            elif input_list[-1].children[0].value.upper() == "EXTERNAL":
                 pi_class = ProcedureExternalIdentifier
             else:
                 raise KeyError("unexpected keyword '{0}' in proc_or_func_directive".format(input_list[0].value))
-
-        elif input_list[0].data.upper() == "PROCEDURE_BLOCK":
-
-            pi_class = ProcedureIdentifier
+            input_list.pop(-1)
 
         else:
-            raise KeyError("unexpected procedure declaration '{0}' ".format(input_list[0].data))
+            pi_class = ProcedureIdentifier
 
         pi = pi_class(identifier, 'RESERVED_TYPE_POINTER', None)
+
+        # store procedure identifier in the symbol table
         symbol = self._symbol_table.retrieve(identifier, equal_level_only=False)
         if not symbol:
             self._symbol_table.append(pi)
@@ -1067,18 +1065,46 @@ class DeftPascalCompiler:
         self._ic.push(pi)
         self._ic.flush()
 
-        if pi_class == ProcedureIdentifier:
-            self._increase_scope(pi.name)
+        self._increase_scope(pi.name)
 
-            # process the procedure body
+        # process the procedure parameters if those are present
+        if len(input_list) > 0 and input_list[0].data.upper() == "FORMAL_PARAMETER_LIST":
+            argument_list = input_list.pop(0).children
+
+            # discard open and close parameters characters -> (  )
+            argument_list.pop(0)
+            argument_list.pop(-1)
+
+            # process each argument
+            for ast in argument_list:
+                if ast.data.upper() == "VALUE_PARAMETER_SPECIFICATION":
+                    type_identifier = self._symbol_table.retrieve(ast.children.pop(-1).value, equal_level_only=False)
+                    if type_identifier:
+                        for token in ast.children:
+                            if token.type == "IDENTIFIER":
+                                # create the variables using the parameter_type
+                                argument = FormalParameter(token.value, type_identifier, None)
+                                self._symbol_table.append(argument)
+                                # add the variable as formal argument to the procedure
+                                pi.add_argument(argument)
+                    else:
+                        msg = "[{0}] unknown type '{1}' reference in procedure declaration."
+                        _MODULE_LOGGER_.error(msg.format(action_name, type_identifier))
+
+                else:
+                    _MODULE_LOGGER_.warning("parameter class '{0}' not yet supported".format(ast))
+
+        if len(input_list) > 0 and input_list[0].data.upper() == "PROCEDURE_BLOCK":
+            # process the procedure body -> PROCEDURE_BLOCK
             for ast in input_list[0].children:
                 if ast.data.upper() == "PROCEDURE_DECLARATION" and len(ast.children) > 0:
                     msg = "nested procedure or function definition is currently not supported. '{0}' will be ignored."
                     _MODULE_LOGGER_.warning(msg.format(ast.children[1]))
                 else:
                     self._internal_compile(ast, [])
+            input_list.pop(0)
 
-            self._decrease_scope()
+        self._decrease_scope()
 
         return working_stack
 

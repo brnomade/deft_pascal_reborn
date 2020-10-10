@@ -68,6 +68,16 @@ class NegativeLanguageTests:
         return code
 
     @staticmethod
+    def scenario_undeclared_type_in_procedure_parameter_declaration_raises_error():
+        code = ("unknown type", "", """
+            PROGRAM {{{0}}};                   
+                PROCEDURE first_procedure(p1: UNDECLARED_TYPE); forward;
+            BEGIN             
+            END.                                         
+        """)
+        return code
+
+    @staticmethod
     def scenario_incompatible_types_assignment_raises_compiler_error_basic_type_case():
         code = ("incompatible types in expression", "", """
             PROGRAM {{{0}}};        
