@@ -472,7 +472,14 @@ class DeftPascalCompiler:
             string_dimension = input_list.pop()
             input_list.pop()    # discard the (
 
-        type_identifier = input_list.pop().value.upper()
+        # type_identifier = input_list.pop().value.upper()
+        type_identifier = input_list.pop()
+        if type_identifier.type == "IDENTIFIER":
+            # identifier is of a custom type and their definition is case sensitive/relevant
+            type_identifier = type_identifier.value
+        else:
+            # identifier is a basic type and those are stored in the symbol table as uppercase
+            type_identifier = type_identifier.value.upper()
 
         # check if a pointer is being declared - if so, pop it out
         is_pointer = False
@@ -1078,7 +1085,15 @@ class DeftPascalCompiler:
             # process each argument
             for ast in argument_list:
                 if ast.data.upper() == "VALUE_PARAMETER_SPECIFICATION":
-                    type_identifier = self._symbol_table.retrieve(ast.children.pop(-1).value, equal_level_only=False)
+
+                    token = ast.children.pop(-1)
+                    if token.type == "IDENTIFIER":
+                        # identifier is of a custom type and their definition is case sensitive/relevant
+                        type_identifier = self._symbol_table.retrieve(token.value, equal_level_only=False)
+                    else:
+                        # identifier is a basic type and those are stored in the symbol table as uppercase
+                        type_identifier = self._symbol_table.retrieve(token.value.upper(), equal_level_only=False)
+
                     if type_identifier:
                         for token in ast.children:
                             if token.type == "IDENTIFIER":
@@ -1089,7 +1104,7 @@ class DeftPascalCompiler:
                                 pi.add_argument(argument)
                     else:
                         msg = "[{0}] unknown type '{1}' reference in procedure declaration."
-                        _MODULE_LOGGER_.error(msg.format(action_name, type_identifier))
+                        _MODULE_LOGGER_.error(msg.format(action_name, identifier))
 
                 else:
                     _MODULE_LOGGER_.warning("parameter class '{0}' not yet supported".format(ast))

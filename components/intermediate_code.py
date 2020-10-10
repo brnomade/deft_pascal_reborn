@@ -692,10 +692,9 @@ class IntermediateCode:
 
             while input_list:
 
-                generic_expression = input_list.pop(0)
-                if len(generic_expression.value) == 1:
-                    parameter = generic_expression.value[0]
-                    self._expression(parameter)
+                actual_parameter = input_list.pop(0)
+                if actual_parameter.cardinality == 1:
+                    self._expression(actual_parameter.value)
                 else:
                     raise ValueError
 

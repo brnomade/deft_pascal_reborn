@@ -20,8 +20,8 @@ class ConfigurationForTestTDD:
     @classmethod
     def tdd_tests_to_run(cls):
         return [(123,
-                 "scenario_procedure_declaration_with_multiple_parameter_same_type_mixed_with_directive",
-                 PositiveLanguageTests.scenario_procedure_declaration_with_multiple_parameter_same_type_mixed_with_directive)
+                 "example_program_definition_2",
+                 PascalExamples.example_program_definition_2)
                 ]
 
 

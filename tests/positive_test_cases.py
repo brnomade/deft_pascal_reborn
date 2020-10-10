@@ -939,6 +939,10 @@ class PositiveLanguageTests:
         code = """
             PROGRAM {{{0}}};                   
                 PROCEDURE first_procedure( p1 : integer); forward;
+                PROCEDURE first_procedure( p1 : integer);
+                BEGIN
+                    writeln('first_procedure');
+                END;
             BEGIN             
             END.                                         
         """
@@ -949,6 +953,10 @@ class PositiveLanguageTests:
         code = """
             PROGRAM {{{0}}};                   
                 PROCEDURE first_procedure( p1 : integer; p2 : BOOLEAN; p3 : REAL; p4: STRING; p5 : CHAR ); forward;
+                PROCEDURE first_procedure( p1 : integer; p2 : BOOLEAN; p3 : REAL; p4: STRING; p5 : CHAR );
+                BEGIN
+                    writeln('first_procedure');
+                END;
             BEGIN             
             END.                                         
         """

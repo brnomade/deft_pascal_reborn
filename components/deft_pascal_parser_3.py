@@ -177,7 +177,7 @@ class DeftPascalParser:
                                  | procedural_parameter_specification
                                  | functional_parameter_specification
 
-        value_parameter_specification : _identifier_list _COLON IDENTIFIER
+        value_parameter_specification : _identifier_list _COLON _domain_type
 
         variable_parameter_specification : RESERVED_DECLARATION_VAR _identifier_list _COLON IDENTIFIER
 

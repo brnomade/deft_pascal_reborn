@@ -15,24 +15,22 @@ class PascalExamples:
         return [i for i in inspect.getmembers(cls, predicate=inspect.isfunction) if 'example_' in i[0]]
 
     @staticmethod
-    def e_xample_program_definition_2():
+    def example_program_definition_2():
         code = """
             program test;                          
             const                                 
               PI = 3.1415;                        
-
             var                                   
-              a, b: real;                         
-              c : MEUTIPO;                        
-            procedure hello(s: string; n: real);  
+              a : real;
+              b : integer;                         
+            procedure multiply_and_print(i: integer; r: real);  
             begin                                 
-              writeln(s);                         
+              writeln(i * r);                         
             end;                                  
-
             begin                                 
               a := PI;                            
-              b := a * 10;                        
-              hello("Hello World!", b);           
+              b := 10;                        
+              multiply_and_print(b, a);           
             end.                                 
         """
         return code

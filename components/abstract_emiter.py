@@ -237,7 +237,7 @@ class CEmitter(AbstractEmitter):
         """
          PROCEDURE_CALL
         """
-        particle = ")"
+        particle = ");"
         self.emit_singleton(particle)
 
     def emit_procedure_call_write(self):
