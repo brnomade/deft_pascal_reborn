@@ -6,36 +6,45 @@ HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
 import logging
-from components.symbols.base_symbols import BaseParameter, BaseExpression
+from components.symbols.base_symbols import BaseExpression
+from components.symbols.type_symbols import BasicType
 
 _MODULE_LOGGER_ = logging.getLogger("deft_pascal_reborn")
+
+
+class BaseParameter:
+
+    @property
+    def category(self):
+        return type(self).__name__
 
 
 class ActualParameter(BaseParameter):
 
     def __init__(self, value, field_width=None, decimal_places=None):
-        if not isinstance(value, BaseExpression):
-            raise ValueError("a parameter must be subclass of BaseExpression")
-        if field_width and not isinstance(field_width, BaseExpression):
-            raise ValueError("a parameter must be subclass of BaseExpression")
-        if decimal_places and not isinstance(decimal_places, BaseExpression):
-            raise ValueError("a parameter must be subclass of BaseExpression")
-
+        assert isinstance(value, BaseExpression), "a parameter must be subclass of BaseExpression"
+        if field_width:
+            assert isinstance(field_width, BaseExpression), "field width must be subclass of BaseExpression"
+        if decimal_places:
+            assert isinstance(decimal_places, BaseExpression), "decimal places must be subclass of BaseExpression"
         self._value = value
         self._width = field_width
         self._decimal = decimal_places
 
+
     def __str__(self):
-        return "{0}({1}:{2}:{3})".format(self.category,
-                                         self._value.value,
-                                         self._width.value if self._width else None,
-                                         self._decimal.value if self._decimal else None)
+        return "{0}({1}:{2}:{3}:{4})".format(self.category,
+                                             self.type,
+                                             self._value.value,
+                                             self._width.value if self._width else None,
+                                             self._decimal.value if self._decimal else None)
 
     def __repr__(self):
-        return "{0}({1}:{2}:{3})".format(self.category,
-                                         self._value.value,
-                                         self._width.value if self._width else None,
-                                         self._decimal.value if self._decimal else None)
+        return "{0}({1}:{2}:{3}:{4})".format(self.category,
+                                             self.type,
+                                             self._value.value,
+                                             self._width.value if self._width else None,
+                                             self._decimal.value if self._decimal else None)
 
 
     @property
@@ -54,9 +63,38 @@ class ActualParameter(BaseParameter):
     def decimal_places(self):
         return self._decimal
 
+    @property
+    def type(self):
+        return self.value.native_type if self.value else None
+
 
 class FormalParameter(BaseParameter):
 
-    def do_nothing(self):
-        pass
+    def __init__(self, a_name, a_type):
+        assert isinstance(a_type, BasicType), "formal parameter type must be subclass of BasicType"
+        self._name = a_name
+        self._type = a_type
+
+    def __str__(self):
+        return "{0}('{1}'|{2})".format(self.category, self.name, self.type)
+
+    def __repr__(self):
+        return "{0}('{1}'|{2})".format(self.category, self.name, self.type)
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def type(self):
+        return self._type
+
+    @name.setter
+    def name(self, new_name):
+        self._name = new_name
+
+    @type.setter
+    def type(self, new_type):
+        self._type = new_type
+
 

@@ -116,53 +116,32 @@ class ProcedureIdentifier(BaseIdentifier):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._parameter_counter = 0
-        self._parameter_list = []
+        #self._parameter_counter = 0
+        #self._parameter_list = []
         self._argument_list = []
 
     @classmethod
-    def name_is_reserved_for_in_built_procedure(cls, name):
-        return True if name.upper() in ["WRITE", "WRITELN"] else False
-
-    @classmethod
-    def unlimited_parameters_list_size(cls):
+    def unlimited_arguments_counter(cls):
         return -1
 
-    @classmethod
-    def in_built_procedure_write(cls):
+    #@property
+    #def parameter_counter(self):
+    #    return self._parameter_counter
 
-        # TODO: Revisit the use of type POINTER for procedures.
-        # TODO: probably procedures need to be of a NULL type so that they cannot be mixed in expressions.
-        # TODO: the default "type" could be initialised in the class constructor instead of passing by parameter here.
+    #@parameter_counter.setter
+    #def parameter_counter(self, new_counter):
+    #    if not isinstance(new_counter, int):
+    #        raise ValueError("parameter_counter expects an integer value")
+    #    self._parameter_counter = new_counter
 
-        write = cls('write', 'RESERVED_TYPE_POINTER', None)
-        write.parameter_counter = cls.unlimited_parameters_list_size()
-        return write
-
-    @classmethod
-    def in_built_procedure_writeln(cls):
-        write = cls.in_built_procedure_write()
-        write.name = "writeln"
-        return write
-
-    @property
-    def parameter_counter(self):
-        return self._parameter_counter
-
-    @parameter_counter.setter
-    def parameter_counter(self, new_counter):
-        if not isinstance(new_counter, int):
-            raise ValueError("parameter_counter expects an integer value")
-        self._parameter_counter = new_counter
-
-    def add_parameter_expression(self, an_expression):
-        if (self._parameter_counter == self.unlimited_parameters_list_size()) or (len(self._parameter_list) < self._parameter_counter):
-            self._parameter_list.append(an_expression)
-            return True
-            # TODO - type check of the incoming expression against what is expected by the procedure parameter
-        else:
-            _MODULE_LOGGER.error("ProcedureIdentifier accepts only '{0}' arguments. Received '{1}'".format(self.argument_counter, an_expression))
-            return False
+    #def add_parameter_expression(self, an_expression):
+    #    if (self._parameter_counter == self.unlimited_parameters_list_size()) or (len(self._parameter_list) < self._parameter_counter):
+    #        self._parameter_list.append(an_expression)
+    #        return True
+    #        # TODO - type check of the incoming expression against what is expected by the procedure parameter
+    #    else:
+    #        _MODULE_LOGGER.error("ProcedureIdentifier accepts only '{0}' arguments. Received '{1}'".format(self.argument_counter, an_expression))
+    #        return False
 
     def add_argument(self, a_symbol):
         assert type(a_symbol).__name__ == "FormalParameter"
@@ -175,6 +154,51 @@ class ProcedureIdentifier(BaseIdentifier):
     @property
     def argument_counter(self):
         return len(self._argument_list)
+
+    def is_parameter_compatible(self, a_symbol, argument_index):
+        assert type(a_symbol).__name__ == "ActualParameter"
+        assert isinstance(argument_index, int)
+        if argument_index > self.argument_counter or argument_index < 1:
+            return False
+        else:
+            return a_symbol.type == self._argument_list[argument_index - 1].type
+
+
+class InBuiltProcedureWrite(ProcedureIdentifier):
+
+    @classmethod
+    def in_built_procedure_write(cls):
+
+        # TODO: Revisit the use of type POINTER for procedures.
+        # TODO: probably procedures need to be of a NULL type so that they cannot be mixed in expressions.
+        # TODO: the default "type" could be initialised in the class constructor instead of passing by parameter here.
+
+        write = cls('write', 'RESERVED_TYPE_POINTER')
+        return write
+
+    @classmethod
+    def in_built_procedure_writeln(cls):
+        write = cls.in_built_procedure_write()
+        write.name = "writeln"
+        return write
+
+    def add_argument(self, a_symbol):
+        raise AttributeError("procedure write cannot be extended with new arguments")
+
+    @property
+    def arguments(self):
+        raise AttributeError("procedure write cannot be inquired about its arguments")
+
+    @property
+    def argument_counter(self):
+        return self.unlimited_arguments_counter()
+
+    def is_parameter_compatible(self, a_symbol, argument_index):
+        assert type(a_symbol).__name__ == "ActualParameter"
+        assert isinstance(argument_index, int)
+        return a_symbol.type.type in ["RESERVED_TYPE_INTEGER","RESERVED_TYPE_REAL",
+                                      "RESERVED_TYPE_SET", "RESERVED_TYPE_CHAR",
+                                      "RESERVED_TYPE_BOOLEAN", "RESERVED_TYPE_STRING"]
 
 
 class ProcedureForwardIdentifier(ProcedureIdentifier):

@@ -10,7 +10,7 @@ from components.deft_pascal_parser_3 import DeftPascalParser
 from components.symbol_table import SymbolTable
 from components.symbols.base_symbols import BaseKeyword, BaseExpression
 from components.symbols.operator_symbols import Operator, BinaryOperator, UnaryOperator, NeutralOperator
-from components.symbols.identifier_symbols import Identifier, TypeIdentifier, ProcedureIdentifier, ProcedureExternalIdentifier, ProcedureForwardIdentifier, ConstantIdentifier
+from components.symbols.identifier_symbols import Identifier, TypeIdentifier, ProcedureIdentifier, InBuiltProcedureWrite, ProcedureExternalIdentifier, ProcedureForwardIdentifier, ConstantIdentifier
 from components.symbols.literals_symbols import BooleanLiteral, NilLiteral, NumericLiteral, StringLiteral
 from components.symbols.type_symbols import PointerType, BasicType, StringType
 from components.symbols.expression_symbols import ConstantExpression, IntegerExpression, BooleanExpression
@@ -224,8 +224,8 @@ class DeftPascalCompiler:
         self._symbol_table.append(BasicType.reserved_type_text())
 
         # add the in-built procedures to the symbol table
-        self._symbol_table.append(ProcedureIdentifier.in_built_procedure_write())
-        self._symbol_table.append(ProcedureIdentifier.in_built_procedure_writeln())
+        self._symbol_table.append(InBuiltProcedureWrite.in_built_procedure_write())
+        self._symbol_table.append(InBuiltProcedureWrite.in_built_procedure_writeln())
 
         # add all operators to the operator table
         self._operator_table.append(BinaryOperator.operator_multiply())
@@ -932,7 +932,7 @@ class DeftPascalCompiler:
         token = input_list.pop(0)
 
         # ensure in built procedures use a lowercase name
-        if ProcedureIdentifier.name_is_reserved_for_in_built_procedure(token.value):
+        if token.value.upper() in ["WRITE", "WRITELN"]:
             token.value = token.value.lower()
 
         identifier = self._symbol_table.retrieve(token.value, equal_level_only=False)
@@ -954,9 +954,6 @@ class DeftPascalCompiler:
 
                 elif isinstance(token, Tree):
                     parameters_counter = parameters_counter + 1
-
-                    # type checking the expression passed as parameter
-                    # TODO: check if the expression type is compatible with the procedure parameter type definition
 
                     value_to_print_stack = self._internal_compile(token.children[0], [])
                     expression_value_to_print = BaseExpression.from_list(value_to_print_stack)
@@ -980,6 +977,10 @@ class DeftPascalCompiler:
 
                     # create the actual parameter
                     parameter = ActualParameter(expression_value_to_print, expression_field_width, expression_decimal_field)
+
+                    if not identifier.is_parameter_compatible(parameter, parameters_counter):
+                        msg = "[{0}] :  Incompatible parameter '{1}' passed to procedure {2}"
+                        _MODULE_LOGGER_.error(msg.format(action_name, parameter, identifier))
 
                     # push to the working stack
                     working_stack.append(parameter)
@@ -1098,7 +1099,7 @@ class DeftPascalCompiler:
                         for token in ast.children:
                             if token.type == "IDENTIFIER":
                                 # create the variables using the parameter_type
-                                argument = FormalParameter(token.value, type_identifier, None)
+                                argument = FormalParameter(token.value, type_identifier)
                                 self._symbol_table.append(argument)
                                 # add the variable as formal argument to the procedure
                                 pi.add_argument(argument)

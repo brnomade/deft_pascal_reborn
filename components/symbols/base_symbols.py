@@ -49,8 +49,6 @@ class BaseSymbol:
         self._name = a_name
         self._type = a_type
         self._value = a_value
-        # self._reference_stack = []
-
 
     def __str__(self):
         return "{0}('{1}'|{2}|{3})".format(self.category, self.name, self.type, self.value)
@@ -89,17 +87,6 @@ class BaseSymbol:
     def category(self):
         return type(self).__name__
 
-    #@property
-    #def references(self):
-    #    return self._reference_stack
-
-    #@property
-    #def has_references(self):
-    #    if self._reference_stack:
-    #        return True
-    #    else:
-    #        return False
-
     @name.setter
     def name(self, new_name):
         self._name = new_name
@@ -111,12 +98,6 @@ class BaseSymbol:
     @value.setter
     def value(self, new_value):
         self._value = new_value
-
-    #def push_reference(self, reference):
-    #    self._reference_stack.append(reference)
-
-    #def pop_reference(self):
-    #    return self._reference_stack.pop()
 
 
 class BaseIdentifier(BaseSymbol):
@@ -308,7 +289,4 @@ class BaseExpression(BaseSymbol):
         return self._type
 
 
-class BaseParameter(BaseSymbol):
 
-    def do_nothing(self):
-        pass

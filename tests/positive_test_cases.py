@@ -1005,3 +1005,52 @@ class PositiveLanguageTests:
             END.                                         
         """
         return code
+
+
+    @staticmethod
+    def scenario_procedure_call_single_parameter_with_literal():
+        code = """
+                PROGRAM {{{0}}};                   
+                    PROCEDURE first_procedure(p1 : integer); 
+                    BEGIN
+                        writeln('first_procedure');
+                    END;
+                BEGIN             
+                    first_procedure(1)
+                END.                                         
+            """
+        return code
+
+    @staticmethod
+    def scenario_procedure_call_single_parameter_with_variable():
+        code = """
+                PROGRAM {{{0}}};                   
+                    VAR
+                        x : integer;
+                    PROCEDURE first_procedure(p1 : integer); 
+                    BEGIN
+                        writeln('first_procedure');
+                    END;
+                BEGIN             
+                    x := 1;
+                    first_procedure(x)
+                END.                                         
+            """
+        return code
+
+    @staticmethod
+    def scenario_procedure_call_single_parameter_with_expression():
+        code = """
+                PROGRAM {{{0}}};                   
+                    VAR
+                        x : integer;
+                    PROCEDURE first_procedure(p1 : integer); 
+                    BEGIN
+                        writeln('first_procedure');
+                    END;
+                BEGIN             
+                    x := 1;
+                    first_procedure(x + x)
+                END.                                         
+            """
+        return code
