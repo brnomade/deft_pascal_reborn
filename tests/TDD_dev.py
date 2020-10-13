@@ -20,8 +20,8 @@ class ConfigurationForTestTDD:
     @classmethod
     def tdd_tests_to_run(cls):
         return [(123,
-                 "scenario_procedure_call_single_parameter_with_literal",
-                 PositiveLanguageTests.scenario_procedure_call_single_parameter_with_literal)
+                 "example_program_definition_2",
+                 PascalExamples.example_program_definition_2)
                 ]
 
 

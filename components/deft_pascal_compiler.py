@@ -944,8 +944,14 @@ class DeftPascalCompiler:
             input_list.pop(0)
             input_list.pop(-1)
 
+            # calculate the number of parameters in the procedure call
+            parameters_counter = len(input_list) - input_list.count(",")
+            if not identifier.accepts_parameters_count(parameters_counter):
+                msg = "[{0}] :  '{1}' parameters passed to procedure {2} but '{3}' expected."
+                _MODULE_LOGGER_.error(msg.format(action_name, parameters_counter, identifier.name, identifier.argument_counter))
+
             # process each parameter expression, discard the commas used as separators
-            parameters_counter = 0
+            parameter_index = 0
             for token in input_list:
                 if isinstance(token, Token):
                     if not token.type == "COMMA":
@@ -953,7 +959,7 @@ class DeftPascalCompiler:
                         _MODULE_LOGGER_.error(msg.format(action_name, token))
 
                 elif isinstance(token, Tree):
-                    parameters_counter = parameters_counter + 1
+                    parameter_index = parameter_index + 1
 
                     value_to_print_stack = self._internal_compile(token.children[0], [])
                     expression_value_to_print = BaseExpression.from_list(value_to_print_stack)
@@ -978,20 +984,17 @@ class DeftPascalCompiler:
                     # create the actual parameter
                     parameter = ActualParameter(expression_value_to_print, expression_field_width, expression_decimal_field)
 
-                    if not identifier.is_parameter_compatible(parameter, parameters_counter):
+                    if not identifier.is_parameter_compatible(parameter, parameter_index):
                         msg = "[{0}] :  Incompatible parameter '{1}' passed to procedure {2}"
                         _MODULE_LOGGER_.error(msg.format(action_name, parameter, identifier))
 
-                    # push to the working stack
-                    working_stack.append(parameter)
+                    else:
+                        # push to the working stack
+                        working_stack.append(parameter)
 
                 else:
                     msg = "[{0}] :  Unknown parameter '{1}' passed to procedure {2}"
                     _MODULE_LOGGER_.error(msg.format(action_name, token, identifier))
-
-            if identifier.value and not identifier.argument_counter == parameters_counter:
-                msg = "[{0}] :  '{1}' parameters passed to procedure {2} but '{3}' expected."
-                _MODULE_LOGGER_.error(msg.format(action_name, parameters_counter, identifier.name, identifier.argument_counter))
 
             # generate the intermediate code
             self._ic.init(action_name)
@@ -1007,18 +1010,6 @@ class DeftPascalCompiler:
 
         return working_stack
 
-    # def _procedure_and_function_declaration_part(self, action_name, input_list, working_stack):
-    #     """
-    #     input_List -> [ Tree(procedure_declaration, [declaration 1]),
-    #                     Tree(procedure_declaration, [declaration 2]),
-    #                     ...
-    #                  ]
-    #     """
-    #     # process declarations
-    #     for procedure_declaration in input_list:
-    #         self._internal_compile(procedure_declaration, [])
-    #
-    #     return working_stack
 
     def _procedure_declaration(self, action_name, input_list, working_stack):
         """
@@ -1087,6 +1078,7 @@ class DeftPascalCompiler:
             for ast in argument_list:
                 if ast.data.upper() == "VALUE_PARAMETER_SPECIFICATION":
 
+                    # process the type of the argument list
                     token = ast.children.pop(-1)
                     if token.type == "IDENTIFIER":
                         # identifier is of a custom type and their definition is case sensitive/relevant
@@ -1096,11 +1088,18 @@ class DeftPascalCompiler:
                         type_identifier = self._symbol_table.retrieve(token.value.upper(), equal_level_only=False)
 
                     if type_identifier:
+                        # process the arguments
                         for token in ast.children:
                             if token.type == "IDENTIFIER":
                                 # create the variables using the parameter_type
+                                new_variable = Identifier(token.value, type_identifier, None)
+
+                                # add the new variable to the symbol_table
+                                self._symbol_table.append(new_variable)
+
+                                # create the formal parameter
                                 argument = FormalParameter(token.value, type_identifier)
-                                self._symbol_table.append(argument)
+
                                 # add the variable as formal argument to the procedure
                                 pi.add_argument(argument)
                     else:

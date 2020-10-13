@@ -159,9 +159,12 @@ class ProcedureIdentifier(BaseIdentifier):
         assert type(a_symbol).__name__ == "ActualParameter"
         assert isinstance(argument_index, int)
         if argument_index > self.argument_counter or argument_index < 1:
-            return False
+            return None
         else:
             return a_symbol.type == self._argument_list[argument_index - 1].type
+
+    def accepts_parameters_count(self, parameter_count):
+        return self.argument_counter == parameter_count
 
 
 class InBuiltProcedureWrite(ProcedureIdentifier):
@@ -199,6 +202,9 @@ class InBuiltProcedureWrite(ProcedureIdentifier):
         return a_symbol.type.type in ["RESERVED_TYPE_INTEGER","RESERVED_TYPE_REAL",
                                       "RESERVED_TYPE_SET", "RESERVED_TYPE_CHAR",
                                       "RESERVED_TYPE_BOOLEAN", "RESERVED_TYPE_STRING"]
+
+    def accepts_parameters_count(self, parameter_count):
+        return True
 
 
 class ProcedureForwardIdentifier(ProcedureIdentifier):

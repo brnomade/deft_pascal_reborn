@@ -79,7 +79,7 @@ class NegativeLanguageTests:
 
     @staticmethod
     def scenario_incorrect_parameter_numbers_in_procedure_call_raises_error():
-        code = ("unknown type", "", """
+        code = ("parameters passed", "", """
             PROGRAM {{{0}}};                   
                 PROCEDURE first_procedure(p1: integer);
                 BEGIN

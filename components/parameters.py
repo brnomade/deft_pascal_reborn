@@ -7,7 +7,7 @@ HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 
 import logging
 from components.symbols.base_symbols import BaseExpression
-from components.symbols.type_symbols import BasicType
+from components.symbols.type_symbols import BasicType, StringType
 
 _MODULE_LOGGER_ = logging.getLogger("deft_pascal_reborn")
 
@@ -71,7 +71,7 @@ class ActualParameter(BaseParameter):
 class FormalParameter(BaseParameter):
 
     def __init__(self, a_name, a_type):
-        assert isinstance(a_type, BasicType), "formal parameter type must be subclass of BasicType"
+        assert isinstance(a_type, BasicType) or isinstance(a_type, StringType), "formal parameter type must be subclass of BasicType"
         self._name = a_name
         self._type = a_type
 
