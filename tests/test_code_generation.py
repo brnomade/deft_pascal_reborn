@@ -14,7 +14,7 @@ import subprocess
 import platform
 
 
-param_remove_file_after_test = False
+param_remove_file_after_test = True
 
 
 def compile_in_gcc(input_c):
