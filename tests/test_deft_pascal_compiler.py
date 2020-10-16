@@ -12,7 +12,6 @@ from components.deft_pascal_compiler import DeftPascalCompiler
 from parameterized import parameterized
 from tests.declarations_test_suit import TestSuit
 from tests.negative_test_cases import NegativeLanguageTests
-from tests.positive_test_cases import PositiveLanguageTests
 
 GLB_LOGGER = getLogger(__name__)
 GLB_LOGGER.level = DEBUG
@@ -22,13 +21,10 @@ class ConfigurationForTestDeftPascalCompiler:
 
     @classmethod
     def positive_tests_to_run(cls):
-        # return [("scenario_variable_assignment_with_pointer", PositiveLanguageTests.scenario_variable_assignment_with_pointer)]
         return TestSuit.positive_tests_to_run()
 
     @classmethod
     def negative_tests_to_run(cls):
-        #return [("scenario_incompatible_types_assignment_raises_compiler_error_basic_type_case", NegativeLanguageTests.scenario_incompatible_types_assignment_raises_compiler_error_basic_type_case)
-        #        ]
         return TestSuit.negative_tests_to_run()
 
     @classmethod
@@ -52,7 +48,7 @@ class TestCompilerPositiveScenarios(TestCase):
         source_code = function_callable()
         if "{{{0}}}" in source_code:
             source_code = source_code.replace("{{{0}}}", name)
-        #
+
         compiler = DeftPascalCompiler()
         log = compiler.check_syntax(source_code)
         if log["ERROR"]:
@@ -128,15 +124,13 @@ class TestCompilerExampleScenarios(TestCase):
         source_code = function_callable()
         if "{{{0}}}" in source_code:
             source_code = source_code.replace("{{{0}}}", name)
-        #
+
         compiler = DeftPascalCompiler()
         log = compiler.check_syntax(source_code)
         if log["ERROR"]:
             print(log["ERROR"])
         self.assertEqual([], log["ERROR"])
-        #
-        # GLB_LOGGER.debug(compiler.ast.pretty())
-        #
+
         log = compiler.compile()
         if log["ERROR"]:
             print(log["ERROR"])

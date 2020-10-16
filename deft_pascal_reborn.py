@@ -157,40 +157,40 @@ class DeftPascalReborn:
             return None
 
 
-    def _compile_in_gcc(self, path_to_c_code):
-
-        home_dir = os.getcwd()
-        gcc_dir = os.path.dirname(self._arguments.compiler_executable)
-        gcc_exe = os.path.basename(self._arguments.compiler_executable)
-
-        print(gcc_dir, gcc_exe)
-
-        output_err = path_to_c_code.split(".")[0] + ".err"
-        output_out = path_to_c_code.split(".")[0] + ".out"
-        output_exe = path_to_c_code.split(".")[0] + ".exe"
-
-        # c_compiler = "{0} -v -print-search-dirs -print-libgcc-file-name -print-multi-directory -print-multi-lib -print-sysroot-headers-suffix -print-multi-os-directory -print-sysroot -o {1}".format(gcc_exe, output_exe)
-        c_compiler = "{0} -o {1}".format(self._arguments.compiler_executable, output_exe)
-        c_env = "{0} {1} > {2} 2> {3}".format(c_compiler, path_to_c_code, output_out, output_err)
-        _MAIN_LOGGER.info(c_env)
-
-        os.chdir(gcc_dir)
-        subprocess.run(c_env, shell=True)
-        os.chdir(home_dir)
-
-        result_out = "error"
-        if os.path.exists(os.path.join(home_dir, output_out)):
-            file = open(output_out)
-            result_out = file.read()
-            file.close()
-
-        result_err = "error"
-        if os.path.exists(os.path.join(home_dir, output_err)):
-            file = open(output_err)
-            result_err = file.read()
-            file.close()
-
-        return result_out + result_err
+    #def _compile_in_gcc(self, path_to_c_code):
+    #
+    #    home_dir = os.getcwd()
+    #    gcc_dir = os.path.dirname(self._arguments.compiler_executable)
+    #    gcc_exe = os.path.basename(self._arguments.compiler_executable)
+    #
+    #    print(gcc_dir, gcc_exe)
+    #
+    #    output_err = path_to_c_code.split(".")[0] + ".err"
+    #    output_out = path_to_c_code.split(".")[0] + ".out"
+    #    output_exe = path_to_c_code.split(".")[0] + ".exe"
+    #
+    #    # c_compiler = "{0} -v -print-search-dirs -print-libgcc-file-name -print-multi-directory -print-multi-lib -print-sysroot-headers-suffix -print-multi-os-directory -print-sysroot -o {1}".format(gcc_exe, output_exe)
+    #    c_compiler = "{0} -o {1}".format(self._arguments.compiler_executable, output_exe)
+    #    c_env = "{0} {1} > {2} 2> {3}".format(c_compiler, path_to_c_code, output_out, output_err)
+    #    _MAIN_LOGGER.info(c_env)
+    #
+    #    os.chdir(gcc_dir)
+    #    subprocess.run(c_env, shell=True)
+    #    os.chdir(home_dir)
+    #
+    #    result_out = "error"
+    #    if os.path.exists(os.path.join(home_dir, output_out)):
+    #        file = open(output_out)
+    #        result_out = file.read()
+    #        file.close()
+    #
+    #    result_err = "error"
+    #    if os.path.exists(os.path.join(home_dir, output_err)):
+    #        file = open(output_err)
+    #        result_err = file.read()
+    #        file.close()
+    #
+    #    return result_out + result_err
 
     def _compile_in_c_compiler(self, path_to_c_code):
 
@@ -273,7 +273,6 @@ class DeftPascalReborn:
                     return None
                 #
                 if self._arguments.steps in ["BUILD"]:
-                    #log = self._compile_in_gcc(path_to_c_code)
                     log = self._compile_in_c_compiler(path_to_c_code)
                     if log:
                         print(log)

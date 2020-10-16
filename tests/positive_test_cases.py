@@ -1058,7 +1058,7 @@ class PositiveLanguageTests:
         return code
 
     @staticmethod
-    def scenario_if_no_else_with_literals_single_command():
+    def scenario_if_with_else_using_begin_end_with_literals():
         code = """
                 PROGRAM {{{0}}};                   
                 BEGIN             
@@ -1072,7 +1072,7 @@ class PositiveLanguageTests:
         return code
 
     @staticmethod
-    def scenario_if_no_else_with_variables_single_command():
+    def scenario_if_with_else_using_begin_end_with_variables():
         code = """
                 PROGRAM {{{0}}};                   
                 VAR
@@ -1090,7 +1090,7 @@ class PositiveLanguageTests:
         return code
 
     @staticmethod
-    def scenario_if_no_else_with_expressions_single_command():
+    def scenario_if_with_else_using_begin_end_with_expressions():
         code = """
                 PROGRAM {{{0}}};                   
                 VAR
@@ -1098,7 +1098,7 @@ class PositiveLanguageTests:
                 BEGIN             
                     x := 2;
                     y := 1;
-                    if x + 1 > y + 1 then begin
+                    if x + 1 > y + x then begin
                         writeln('inside if');
                     end else begin
                         writeln('inside else');
@@ -1107,20 +1107,3 @@ class PositiveLanguageTests:
             """
         return code
 
-    @staticmethod
-    def scenario_if_no_else_with_mix_values_single_command():
-        code = """
-                PROGRAM {{{0}}};                   
-                VAR
-                    x, y : INTEGER;
-                BEGIN             
-                    x := 2;
-                    y := 1;
-                    if x + y > 10 + 1 then begin
-                        writeln('inside if');
-                    end else begin
-                        writeln('inside else');
-                    end;
-                END.                                         
-            """
-        return code
