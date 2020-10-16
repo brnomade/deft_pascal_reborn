@@ -127,25 +127,25 @@ class DeftPascalReborn:
 
 
     def _execute_syntax_chek(self, pascal_source):
-        error_log = self._compiler.check_syntax(pascal_source)
-        if error_log:
-            print(error_log)
+        log = self._compiler.check_syntax(pascal_source)
+        if log["ERROR"]:
+            print(log["ERROR"])
         #
-        if not error_log and self._arguments.save_steps:
+        if not log["ERROR"] and self._arguments.save_steps:
             self._save_to_file(self._compiler.ast.pretty(), "ast")
         #
-        return error_log
+        return log
 
 
     def _execute_compilation(self):
-        error_log = self._compiler.compile()
-        if error_log:
-            print(error_log)
+        log = self._compiler.compile()
+        if log["ERROR"]:
+            print(log["ERROR"])
         #
-        if not error_log and self._arguments.save_steps:
+        if not log["ERROR"] and self._arguments.save_steps:
             self._save_to_file(self._compiler.intermediate_code, "ic")
         #
-        return error_log
+        return log
 
 
     def _execute_generate(self):
@@ -258,13 +258,13 @@ class DeftPascalReborn:
         pascal_source = open(self._arguments.input_file, "r").read()
         #
         log = self._execute_syntax_chek(pascal_source)
-        if log:
+        if log["ERROR"]:
             return None
         #
         if self._arguments.steps in ["SEMANTIC", "INTERMEDIATE", "BUILD"]:
             log = self._execute_compilation()
             #
-            if log:
+            if log["ERROR"]:
                 return None
             #
             if self._arguments.steps in ["INTERMEDIATE", "BUILD"]:

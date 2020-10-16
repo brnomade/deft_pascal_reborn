@@ -20,8 +20,8 @@ class ConfigurationForTestTDD:
     @classmethod
     def tdd_tests_to_run(cls):
         return [(123,
-                 "example_program_definition_2",
-                 PascalExamples.example_program_definition_2)
+                 "example_two_for_with_hello_world",
+                 PascalExamples.example_two_for_with_hello_world)
                 ]
 
 

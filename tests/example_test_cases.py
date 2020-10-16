@@ -94,3 +94,22 @@ class PascalExamples:
             END.
         """
         return code
+
+
+    @staticmethod
+    def example_two_for_with_hello_world():
+        code = """
+            program hello_world;
+            var
+                x, y : integer;
+            begin
+                x := 1;
+                for x := 1 to 10 DO BEGIN
+                    writeln('Hello World!', x)
+                end;
+                for y := 10 downto 1 DO BEGIN
+                    writeln('World, Hello!', y)
+                end;               
+            end.
+        """
+        return code

@@ -802,7 +802,10 @@ class DeftPascalCompiler:
         _MODULE_LOGGER_.debug("[{0}] {1}".format(action_name, working_stack))
 
         # process statements nested inside the for
-        return self._internal_compile(input_list.pop(0), [])
+        self._increase_scope(action_name)
+        result = self._internal_compile(input_list.pop(0), [])
+        self._decrease_scope()
+        return result
 
     def _closed_while_statement(self, action_name, input_list, working_stack):
         """
@@ -840,7 +843,11 @@ class DeftPascalCompiler:
         _MODULE_LOGGER_.debug("[{0}] {1}".format(action_name, working_stack))
 
         # process statements nested inside the while
-        return self._internal_compile(input_list.pop(0), [])
+        self._increase_scope(action_name)
+        result = self._internal_compile(input_list.pop(0), [])
+        self._decrease_scope()
+        return result
+
 
     def _type_definition_part(self, action_name, input_list, working_stack):
         """
@@ -1168,7 +1175,9 @@ class DeftPascalCompiler:
 
         # process statements after IF and before ELSE
         token = input_list.pop(0)
+        self._increase_scope(action_name)
         self._internal_compile(token, [])
+        self._decrease_scope()
 
         # switch the action name to match the ELSE part of the IF
         action_name = action_name + "_ELSE"
@@ -1186,6 +1195,8 @@ class DeftPascalCompiler:
 
         # process statements after ELSE
         token = input_list.pop(0)
+        self._increase_scope(action_name)
         self._internal_compile(token, [])
+        self._decrease_scope()
 
         return working_stack
