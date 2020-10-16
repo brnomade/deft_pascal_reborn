@@ -14,7 +14,7 @@ import subprocess
 import platform
 
 
-param_remove_file_after_test = True
+param_remove_file_after_test = False
 
 
 def compile_in_gcc(input_c):
@@ -82,6 +82,65 @@ def compile_in_gcc(input_c):
     return result_out + result_err
 
 
+def compile_in_c_compiler(compiler_executable, path_to_c_code, compiler="CMOC"):
+
+    home_dir = os.getcwd()
+    compiler_dir = os.path.dirname(compiler_executable)
+    compiler_exe = os.path.basename(compiler_executable)
+
+    output_err = path_to_c_code.split(".")[0] + ".err"
+    output_out = path_to_c_code.split(".")[0] + ".out"
+
+    if compiler == "CMOC":
+        """
+        cmoc is run via cygwin, so path_to_c_code needs to be adjusted
+        """
+        output_exe = path_to_c_code.split(".")[0] + ".bin"
+
+        if "c:\\" in path_to_c_code:
+            path_to_c_code = path_to_c_code.replace("c:\\", "/cygdrive/c/")
+        else:
+            path_to_c_code = path_to_c_code.replace("C:\\", "/cygdrive/c/")
+        path_to_c_code = path_to_c_code.replace("\\", "/")
+
+        if "c:\\" in path_to_c_code:
+            path_to_c_code = path_to_c_code.replace("c:\\", "/cygdrive/c/")
+        else:
+            path_to_c_code = path_to_c_code.replace("C:\\", "/cygdrive/c/")
+        path_to_c_code = path_to_c_code.replace("\\", "/")
+
+        c_compiler = "{0} --verbose -o{1} {2}".format(compiler_executable, output_exe, path_to_c_code)
+    else:
+        """
+        gcc is run via MinGW, so paths are as in windows
+        """
+        # c_compiler = "{0} -v -print-search-dirs -print-libgcc-file-name -print-multi-directory -print-multi-lib -print-sysroot-headers-suffix -print-multi-os-directory -print-sysroot -o {1}".format(gcc_exe, output_exe)
+        output_exe = path_to_c_code.split(".")[0] + ".exe"
+
+        c_compiler = "{0} -o {1} {2}".format(compiler_executable, output_exe, path_to_c_code)
+
+    c_env = "{0} > {1} 2> {2}".format(c_compiler, output_out, output_err)
+    print(c_env)
+
+    os.chdir(compiler_dir)
+    subprocess.run(c_env, shell=True)
+    os.chdir(home_dir)
+
+    if os.path.exists(os.path.join(home_dir, output_out)):
+        file = open(output_out)
+        result_out = file.read()
+        file.close()
+        print(result_out)
+
+    result_err = "error"
+    if os.path.exists(os.path.join(home_dir, output_err)):
+        file = open(output_err)
+        result_err = file.read()
+        file.close()
+
+    return result_err
+
+
 def run_in_shell(c_file_filename):
     #
     filename = os.path.basename(c_file_filename)
@@ -123,20 +182,18 @@ class TestGeneratorPositiveScenarios(TestCase):
         source_code = function_callable()
         if "{{{0}}}" in source_code:
             source_code = source_code.replace("{{{0}}}", name)
-        #
+
         compiler = DeftPascalCompiler(cmoc=False)
-        error_log = compiler.check_syntax(source_code)
-        if error_log:
-            print(error_log)
-        self.assertEqual([], error_log)
-        #
-        print(compiler.ast.pretty())
-        #
-        error_log = compiler.compile()
-        if error_log:
-            print(error_log)
-        self.assertEqual([], error_log)
-        #
+        log = compiler.check_syntax(source_code)
+        if log["ERROR"]:
+            print(log["ERROR"])
+        self.assertEqual([], log["ERROR"])
+
+        log = compiler.compile()
+        if log["ERROR"]:
+            print(log["ERROR"])
+        self.assertEqual([], log["ERROR"])
+
         ic = compiler.intermediate_code
         print(ic)
         #
@@ -154,8 +211,9 @@ class TestGeneratorPositiveScenarios(TestCase):
             file = open(filename, "w")
             file.write(output_code)
             file.close()
-        #
-        output = compile_in_gcc(filename)
+
+        output = compile_in_c_compiler("C:\\MinGW\\bin\\gcc.exe", filename, compiler="GCC")
+
         self.assertNotIn("error", output)
         self.assertNotIn("warning", output)
 
@@ -176,20 +234,18 @@ class TestGeneratorExampleScenarios(TestCase):
         source_code = function_callable()
         if "{{{0}}}" in source_code:
             source_code = source_code.replace("{{{0}}}", name)
-        #
-        compiler = DeftPascalCompiler(cmoc=False)
-        error_log = compiler.check_syntax(source_code)
-        if error_log:
-            print(error_log)
-        self.assertEqual([], error_log)
-        #
-        print(compiler.ast.pretty())
-        #
-        error_log = compiler.compile()
-        if error_log:
-            print(error_log)
-        self.assertEqual([], error_log)
-        #
+
+        compiler = DeftPascalCompiler()
+        log = compiler.check_syntax(source_code)
+        if log["ERROR"]:
+            print(log["ERROR"])
+        self.assertEqual([], log["ERROR"])
+
+        log = compiler.compile()
+        if log["ERROR"]:
+            print(log["ERROR"])
+        self.assertEqual([], log["ERROR"])
+
         ic = compiler.intermediate_code
         print(ic)
         #
@@ -207,8 +263,8 @@ class TestGeneratorExampleScenarios(TestCase):
             file = open(filename, "w")
             file.write(output_code)
             file.close()
-        #
-        output = compile_in_gcc(filename)
+
+        output = compile_in_c_compiler("C:\\MinGW\\bin\\gcc.exe", filename, compiler="GCC")
+
         self.assertNotIn("error", output)
         self.assertNotIn("warning", output)
-        #
