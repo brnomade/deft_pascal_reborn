@@ -105,9 +105,12 @@ def compile_in_c_compiler(path_to_c_code):
 
     print(c_env)
 
-    os.chdir(compiler_dir)
-    subprocess.run(c_env, shell=True)
-    os.chdir(home_dir)
+    if platform.system() == "Windows":
+        os.chdir(compiler_dir)
+        subprocess.run(c_env, shell=True)
+        os.chdir(home_dir)
+    else:
+        subprocess.run(c_env, shell=True)
 
     if os.path.exists(os.path.join(home_dir, output_out)):
         file = open(output_out)
