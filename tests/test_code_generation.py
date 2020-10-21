@@ -82,49 +82,24 @@ param_remove_file_after_test = True
 #     return result_out + result_err
 
 
-def compile_in_c_compiler(compiler_executable, path_to_c_code, compiler="CMOC"):
+def compile_in_c_compiler(path_to_c_code):
 
     if platform.system() == "Windows":
         home_dir = os.getcwd()
-        compiler_dir = os.path.dirname(compiler_executable)
-        compiler_exe = os.path.basename(compiler_executable)
+        compiler_exe = "C:\\MinGW\\bin\\gcc.exe"
+        compiler_dir = os.path.dirname(compiler_exe)
     else:
         home_dir = os.getcwd()
+        compiler_exe = "gcc"
         compiler_dir = ""
-        compiler_exe = compiler_executable.split("\\")[-1]
 
     output_err = path_to_c_code.split(".")[0] + ".err"
     output_out = path_to_c_code.split(".")[0] + ".out"
+    output_exe = path_to_c_code.split(".")[0] + ".exe"
 
-    if (compiler == "CMOC") and (platform.system() == "Windows"):
-        """
-        cmoc is run via cygwin, so path_to_c_code needs to be adjusted
-        """
-        output_exe = path_to_c_code.split(".")[0] + ".bin"
-
-        if "c:\\" in path_to_c_code:
-            path_to_c_code = path_to_c_code.replace("c:\\", "/cygdrive/c/")
-        else:
-            path_to_c_code = path_to_c_code.replace("C:\\", "/cygdrive/c/")
-        path_to_c_code = path_to_c_code.replace("\\", "/")
-
-        if "c:\\" in path_to_c_code:
-            path_to_c_code = path_to_c_code.replace("c:\\", "/cygdrive/c/")
-        else:
-            path_to_c_code = path_to_c_code.replace("C:\\", "/cygdrive/c/")
-        path_to_c_code = path_to_c_code.replace("\\", "/")
-
-        c_compiler = "{0} --verbose -o{1} {2}".format(compiler_executable, output_exe, path_to_c_code)
-    else:
-        """
-        gcc is run via MinGW, so paths are as in windows
-        """
-        # c_compiler = "{0} -v -print-search-dirs -print-libgcc-file-name -print-multi-directory -print-multi-lib -print-sysroot-headers-suffix -print-multi-os-directory -print-sysroot -o {1}".format(gcc_exe, output_exe)
-        output_exe = path_to_c_code.split(".")[0] + ".exe"
-
-        c_compiler = "{0} -o {1} {2}".format(compiler_executable, output_exe, path_to_c_code)
-
+    c_compiler = "{0} -o {1} {2}".format(compiler_exe, output_exe, path_to_c_code)
     c_env = "{0} > {1} 2> {2}".format(c_compiler, output_out, output_err)
+
     print(c_env)
 
     os.chdir(compiler_dir)
@@ -217,7 +192,7 @@ class TestGeneratorPositiveScenarios(TestCase):
             file.write(output_code)
             file.close()
 
-        output = compile_in_c_compiler("C:\\MinGW\\bin\\gcc.exe", filename, compiler="GCC")
+        output = compile_in_c_compiler(filename)
 
         self.assertNotIn("error", output)
         self.assertNotIn("warning", output)
@@ -269,7 +244,7 @@ class TestGeneratorExampleScenarios(TestCase):
             file.write(output_code)
             file.close()
 
-        output = compile_in_c_compiler("C:\\MinGW\\bin\\gcc.exe", filename, compiler="GCC")
+        output = compile_in_c_compiler(filename)
 
         self.assertNotIn("error", output)
         self.assertNotIn("warning", output)
