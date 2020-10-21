@@ -17,81 +17,86 @@ import platform
 param_remove_file_after_test = True
 
 
-def compile_in_gcc(input_c):
-    home_dir = os.getcwd()
-
-    mig_dir = "C:\\MinGW\\bin"
-
-    if platform.system() == "Windows":
-        sources_path = "output\\sources"
-        bin_path = "output\\bin"
-        logs_path = "output\\logs"
-    else:
-        sources_path = ""
-        bin_path = ""
-        logs_path = ""
-
-    input_source = os.path.join(home_dir, sources_path, input_c)
-    output_err = os.path.join(home_dir, logs_path, input_c.split(".")[0] + ".err")
-    output_out = os.path.join(home_dir, logs_path, input_c.split(".")[0] + ".out")
-    output_exe = os.path.join(home_dir, bin_path, input_c.split(".")[0] + ".exe")
-    #
-    if platform.system() == "Windows":
-        gcc_name = "gcc.exe"
-    else:
-        gcc_name = "gcc"
-    #
-    # c_compiler = "{0} -S -c -o {1}".format(gcc_name, output_exe)
-    # c_env = "{0} {1} > {2} 2> {3}".format(c_compiler, input_source, output_out, output_err)
-    c_compiler = "{0} -S -c".format(gcc_name)
-    c_env = "{0} {1} > {2} 2> {3}".format(c_compiler, input_source, output_out, output_err)
-
-    print(c_env)
-    #
-    if platform.system() == "Windows":
-        os.chdir(mig_dir)
-    #
-    subprocess.run(c_env, shell=True)
-    #
-    if platform.system() == "Windows":
-        os.chdir(home_dir)
-    #
-    result_out = "error"
-    if os.path.exists(os.path.join(home_dir, output_out)):
-        file = open(output_out)
-        result_out = file.read()
-        file.close()
-        if result_out:
-            print(result_out)
-        if param_remove_file_after_test:
-            os.remove(output_out)
-
-    result_err = "error"
-    if os.path.exists(os.path.join(home_dir, output_err)):
-        file = open(output_err)
-        result_err = file.read()
-        file.close()
-        if result_err:
-            print(result_err)
-        if param_remove_file_after_test:
-            os.remove(output_err)
-
-    if param_remove_file_after_test:
-        os.remove(input_c)
-
-    return result_out + result_err
+# def compile_in_gcc(input_c):
+#     home_dir = os.getcwd()
+#
+#     mig_dir = "C:\\MinGW\\bin"
+#
+#     if platform.system() == "Windows":
+#         sources_path = "output\\sources"
+#         bin_path = "output\\bin"
+#         logs_path = "output\\logs"
+#     else:
+#         sources_path = ""
+#         bin_path = ""
+#         logs_path = ""
+#
+#     input_source = os.path.join(home_dir, sources_path, input_c)
+#     output_err = os.path.join(home_dir, logs_path, input_c.split(".")[0] + ".err")
+#     output_out = os.path.join(home_dir, logs_path, input_c.split(".")[0] + ".out")
+#     output_exe = os.path.join(home_dir, bin_path, input_c.split(".")[0] + ".exe")
+#     #
+#     if platform.system() == "Windows":
+#         gcc_name = "gcc.exe"
+#     else:
+#         gcc_name = "gcc"
+#     #
+#     # c_compiler = "{0} -S -c -o {1}".format(gcc_name, output_exe)
+#     # c_env = "{0} {1} > {2} 2> {3}".format(c_compiler, input_source, output_out, output_err)
+#     c_compiler = "{0} -S -c".format(gcc_name)
+#     c_env = "{0} {1} > {2} 2> {3}".format(c_compiler, input_source, output_out, output_err)
+#
+#     print(c_env)
+#     #
+#     if platform.system() == "Windows":
+#         os.chdir(mig_dir)
+#     #
+#     subprocess.run(c_env, shell=True)
+#     #
+#     if platform.system() == "Windows":
+#         os.chdir(home_dir)
+#     #
+#     result_out = "error"
+#     if os.path.exists(os.path.join(home_dir, output_out)):
+#         file = open(output_out)
+#         result_out = file.read()
+#         file.close()
+#         if result_out:
+#             print(result_out)
+#         if param_remove_file_after_test:
+#             os.remove(output_out)
+#
+#     result_err = "error"
+#     if os.path.exists(os.path.join(home_dir, output_err)):
+#         file = open(output_err)
+#         result_err = file.read()
+#         file.close()
+#         if result_err:
+#             print(result_err)
+#         if param_remove_file_after_test:
+#             os.remove(output_err)
+#
+#     if param_remove_file_after_test:
+#         os.remove(input_c)
+#
+#     return result_out + result_err
 
 
 def compile_in_c_compiler(compiler_executable, path_to_c_code, compiler="CMOC"):
 
-    home_dir = os.getcwd()
-    compiler_dir = os.path.dirname(compiler_executable)
-    compiler_exe = os.path.basename(compiler_executable)
+    if platform.system() == "Windows":
+        home_dir = os.getcwd()
+        compiler_dir = os.path.dirname(compiler_executable)
+        compiler_exe = os.path.basename(compiler_executable)
+    else:
+        home_dir = os.getcwd()
+        compiler_dir = ""
+        compiler_exe = compiler_executable.split("\\")[-1]
 
     output_err = path_to_c_code.split(".")[0] + ".err"
     output_out = path_to_c_code.split(".")[0] + ".out"
 
-    if compiler == "CMOC":
+    if (compiler == "CMOC") and (platform.system() == "Windows"):
         """
         cmoc is run via cygwin, so path_to_c_code needs to be adjusted
         """
