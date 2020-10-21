@@ -93,6 +93,9 @@ def compile_in_c_compiler(path_to_c_code):
         compiler_exe = "gcc"
         compiler_dir = ""
 
+    if not os.path.exists(path_to_c_code):
+        raise FileNotFoundError("file not found : '{0}'".format(path_to_c_code))
+
     output_err = path_to_c_code.split(".")[0] + ".err"
     output_out = path_to_c_code.split(".")[0] + ".out"
     output_exe = path_to_c_code.split(".")[0] + ".exe"
