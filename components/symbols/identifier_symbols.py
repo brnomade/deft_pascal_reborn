@@ -116,32 +116,11 @@ class ProcedureIdentifier(BaseIdentifier):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        #self._parameter_counter = 0
-        #self._parameter_list = []
         self._argument_list = []
 
     @classmethod
     def unlimited_arguments_counter(cls):
         return -1
-
-    #@property
-    #def parameter_counter(self):
-    #    return self._parameter_counter
-
-    #@parameter_counter.setter
-    #def parameter_counter(self, new_counter):
-    #    if not isinstance(new_counter, int):
-    #        raise ValueError("parameter_counter expects an integer value")
-    #    self._parameter_counter = new_counter
-
-    #def add_parameter_expression(self, an_expression):
-    #    if (self._parameter_counter == self.unlimited_parameters_list_size()) or (len(self._parameter_list) < self._parameter_counter):
-    #        self._parameter_list.append(an_expression)
-    #        return True
-    #        # TODO - type check of the incoming expression against what is expected by the procedure parameter
-    #    else:
-    #        _MODULE_LOGGER.error("ProcedureIdentifier accepts only '{0}' arguments. Received '{1}'".format(self.argument_counter, an_expression))
-    #        return False
 
     def add_argument(self, a_symbol):
         assert type(a_symbol).__name__ == "FormalParameter"

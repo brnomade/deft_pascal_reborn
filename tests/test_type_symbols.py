@@ -41,56 +41,56 @@ class TestBasicType(TestCase):
         symbol = BasicType.reserved_type_integer()
         self.assertEqual('INTEGER', symbol.name)
         self.assertEqual('RESERVED_TYPE_INTEGER', symbol.type)
-        self.assertEqual('INTEGER', symbol.value)
+        self.assertIsNone(symbol.value)
         self.assertEqual(0, symbol.index)
 
     def test_reserved_type_real(self):
         symbol = BasicType.reserved_type_real()
         self.assertEqual('REAL', symbol.name)
         self.assertEqual('RESERVED_TYPE_REAL', symbol.type)
-        self.assertEqual('REAL', symbol.value)
+        self.assertIsNone(symbol.value)
         self.assertEqual(1, symbol.index)
 
     def test_reserved_type_set(self):
         symbol = BasicType.reserved_type_set()
         self.assertEqual('SET', symbol.name)
         self.assertEqual('RESERVED_TYPE_SET', symbol.type)
-        self.assertEqual('SET', symbol.value)
+        self.assertIsNone(symbol.value)
         self.assertEqual(2, symbol.index)
 
     def test_reserved_type_char(self):
         symbol = BasicType.reserved_type_char()
         self.assertEqual('CHAR', symbol.name)
         self.assertEqual('RESERVED_TYPE_CHAR', symbol.type)
-        self.assertEqual('CHAR', symbol.value)
+        self.assertIsNone(symbol.value)
         self.assertEqual(3, symbol.index)
 
     def test_reserved_type_boolean(self):
         symbol = BasicType.reserved_type_boolean()
         self.assertEqual('BOOLEAN', symbol.name)
         self.assertEqual('RESERVED_TYPE_BOOLEAN', symbol.type)
-        self.assertEqual('BOOLEAN', symbol.value)
+        self.assertIsNone(symbol.value)
         self.assertEqual(5, symbol.index)
 
     def test_reserved_type_text(self):
         symbol = BasicType.reserved_type_text()
         self.assertEqual('TEXT', symbol.name)
         self.assertEqual('RESERVED_TYPE_TEXT', symbol.type)
-        self.assertEqual('TEXT', symbol.value)
+        self.assertIsNone(symbol.value)
         self.assertEqual(7, symbol.index)
 
     def test_reserved_type_array(self):
         symbol = BasicType.reserved_type_array()
         self.assertEqual('ARRAY', symbol.name)
         self.assertEqual('RESERVED_TYPE_ARRAY', symbol.type)
-        self.assertEqual('ARRAY', symbol.value)
+        self.assertIsNone(symbol.value)
         self.assertEqual(8, symbol.index)
 
     def test_reserved_type_nil(self):
         symbol = BasicType.reserved_type_null()
-        self.assertEqual('NIL', symbol.name)
-        self.assertEqual('CONSTANT_NIL', symbol.type)
-        self.assertEqual('NIL', symbol.value)
+        self.assertEqual('NULL', symbol.name)
+        self.assertEqual('NULL', symbol.type)
+        self.assertIsNone(symbol.value)
         self.assertEqual(9, symbol.index)
 
 
