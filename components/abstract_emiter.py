@@ -97,13 +97,25 @@ class CEmitter(AbstractEmitter):
         line = "const {0} *{1} = "
         self.emit_header(line.format(in_type, in_name))
 
-    def emit_constant_definition_part_generic(self, in_name, in_type):
+    def emit_constant_definition_part_generic_left_side(self, in_name):
         """
         CONSTANT_DEFINITION_PART
         const type variable = expression;
+        #define variable (expression)
         """
-        line = "const {0} {1} = "
-        self.emit_header(line.format(in_type, in_name))
+        # line = "const {0} {1} = "
+        # self.emit_header(line.format(in_type, in_name))
+        line = "#define {0} ("
+        self.emit_header(line.format(in_name))
+
+    def emit_constant_definition_part_generic_right_side(self):
+        """
+        CONSTANT_DEFINITION_PART
+        const type variable = expression;
+        #define variable (expression)
+        """
+        line = ")"
+        self.emit_header_line(line)
 
 
     def emit_variable_declaration_part_string(self, in_type, in_name, in_dimension):

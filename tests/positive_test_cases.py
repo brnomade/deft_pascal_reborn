@@ -228,7 +228,6 @@ class PositiveLanguageTests:
         code = """
             PROGRAM {{{0}}};                
             CONST                                   
-            C8 = False and False or not True;                              
             C1 = 2 + 2;                                  
             C1a = -1 - 1;                                 
             C1b = +1 + 1;                                 
@@ -241,7 +240,8 @@ class PositiveLanguageTests:
             C4 = &HFF + &HFF;                               
             C4a = &B10 + &B10;                               
             C4b = &O12 - &O12;                               
-            C7 = True and (False or not True) and (true and not (true or false));                               
+            C7 = (True and (False or not True)) and (true and not (true or false));                               
+            C8 = False and (False or not True);                              
             BEGIN                                   
             END.                                  
         """
@@ -266,9 +266,25 @@ class PositiveLanguageTests:
             C4b = &O12 - &O12;      
             C6 = True;
             C7 = False;                         
-            C8 = C6 and C7 or not C6;                               
-            C9 = C7 and C7 or not (C6 OR C7) and C8;                              
-            BEGIN                                   
+            C8 = (C6 and C7) or not C6;                               
+            C9 = (C7 and C7) or not ((C6 OR C7) and C8);                              
+            BEGIN       
+                writeln(C1);                            
+                writeln(C1a);                            
+                writeln(C1b);                            
+                writeln(C2);                            
+                writeln(C2a);                            
+                writeln(C2b);                            
+                writeln(C3);                            
+                writeln(C3a);                            
+                writeln(C3b);                            
+                writeln(C4);                            
+                writeln(C4a);                            
+                writeln(C4b);                            
+                writeln(C6);                            
+                writeln(C7);                            
+                writeln(C8);                            
+                writeln(C9);                            
             END.                                  
         """
         return code

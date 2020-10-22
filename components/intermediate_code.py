@@ -299,20 +299,23 @@ class IntermediateCode:
             if inner_type in ["RESERVED_TYPE_STRING"]:
                 inner_literal = token.to_literal()
                 self._emiter.emit_constant_definition_part_string(token.name, inner_c_type, inner_literal.type.dimension, inner_literal.value_to_c)
+                self._emiter.emit_statement_terminator()
 
             elif inner_type in ["RESERVED_TYPE_CHAR"]:
                 self._emiter.emit_constant_definition_part_char(token.name, inner_c_type)
                 self._expression(token.value)
+                self._emiter.emit_statement_terminator()
 
             elif inner_type in ["RESERVED_TYPE_POINTER"]:
                 self._emiter.emit_constant_definition_part_pointer(token.name, inner_c_type)
                 self._expression(token.value)
+                self._emiter.emit_statement_terminator()
 
             else:
-                self._emiter.emit_constant_definition_part_generic(token.name, inner_c_type)
+                self._emiter.emit_constant_definition_part_generic_left_side(token.name)
                 self._expression(token.value)
+                self._emiter.emit_constant_definition_part_generic_right_side()
 
-            self._emiter.emit_statement_terminator()
 
     def _type_definition_part(self, token_list):
         """
@@ -626,7 +629,7 @@ class IntermediateCode:
                 # particle = "%{0}\\t"
                 action = self._emiter.emit_procedure_call_write_with_no_format
 
-            if actual_parameter.value.type == "RESERVED_TYPE_INTEGER":
+            if actual_parameter.value.type in ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_BOOLEAN"]:
                 action("d")
             elif actual_parameter.value.type == "RESERVED_TYPE_REAL":
                 action("f")

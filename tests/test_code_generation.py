@@ -88,11 +88,13 @@ def compile_in_c_compiler(path_to_c_code):
         home_dir = os.getcwd()
         compiler_exe = "C:\\MinGW\\bin\\gcc.exe"
         compiler_dir = os.path.dirname(compiler_exe)
+        compiler_options = "-Wall -std=gnu99 -O2"
     else:
         home_dir = os.getcwd()
         # compiler_exe = "gcc --version -dumpspecs -dumpversion -dumpmachine -v"
         compiler_exe = "cc"
         compiler_dir = ""
+        compiler_options = "-Wall -std=gnu99 -O2"
 
     if not os.path.exists(path_to_c_code):
         raise FileNotFoundError("file not found : '{0}'".format(path_to_c_code))
@@ -101,7 +103,7 @@ def compile_in_c_compiler(path_to_c_code):
     output_out = path_to_c_code.split(".")[0] + ".out"
     output_exe = path_to_c_code.split(".")[0] + ".exe"
 
-    c_compiler = "{0} -o {1} {2}".format(compiler_exe, output_exe, path_to_c_code)
+    c_compiler = "{0} {1} -o {2} {3}".format(compiler_exe, compiler_options, output_exe, path_to_c_code)
     c_env = "{0} > {1} 2> {2}".format(c_compiler, output_out, output_err)
 
     print(c_env)
@@ -200,6 +202,7 @@ class TestGeneratorPositiveScenarios(TestCase):
             file.close()
 
         output = compile_in_c_compiler(filename)
+        print(output)
 
         self.assertNotIn("error", output)
         self.assertNotIn("warning", output)
@@ -253,6 +256,7 @@ class TestGeneratorExampleScenarios(TestCase):
             file.close()
 
         output = compile_in_c_compiler(filename)
+        print(output)
 
         self.assertNotIn("error", output)
         self.assertNotIn("warning", output)
