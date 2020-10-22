@@ -90,7 +90,8 @@ def compile_in_c_compiler(path_to_c_code):
         compiler_dir = os.path.dirname(compiler_exe)
     else:
         home_dir = os.getcwd()
-        compiler_exe = "gcc --version -dumpspecs -dumpversion -dumpmachine -v"
+        # compiler_exe = "gcc --version -dumpspecs -dumpversion -dumpmachine -v"
+        compiler_exe = "gcc -S"
         compiler_dir = ""
 
     if not os.path.exists(path_to_c_code):
