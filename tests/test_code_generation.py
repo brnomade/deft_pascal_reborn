@@ -203,6 +203,7 @@ class TestGeneratorPositiveScenarios(TestCase):
 
         self.assertNotIn("error", output)
         self.assertNotIn("warning", output)
+        print("compilation finished successfully.")
 
 
 class TestGeneratorExampleScenarios(TestCase):
@@ -255,3 +256,4 @@ class TestGeneratorExampleScenarios(TestCase):
 
         self.assertNotIn("error", output)
         self.assertNotIn("warning", output)
+        print("compilation finished successfully.")
