@@ -20,8 +20,8 @@ class ConfigurationForTestTDD:
     @classmethod
     def tdd_tests_to_run(cls):
         return [(123,
-                 "example_two_for_with_hello_world",
-                 PascalExamples.example_two_for_with_hello_world)
+                 "scenario_string_variables_and_string_literals",
+                 PositiveLanguageTests.scenario_string_variables_and_string_literals)
                 ]
 
 
@@ -55,15 +55,15 @@ class TestTDD(TestCase):
         print("Running syntax and semantic check")
         compiler = DeftPascalCompiler()
         error_log = compiler.check_syntax(source_code)
-        if error_log:
+        if error_log["ERROR"]:
             print(error_log)
-        self.assertEqual([], error_log)
+        self.assertEqual([], error_log["ERROR"])
         print(compiler.ast.pretty())
         #
         error_log = compiler.compile()
-        if error_log:
-            print(error_log)
-        self.assertEqual([], error_log)
+        if error_log["ERROR"]:
+            print(error_log["ERROR"])
+        self.assertEqual([], error_log["ERROR"])
 
 
     def _execute_negative_test(self, name, inbound):
@@ -105,15 +105,17 @@ class TestTDD(TestCase):
         print("Run syntax check, semantic check and generating intermediate code")
         compiler = DeftPascalCompiler()
         error_log = compiler.check_syntax(source_code)
-        if error_log:
+        if error_log["ERROR"]:
             print(error_log)
-        self.assertEqual([], error_log)
+        self.assertEqual([], error_log["ERROR"])
+        print(compiler.ast.pretty())
         #
         error_log = compiler.compile()
-        if error_log:
-            print(error_log)
-        self.assertEqual([], error_log)
+        if error_log["ERROR"]:
+            print(error_log["ERROR"])
+        self.assertEqual([], error_log["ERROR"])
         print(compiler.intermediate_code)
+
 
     def _execute_step_1_2_3(self, source_code):
         print("Run syntax check, semantic check, generating intermediate code, generating c code and compiling in gcc")

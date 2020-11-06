@@ -410,33 +410,43 @@ class IntermediateCode:
                        Operator(':='|OPERATOR_ASSIGNMENT|:=|scenario_fahrenheit_to_celsius_converter|0|[]),
                        GenericExpression('GENERIC_EXPRESSION'|GENERIC_EXPRESSION|[Constant('0'|RESERVED_TYPE_INTEGER|0|scenario_fahrenheit_to_celsius_converter|0|[]), Operator('+'|OPERATOR_PLUS|+|scenario_fahrenheit_to_celsius_converter|0|[]), Constant('1'|RESERVED_TYPE_INTEGER|1|scenario_fahrenheit_to_celsius_converter|0|[]), Operator('+'|OPERATOR_PLUS|+|scenario_fahrenheit_to_celsius_converter|0|[]), Identifier('fahren'|int|None|scenario_fahrenheit_to_celsius_converter|0|[])]|None|None|[])
         """
-
-        """
-        #include <stdio.h>
-        #include <string.h>
-
-        int main() {
-            char str1[20] = "C programming";
-            char str2[20];
-            // copying str1 to str2
-            strcpy(str2, str1);
-        """
-
         # emit identifier
         identifier = input_list.pop(0)
 
         if isinstance(identifier.type, StringType):
 
-            self._emiter.emit_assignment_string_left_side(identifier.name)
-
             # discard operator ':='
             operator = input_list.pop(0)
 
-            # emit expression
-            self._expression(input_list.pop(0))
-
-            # emit statement terminator
-            self._emiter.emit_assignment_string_right_side()
+            """
+            scenarios of string assignment:
+                1) string identifier <- expression of cardinality 1 [string literal]
+                    pattern: char c[50] = "abcd";
+                2) string identifier <- expression of cardinality 1 [string variable]
+                    pattern: strcpy(str2, str1);
+                3) string identifier <- expression of cardinality 2+ [string literals only and operators]
+                    pattern: strcpy(variable, "abcd"); 
+                             strcpy(variable, "defg");
+                4) string identifier <- expression of cardinality 2+ [mixed string literals, operators and variables]
+            the two templates need to have distinct mapping to C language
+            """
+            expression = input_list.pop(0)
+            if expression.cardinality == 1 and expression.value[0].category.upper() == "STRINGLITERAL":
+                self._emiter.emit_assignment_scenario_unary_string_literal(identifier.type.type_to_c,
+                                                                           identifier.name,
+                                                                           identifier.type.dimension,
+                                                                           expression.value[0].value)
+            elif expression.cardinality == 1 and expression.value[0].category.upper() == "IDENTIFIER":
+                self._emiter.emit_assignment_scenario_unary_string_identifier(identifier.name,
+                                                                              expression.value[0].name)
+            else:
+                for e in expression.value:
+                    if e.category.upper() == "STRINGLITERAL":
+                        self._emiter.emit_assignment_scenario_multiple_string_literals(identifier.name, e.value)
+                    elif e.category.upper() == "IDENTIFIER":
+                        self._emiter.emit_assignment_scenario_unary_string_identifier(identifier.name, e.name)
+                    elif not isinstance(e, Operator):
+                        self._log(WARNING, "assignment_statement - emiter for '{0}' not yet implemented".format(e))
 
         else:
 

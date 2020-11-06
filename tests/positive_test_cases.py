@@ -194,7 +194,11 @@ class PositiveLanguageTests:
             C5 = C1;                                
             C2 = 'C8C8C8C8';                         
             C6 = C2;                         
-            BEGIN                                   
+            BEGIN        
+                WRITELN(C1);
+                WRITELN(C5);
+                WRITELN(C2);
+                WRITELN(C6);                           
             END.                                  
         """
         return code
@@ -1140,3 +1144,22 @@ class PositiveLanguageTests:
             """
         return code
 
+    @staticmethod
+    def scenario_string_variables_and_string_literals():
+        code = """
+                PROGRAM {{{0}}};                   
+                VAR
+                    a, b, c, d, e : STRING(80);
+                BEGIN             
+                    a := 'THIS IS A STRING';
+                    b := a;
+                    c := 'THIS STRING' + 'THAT STRING';
+                    d := a + b;
+                    e := a + 'THIS IS A STRING';
+                    writeln('inside else');
+                    writeln(a);
+                    writeln(b);
+                    writeln(c);
+                END.                                         
+            """
+        return code

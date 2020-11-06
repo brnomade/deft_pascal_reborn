@@ -77,8 +77,7 @@ class CEmitter(AbstractEmitter):
         CONSTANT_DEFINITION_PART
         const type variable = expression;
         """
-        line = "const {0} {1} [{2}] = {3}"
-        # line = "const {0} {1} [{2}] = "
+        line = "const {0} {1}[{2}] = {3}"
         self.emit_header(line.format(in_type, in_name, dimension + 1, in_value))
 
     def emit_constant_definition_part_char(self, in_name, in_type):
@@ -122,7 +121,7 @@ class CEmitter(AbstractEmitter):
         """
         VARIABLE_DECLARATION_PART
         """
-        line = "{0} {1} [{2}];"
+        line = "{0} {1}[{2}];"
         self.emit_header_line(line.format(in_type, in_name, str(in_dimension)))
 
     def emit_variable_declaration_part_pointer(self, in_type, in_name):
@@ -182,6 +181,21 @@ class CEmitter(AbstractEmitter):
         """
         particle = ";"
         self.emit_line(particle)
+
+    def emit_assignment_scenario_unary_string_literal(self, in_type, in_name, in_dimension, in_value):
+        particle = '{0} {1}[{2}] = "{3}"'
+        self.emit(particle.format(in_type, in_name, str(in_dimension), in_value))
+        self.emit_statement_terminator()
+
+    def emit_assignment_scenario_unary_string_identifier(self, in_left, in_right):
+        particle = "strcpy({0}, {1})"
+        self.emit(particle.format(in_left, in_right))
+        self.emit_statement_terminator()
+
+    def emit_assignment_scenario_multiple_string_literals(self, in_left, in_right):
+        particle = 'strcpy({0}, "{1}")'
+        self.emit(particle.format(in_left, in_right))
+        self.emit_statement_terminator()
 
     def emit_assignment_string_left_side(self, in_variable):
         particle = "strcpy({0},"
