@@ -20,8 +20,8 @@ class ConfigurationForTestTDD:
     @classmethod
     def tdd_tests_to_run(cls):
         return [(123,
-                 "scenario_string_variables_and_string_literals",
-                 PositiveLanguageTests.scenario_string_variables_and_string_literals)
+                 "scenario_constant_declaration_with_single_value_string_constant",
+                 PositiveLanguageTests.scenario_constant_declaration_with_single_value_string_constant)
                 ]
 
 

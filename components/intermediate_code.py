@@ -289,32 +289,59 @@ class IntermediateCode:
           ConstantIdentifier('C3'|StringType(RESERVED_TYPE_STRING[80])|GenericExpression[StringLiteral('C')|BinaryOperator(OPERATOR_PLUS)|StringLiteral('B')]),
           ConstantIdentifier('C5'|StringType(RESERVED_TYPE_STRING[80])|GenericExpression[ConstantIdentifier(C1)|BinaryOperator(OPERATOR_PLUS)|ConstantIdentifier(C3)])
         ]
+
+        Example:
+            Pascal
+                CONST
+                C1 = 'C';
+                C5 = C1;
+                C2 = 'C8C8C8C8';
+                C6 = C2;
+
+            C
+                const char C1 = 'C';
+                char C5;
+                const char C2[81] = "C8C8C8C8";
+                char C6[81];
+                int main() {
+                C5 = C1;
+                strcpy(c6, c2);
+
         """
         for token in token_list:
             assert token.category == "ConstantIdentifier", "ConstantIdentifier expected but found {0}".format(token)
 
-            inner_type = token.type.type
-            inner_c_type = token.type.type_to_c
-
-            if inner_type in ["RESERVED_TYPE_STRING"]:
-                inner_literal = token.to_literal()
-                self._emiter.emit_constant_definition_part_string(token.name, inner_c_type, inner_literal.type.dimension, inner_literal.value_to_c)
-                self._emiter.emit_statement_terminator()
-
-            elif inner_type in ["RESERVED_TYPE_CHAR"]:
-                self._emiter.emit_constant_definition_part_char(token.name, inner_c_type)
-                self._expression(token.value)
-                self._emiter.emit_statement_terminator()
-
-            elif inner_type in ["RESERVED_TYPE_POINTER"]:
-                self._emiter.emit_constant_definition_part_pointer(token.name, inner_c_type)
-                self._expression(token.value)
-                self._emiter.emit_statement_terminator()
+            if token.value.cardinality > 1:
+                self._log(WARNING, "Expression in constant declaration not yet supported and will be ignored. {0}".format(token))
 
             else:
-                self._emiter.emit_constant_definition_part_generic_left_side(token.name)
-                self._expression(token.value)
-                self._emiter.emit_constant_definition_part_generic_right_side()
+                if token.value[0].category
+
+                inner_type = token.type.type
+                inner_c_type = token.type.type_to_c
+
+                if inner_type in ["RESERVED_TYPE_STRING"]:
+                    inner_literal = token.to_literal()
+                    self._emiter.emit_constant_definition_part_string(token.name,
+                                                                      inner_c_type,
+                                                                      inner_literal.type.dimension,
+                                                                      inner_literal.value_to_c)
+                    self._emiter.emit_statement_terminator()
+
+                elif inner_type in ["RESERVED_TYPE_CHAR"]:
+                    self._emiter.emit_constant_definition_part_char(token.name, inner_c_type)
+                    self._expression(token.value)
+                    self._emiter.emit_statement_terminator()
+
+                elif inner_type in ["RESERVED_TYPE_POINTER"]:
+                    self._emiter.emit_constant_definition_part_pointer(token.name, inner_c_type)
+                    self._expression(token.value)
+                    self._emiter.emit_statement_terminator()
+
+                else:
+                    self._emiter.emit_constant_definition_part_generic_left_side(token.name)
+                    self._expression(token.value)
+                    self._emiter.emit_constant_definition_part_generic_right_side()
 
 
     def _type_definition_part(self, token_list):

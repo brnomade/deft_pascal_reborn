@@ -24,9 +24,9 @@ class ConstantExpression(BaseExpression):
             # scenario - expression has incompatible symbols.
             return None
 
-        if expression.cardinality > 1 and (expression.type in ["RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING"]):
-            _MODULE_LOGGER_.error("string based constant expressions are not supported: {0}".format(expression))
-            expression.trim_cardinality_down()
+        #if expression.cardinality > 1 and (expression.type in ["RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING"]):
+        #    _MODULE_LOGGER_.error("string based constant expressions are not supported: {0}".format(expression))
+        #    expression.trim_cardinality_down()
 
         return expression
 
