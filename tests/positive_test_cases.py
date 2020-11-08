@@ -502,7 +502,6 @@ class PositiveLanguageTests:
              V2 : BOOLEAN;                             
              V3 : CHAR;                              
              V4 : STRING;                         
-             V5 : STRING;                         
              V6 : INTEGER;                               
              V7 : REAL;                             
              V8 : INTEGER;                             
@@ -519,7 +518,17 @@ class PositiveLanguageTests:
              V8 := &HFF;                             
              V9 := &B10;                             
              V10 := &O11;                            
-             V12 := -1.1E-23;                         
+             V12 := -1.1E-23;     
+             WRITELN(V1);
+             WRITELN(V2);
+             WRITELN(V3);
+             WRITELN(V4);
+             WRITELN(V6);
+             WRITELN(V7);
+             WRITELN(V8);
+             WRITELN(V9);
+             WRITELN(V10);
+             WRITELN(V12);                    
             END.                                   
         """
         return code
@@ -625,7 +634,7 @@ class PositiveLanguageTests:
             V2 : INTEGER;
             V3 : REAL;
             BEGIN           
-             V1 := V1 and True or (V2 > 1) and (not ((V1 <> False) and (V1 = True) and (-2.0 >= V3)));              
+             V1 := ((V1 and True) or (V2 > 1)) and (not ((V1 <> False) and (V1 = True) and (-2.0 >= V3)));              
             END.                                      
         """
         return code
@@ -638,7 +647,7 @@ class PositiveLanguageTests:
              V2 : INTEGER;                     
             BEGIN           
              V2 := 0;                          
-             V1 := V1 and True or V1 and (not (V2 >= 1));              
+             V1 := (V1 and True) or (V1 and (not (V2 >= 1)));              
             END.                                      
         """
         return code
