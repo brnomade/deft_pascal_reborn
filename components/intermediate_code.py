@@ -428,18 +428,22 @@ class IntermediateCode:
                     pattern: strcpy(variable, "abcd"); 
                              strcpy(variable, "defg");
                 4) string identifier <- expression of cardinality 2+ [mixed string literals, operators and variables]
-            the two templates need to have distinct mapping to C language
             """
             expression = input_list.pop(0)
             if expression.cardinality == 1 and expression.value[0].category.upper() == "STRINGLITERAL":
+                # scenario 1
                 self._emiter.emit_assignment_scenario_unary_string_literal(identifier.type.type_to_c,
                                                                            identifier.name,
                                                                            identifier.type.dimension,
                                                                            expression.value[0].value)
             elif expression.cardinality == 1 and expression.value[0].category.upper() == "IDENTIFIER":
+                # scenario 2
                 self._emiter.emit_assignment_scenario_unary_string_identifier(identifier.name,
                                                                               expression.value[0].name)
             else:
+                # scenarios 3 and 4
+                # the only operator valid for strings is '+' so the translation
+                # to c does not take into account any other scenario.
                 for e in expression.value:
                     if e.category.upper() == "STRINGLITERAL":
                         self._emiter.emit_assignment_scenario_multiple_string_literals(identifier.name, e.value)
@@ -451,8 +455,10 @@ class IntermediateCode:
         else:
 
             if input_list[0].category == "UnaryOperator" and input_list[0].type == "OPERATOR_UPARROW":
+
                 # if isinstance(identifier.type, PointerType):
                 self._emiter.emit_assignment_pointer_left_side(identifier.name)
+
                 # discard uparrow operator
                 input_list.pop(0)
 
@@ -461,7 +467,6 @@ class IntermediateCode:
 
             # emit operator ':='
             operator = input_list.pop(0)
-            #operator = self._translate_operator_to_c(operator)
             self._emiter.emit_singleton(operator.to_c)
 
             # emit expression
@@ -643,6 +648,8 @@ class IntermediateCode:
                 action("d")
             elif actual_parameter.value.type == "RESERVED_TYPE_REAL":
                 action("f")
+            elif actual_parameter.value.type in ["RESERVED_TYPE_CHAR", "RESERVED_TYPE_TEXT"]:
+                action("c")
             else:
                 action("s")
 

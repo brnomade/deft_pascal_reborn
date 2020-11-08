@@ -102,7 +102,8 @@ class BasicType(BaseType):
             return "NOT IMPLEMENTED YET"
 
         if self.type in ["RESERVED_TYPE_CHAR", "RESERVED_TYPE_TEXT"]:
-            return "unsigned char"
+            # return "unsigned char"
+            return "char"
 
         if self.type == "RESERVED_TYPE_BOOLEAN":
             return "_Bool"
@@ -146,4 +147,6 @@ class StringType(BaseType):
 
     @property
     def type_to_c(self):
-        return "unsigned char"
+        # return "unsigned char"
+        return "char"
+
