@@ -10,41 +10,55 @@ import logging
 
 
 class AbstractEmitter:
-
-    logging.basicConfig()
-    _GLB_LOGGER = logging.getLogger("AbstractEmitter")
-
     def __init__(self, file_name, dir_path="output\\sources"):
-
         path = os.getcwd()
         self.full_path = os.path.join(path, dir_path, file_name + ".c")
-        self.header = ""
-        self.code = ""
-
-    def emit(self, input_source):
-        self.code += input_source
-
-    def emit_line(self, input_source):
-        self.code += input_source + '\n'
-
-    def emit_header(self, input_source):
-        # self.header += input_source
-        self.code += input_source
-
-    def emit_header_line(self, input_source):
-        # self.header += input_source + '\n'
-        self.code += input_source + '\n'
 
     @property
     def output_code(self):
-        return self.header + self.code
+        raise NotImplementedError("Must be implemented by subclass.")
 
     def write_file(self):
         with open(self.full_path, 'w') as outputFile:
-            outputFile.write(self.header + self.code)
+            outputFile.write(self.output_code)
 
 
-class CEmitter(AbstractEmitter):
+class TreeBasedEmitter:
+
+    def __init__(self, file_name, dir_path="output\\sources"):
+        super().__init__(file_name, dir_path)
+
+
+class LinearEmitter(AbstractEmitter):
+
+    logging.basicConfig()
+    _GLB_LOGGER = logging.getLogger("LinearEmitter")
+
+    def __init__(self, file_name, dir_path="output\\sources"):
+        super().__init__(file_name, dir_path)
+        self._header = ""
+        self._code = ""
+
+    def emit(self, input_source):
+        self._code += input_source
+
+    def emit_line(self, input_source):
+        self._code += input_source + '\n'
+
+    def emit_header(self, input_source):
+        # self.header += input_source
+        self._code += input_source
+
+    def emit_header_line(self, input_source):
+        # self.header += input_source + '\n'
+        self._code += input_source + '\n'
+
+    @property
+    def output_code(self):
+        return self._header + self._code
+
+
+class CEmitter(LinearEmitter):
 
     def emit_singleton(self, a_generic_string):
         """

@@ -315,8 +315,6 @@ class IntermediateCode:
                 self._log(WARNING, "Expression in constant declaration not yet supported and will be ignored. {0}".format(token))
 
             else:
-                if token.value[0].category
-
                 inner_type = token.type.type
                 inner_c_type = token.type.type_to_c
 
