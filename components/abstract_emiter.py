@@ -23,10 +23,123 @@ class AbstractEmitter:
             outputFile.write(self.output_code)
 
 
-class TreeBasedEmitter:
+class NodeBasedEmitter(AbstractEmitter):
+    """
+        anatomy of C program:
+
+        HEADER SECTION
+            #include <stdio.h>
+            #include <stdbool.h>
+            #include <string.h>
+
+        DECLARATION SECTION ((VARIABLE, CONSTANT and FUNCTIONS)
+            const char C1 ;
+            const char C2[81] ;
+            const char C5 ;
+            const char C6[81] ;
+            int sum(int I1, int I2);
+
+        FUNCTIONS DECLARATION SECTION
+
+            f1 -> always the main
+            f2 -> any other function defined
+            f3 -> any other function defined
+
+        FUNCTION DEFINITION SECTION (FOR EACH FUNCTION)
+
+            HEADER SECTION
+               int main() {
+
+            DECLARATION SECTION (VARIABLE, CONSTANT)
+                const char C1 = 'C' ;
+                const char C2[81] = "C8C8C8C8";
+                C5 = C1;
+                strcpy(c6, c2);
+
+            LOCAL DEFINITION SECTION (VARIABLE, CONSTANT)
+
+            BODY
+                printf("%c\t\n", C1 ); ;
+                printf("%c\t\n", C5 ); ;
+                printf("%s\t\n", C2 ); ;
+                printf("%s\t\n", C6 ); ;
+
+            CLOSURE
+                return 0;
+                 }
+
+            HEADER SECTION
+                int max(int num1, int num2) {
+
+            VARIABLE & CONSTANT DECLARATION SECTION
+                /* local variable declaration */
+                int result;
+
+            BODY
+               if (num1 > num2)
+                  result = num1;
+               else
+                  result = num2;
+
+            CLOSURE
+                   return result;
+                }
+
+    """
+
+    logging.basicConfig()
+    _GLB_LOGGER = logging.getLogger("TreeBasedEmitter")
 
     def __init__(self, file_name, dir_path="output\\sources"):
         super().__init__(file_name, dir_path)
+        self._source = dict()
+        self._source["root"] = self.new_node()
+        self._source["main"] = self.new_node()
+
+    @classmethod
+    def new_node(cls):
+        return {"header": "",
+                "declaration: "","
+                "f_declaration" : "",
+                "definition": "",
+                "body": "",
+                "closure": ""
+                }
+
+    def serialise(self, node_name, input_list):
+        code = ""
+        for i in input_list:
+            code += self[node_name][i]
+        return code
+
+
+    def output_code(self):
+        code = self.serialise("root", ["header", "declaration", "f_declaration"])
+        code += self.serialise("main", ["header", "declaration", "definition", "body", "closure"])
+        for i in self._source:
+            if i not in ["root", "main"]:
+                code += self.serialise(i, ["header", "declaration", "f_declaration", "definition", "body", "closure"])
+        return code
+
+
+    def emit_header(self, input_source, line_break=False):
+        if line_break:
+            self._header += input_source + '\n'
+        else:
+            self._header += input_source
+
+    def emit_declaration(self, input_source, line_break=False):
+        if line_break:
+            self._declaration += input_source + '\n'
+        else:
+            self._declaration += input_source
+
+    def emit_declaration(self, input_source, line_break=False):
+        if line_break:
+            self._declaration += input_source + '\n'
+        else:
+            self._declaration += input_source
+
 
 
 class LinearEmitter(AbstractEmitter):
