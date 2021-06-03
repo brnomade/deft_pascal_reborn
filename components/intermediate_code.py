@@ -5,7 +5,7 @@ DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original D
 HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
-from components.abstract_emiter import CEmitter, CMOCEmitter
+from components.abstract_emiter import CEmitter, CEmitter2, CMOCEmitter
 from components.symbols.base_symbols import BaseSymbol, BaseKeyword, BaseType, BaseExpression
 from components.symbols.operator_symbols import Operator, UnaryOperator
 from components.symbols.type_symbols import PointerType, BasicType, StringType
@@ -79,161 +79,6 @@ class IntermediateCode:
         self._top += 1
         self._temp_stack = []
 
-    # @staticmethod
-    # def _translate_token_value_to_c(token):
-    #     # translates a pascal symbol to c
-    #     cvalue = token.value
-    #     if token.type == "OPERATOR_ASSIGNMENT":
-    #         token.value = "="
-    #     elif token.type in ["RESERVED_TYPE_INTEGER"]:
-    #         if "&B" in token.value.upper():     # == "NUMBER_BINARY"
-    #             cvalue = "0b{0}".format(token.value.upper().strip("&B"))
-    #         elif "&H" in token.value.upper():   # == "NUMBER_HEXADECIMAL"
-    #             cvalue = "0x{0}".format(token.value.upper().strip("&H"))
-    #         elif "&O" in token.value.upper():   # == "NUMBER_OCTAL"
-    #             cvalue = "0{0}".format(token.value.upper().strip("&O"))
-    #     elif token.type in ["CHARACTER", "STRING"]:
-    #         cvalue = token.value.strip("'").strip('"')
-    #     elif token.type in ["CONSTANT_TRUE", "CONSTANT_FALSE"]:
-    #         cvalue = "true" if token.type == "CONSTANT_TRUE" else "false"
-    #     elif token.type == "RESERVED_OPERATOR_AND":
-    #         cvalue = "&&"
-    #     else:
-    #         print("Unknown type {0}".format(token))
-    #     return cvalue
-
-    # def _translate_operator_to_c(self, in_token):
-    #     token = copy.copy(in_token)
-    #     #
-    #     if token.type == "OPERATOR_ASSIGNMENT":
-    #
-    #         token.value = "="
-    #
-    #     elif token.type == "OPERATOR_AND":
-    #
-    #         token.value = "&&"
-    #
-    #     elif token.type == "OPERATOR_OR":
-    #
-    #         token.value = "||"
-    #
-    #     elif token.type == "OPERATOR_NOT":
-    #
-    #         token.value = "!"
-    #
-    #     elif token.type == "OPERATOR_NOT_EQUAL_TO":
-    #
-    #         token.value = "!="
-    #
-    #     elif token.type == "OPERATOR_EQUAL_TO":
-    #
-    #         token.value = "=="
-    #
-    #     elif token.type == "OPERATOR_DIV":
-    #
-    #         token.value = "/"
-    #
-    #     else:
-    #
-    #         if token.type not in ["OPERATOR_PLUS", "OPERATOR_MULTIPLY", "OPERATOR_ARITHMETIC_NEGATION",
-    #                               "OPERATOR_DIVIDE", "OPERATOR_GREATER_THAN", "OPERATOR_GREATER_OR_EQUAL_TO"
-    #                               ]:    # this are the operators which are similar between pascal and c
-    #
-    #             self._log(WARNING, "translation for operator '{0}' not yet implemented".format(token))
-    #
-    #     return token
-
-    # def _translate_type_to_c_type(self, in_token):
-    #     token = copy.copy(in_token)
-    #     #
-    #     if token.type in ["RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING", "RESERVED_TYPE_TEXT"]:
-    #
-    #         token.type = "unsigned char"
-    #
-    #     elif token.type == "RESERVED_TYPE_INTEGER":
-    #
-    #         token.type = "int"
-    #
-    #     elif token.type == "RESERVED_TYPE_REAL":
-    #
-    #         token.type = "double"
-    #
-    #     elif token.type == "RESERVED_TYPE_BOOLEAN":
-    #
-    #         token.type = "_Bool"
-    #
-    #     else:
-    #
-    #         self._log(WARNING, "translation for operator '{0}' not yet implemented".format(token))
-    #
-    #     return token
-
-
-    # def _translate_constant_to_c(self, in_token):
-    #     token = copy.copy(in_token)
-    #     #
-    #     if token.type in ["RESERVED_TYPE_CHAR", "RESERVED_TYPE_STRING"]:
-    #
-    #         token.type = "unsigned char"
-    #         token.value = token.value.strip("'").strip('"')
-    #
-    #     elif token.type in ["STRING_VALUE"]:
-    #
-    #         raise NotImplementedError
-    #
-    #         # token.name = token.value.replace("'", '"')
-    #         # token.type = "unsigned char"
-    #         # token.value = token.value.strip("'").strip('"')
-    #
-    #     elif token.type == "RESERVED_TYPE_INTEGER":
-    #
-    #         if "&B" in token.value.upper():     # == "NUMBER_BINARY"
-    #
-    #             token.type = "unsigned short"
-    #             token.value = "0b{0}".format(token.value.upper().strip("&B"))
-    #
-    #         elif "&H" in token.value.upper():   # == "NUMBER_HEXADECIMAL"
-    #
-    #             token.type = "unsigned short"
-    #             token.value = "0x{0}".format(token.value.upper().strip("&H"))
-    #
-    #         elif "&O" in token.value.upper():   # == "NUMBER_OCTAL"
-    #
-    #             token.type = "unsigned short"
-    #             token.value = "0{0}".format(token.value.upper().strip("&O"))
-    #
-    #         elif int(token.value) >= 0:         # == "UNSIGNED_DECIMAL"
-    #
-    #             token.type = "unsigned short"
-    #
-    #         else:
-    #
-    #             token.type = "short"
-    #
-    #     elif token.type == "RESERVED_TYPE_REAL":
-    #
-    #         token.type = "float"
-    #
-    #     elif token.type == "RESERVED_TYPE_BOOLEAN":
-    #
-    #         token.type = "bool"
-    #         token.value = "true" if token.value else "false"
-    #
-    #         if token.name in ["CONSTANT_TRUE", "CONSTANT_FALSE"]:
-    #             token.name = "true" if token.value else "false"
-    #
-    #     elif token.type == "RESERVED_TYPE_POINTER":
-    #
-    #         token.type = "int"
-    #         token.value = "NULL"
-    #
-    #     else:
-    #
-    #         self._log(WARNING, "translation for constant '{0}' not yet implemented".format(token))
-    #
-    #     return token
-
-
     def init(self, action_name):
         self._i_stack[self._top] = {"action_name": action_name,
                                     "token_list": None
@@ -275,7 +120,8 @@ class IntermediateCode:
         if self._target == "CMOC":
             self._emiter = CMOCEmitter(token_list[1].value)
         else:
-            self._emiter = CEmitter(token_list[1].value)
+            self._emiter = CEmitter2(token_list[1].value)
+            #self._emiter = CEmitter(token_list[1].value)
         self._emiter.emit_program_heading()
 
 
@@ -308,6 +154,8 @@ class IntermediateCode:
                 strcpy(c6, c2);
 
         """
+        # TODO: When managing procedure definitions, this code will need to adjust to emit at the correct level
+
         for token in token_list:
             assert token.category == "ConstantIdentifier", "ConstantIdentifier expected but found {0}".format(token)
 
@@ -324,7 +172,6 @@ class IntermediateCode:
                                                                       inner_c_type,
                                                                       inner_literal.type.dimension,
                                                                       inner_literal.value_to_c)
-                    self._emiter.emit_statement_terminator()
 
                 elif inner_type in ["RESERVED_TYPE_CHAR"]:
                     self._emiter.emit_constant_definition_part_char(token.name, inner_c_type)
@@ -513,8 +360,7 @@ class IntermediateCode:
 
             if isinstance(token, Operator):
 
-                #token = self._translate_operator_to_c(token)
-                self._emiter.emit_singleton(token.to_c)
+                self._emiter.emit_operator_in_definition(token.to_c)
 
             elif isinstance(token, Literal):
 

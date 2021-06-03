@@ -106,40 +106,104 @@ class NodeBasedEmitter(AbstractEmitter):
                 "closure": ""
                 }
 
-    def serialise(self, node_name, input_list):
-        code = ""
+    def _serialise(self, node_name, input_list):
+        result = ""
         for i in input_list:
-            code += self[node_name][i]
-        return code
-
+            result += self[node_name][i]
+        return result
 
     def output_code(self):
-        code = self.serialise("root", ["header", "declaration", "f_declaration"])
-        code += self.serialise("main", ["header", "declaration", "definition", "body", "closure"])
+        result = self._serialise("root", ["header", "declaration", "f_declaration"])
+        result += self._serialise("main", ["header", "declaration", "definition", "body", "closure"])
         for i in self._source:
             if i not in ["root", "main"]:
-                code += self.serialise(i, ["header", "declaration", "f_declaration", "definition", "body", "closure"])
-        return code
+                result += self._serialise(i, ["header", "declaration", "f_declaration", "definition", "body", "closure"])
+        return result
 
-
-    def emit_header(self, input_source, line_break=False):
+    def _emit(self, scope, context, input_source, line_break=False, terminator=False):
+        suffix_particle = ''
         if line_break:
-            self._header += input_source + '\n'
-        else:
-            self._header += input_source
+            suffix_particle = '\n'
 
-    def emit_declaration(self, input_source, line_break=False):
-        if line_break:
-            self._declaration += input_source + '\n'
-        else:
-            self._declaration += input_source
+        terminator_particle = ''
+        if terminator:
+            terminator_particle = ";"
 
-    def emit_declaration(self, input_source, line_break=False):
-        if line_break:
-            self._declaration += input_source + '\n'
-        else:
-            self._declaration += input_source
+        self._source[scope][context] += input_source + suffix_particle + terminator_particle
 
+    def emit_header(self, scope, input_source, line_break=False, terminator=False):
+        self._emit(scope, "header", input_source, line_break)
+
+    def emit_declaration(self, scope, input_source, line_break=False, terminator=False):
+        self._emit(scope, "declaration", input_source, line_break)
+
+    def emit_function_declaration(self, scope, input_source, line_break=False, terminator=False):
+        self._emit(scope, "f_declaration", input_source, line_break)
+
+    def emit_definition(self, scope, input_source, line_break=False, terminator=False):
+        self._emit(scope, "definition", input_source, line_break)
+
+    def emit_body(self, scope, input_source, line_break=False, terminator=False):
+        self._emit(scope, "body", input_source, line_break)
+
+    def emit_closure(self, scope, input_source, line_break=False, terminator=False):
+        self._emit(scope, "closure", input_source, line_break)
+
+
+class CEmitter2(NodeBasedEmitter):
+
+    def emit_program_heading(self):
+        """
+        PROGRAM_HEADING
+        """
+        self.emit_header("root", "#include <stdio.h>", line_break=True)
+        self.emit_header("root", "#include <stdbool.h>", line_break=True)
+        self.emit_header("root", "#include <string.h>", line_break=True)
+
+    def emit_constant_definition_part_string(self, in_name, in_type, dimension, in_value):
+        """
+        CONSTANT_DEFINITION_PART
+        const type variable = expression;
+        """
+        line_1 = "const {0} {1}[{2}];"
+        line_2 = "const {0} {1}[{2}] = {3};"
+
+        self.emit_declaration("root",
+                              line_1.format(in_type, in_name, dimension + 1),
+                              line_break=True,
+                              terminator=True)
+
+        self.emit_definition("root",
+                             line_2.format(in_type, in_name, dimension + 1, in_value),
+                             line_break=True,
+                             terminator=True)
+
+    def emit_constant_definition_part_char(self, in_name, in_type):
+        """
+        CONSTANT_DEFINITION_PART
+        const type variable = expression;
+        """
+        line_1 = "const {0} {1}"
+        line_2 = "const {0} {1} = "
+        self.emit_declaration("root",
+                              line_1.format(in_type, in_name),
+                              line_break=True,
+                              terminator=True)
+
+        self.emit_definition("root",
+                             line_2.format(in_type, in_name),
+                             line_break=True,
+                             terminator=True)
+
+    def emit_operator_in_definition(self, a_generic_string):
+        """
+        Just emits a single input string
+        """
+        particle = "{0} "
+        self.emit_definition("root",
+                             particle.format(a_generic_string),
+                             line_break=False,
+                             terminator=False)
 
 
 class LinearEmitter(AbstractEmitter):

@@ -85,6 +85,14 @@ class TestBinaryOperator(TestCase):
         operator = BinaryOperator.operator_div()
         self._perform_compatibility_test_with_types(operator)
 
+    def test_binary_operator_creation_operator_mod(self):
+        operator = BinaryOperator.operator_mod()
+        self._perform_creation_test(operator, "OPERATOR_MOD", "MOD")
+
+    def test_binary_operator_evaluate_to_type_with_types_operator_mod(self):
+        operator = BinaryOperator.operator_mod()
+        self._perform_compatibility_test_with_types(operator)
+
     def test_binary_operator_creation_operator_assignment(self):
         operator = BinaryOperator.operator_assignment()
         self._perform_creation_test(operator, "OPERATOR_ASSIGNMENT", ":=")

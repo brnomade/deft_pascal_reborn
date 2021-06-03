@@ -113,3 +113,78 @@ class PascalExamples:
             end.
         """
         return code
+
+    @staticmethod
+    def example_divisors():
+        code = """
+            program divisors;
+                VAR NUMBER, DIVISOR : INTEGER;
+            BEGIN
+                FOR NUMBER := 100 DOWNTO 0 DO
+                BEGIN
+                    IF NUMBER > 0 THEN
+                    BEGIN
+                        WRITELN('THE DIVISORS OF', NUMBER, 'ARE:');
+                        FOR DIVISOR := 2 TO NUMBER DO
+                            IF NUMBER MOD DIVISOR = 0 THEN
+                                WRITELN(DIVISOR);
+                    END;
+                END;
+            END.
+        """
+        return code
+
+    @staticmethod
+    def example_primes():
+        code = """
+            program primes;
+                CONST 
+                    N=1229;
+                    N1 = 35; (* N1 is SQRT OF N *)
+                VAR
+                    I, K, X, INC, LIM, SQUARE, L : INTEGER
+                    PRIM : BOOLEAN;
+                    P, V : ARRAY[1..N] of INTEGER;
+                    
+                BEGIN
+                    WRITE(2:6, 3:6); 
+                    L :-2;            
+                    X := 1;
+                    INC := 4;
+                    LIM := 1;
+                    SQUARE := 9;
+                    FOR I := 3 TO N DO
+                    BEGIN (* FIND NEXT PRIME *)
+                        REPEAT 
+                            X := X + INC;
+                            INC := 6 - INC;
+                            IF SQUARE <= X THEN
+                                BEGIN
+                                    LIM := LIM + 1;
+                                    V[LIM] := SQUARE;
+                                    SQUARE := (P[LIM + 1]) * (P[LIM + 1))
+                                END;
+                            K := 2;
+                            PRIM := TRUE;
+                            WHILE PRIM AND (K < LIM) DO
+                                BEGIN
+                                    K := K + 1;
+                                    IF V[K] < X THEN 
+                                        V[K] := V[K] + 2 * P[K];
+                                    PRIM := X <> V[K]
+                                END
+                        UNTIL PRIM;
+                        IF I <= N1 THEN 
+                            P[I] := X;
+                        WRITE(X:6);
+                        L := L + 1;
+                        IF L = 10 THEN
+                            BEGIN
+                                WRITELN;
+                                L := 0;
+                            END
+                    END;
+                    WRITELN;
+                END.                
+        """
+        return code

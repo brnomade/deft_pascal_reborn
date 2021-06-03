@@ -18,6 +18,10 @@ class ConfigurationForTestDeftPascalParser:
     def tests_to_run(cls):
         return TestSuit.positive_tests_to_run()
 
+    @classmethod
+    def example_tests_to_run(cls):
+        return TestSuit.example_tests_to_run()
+
 
 class TestDeftPascalParser(TestCase):
 

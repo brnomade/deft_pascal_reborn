@@ -205,6 +205,22 @@ class BinaryOperator(Operator):
         return operator
 
     @classmethod
+    def operator_mod(cls):
+        """
+         #  0      1    2     3     4     5     6     7     8      9
+         #  INT   REAL  SET   CHAR  STR   BOOL  POINT TEXT  ARRAY  NIL
+
+        (row, column, cell)
+        [(0,0,0),(1,1,0),(0,1,0),(1,0,0)]
+
+        """
+        operator = cls("OPERATOR_MOD", 'OPERATOR_MOD', "MOD")
+        operator._compatible = [(0,0,0),(1,1,0),(0,1,0),(1,0,0)]
+        # operator._as_type = lambda l, r, c: [t for t in c if t[0] == l.index and t[1] == r.index]
+        operator._as_c = "MOD"
+        return operator
+
+    @classmethod
     def operator_assignment(cls):
         """
          #  0      1    2     3     4     5     6     7     8      9

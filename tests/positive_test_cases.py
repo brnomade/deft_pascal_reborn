@@ -671,6 +671,30 @@ class PositiveLanguageTests:
         return code
 
     @staticmethod
+    def scenario_semicolon_not_required_for_last_statement():
+        code = """
+            PROGRAM {{{0}}};  
+            VAR v1 : INTEGER;            
+            BEGIN                                     
+               v1 := 1;
+               writeln(v1)
+            END. 
+        """
+        return code
+
+    @staticmethod
+    def scenario_semicolon_accepted_for_last_statement():
+        code = """
+            PROGRAM {{{0}}};  
+            VAR v1 : INTEGER;            
+            BEGIN                                     
+               v1 := 1;
+               writeln(v1);
+            END. 
+        """
+        return code
+
+    @staticmethod
     def scenario_repeat_loop_with_boolean_constant():
         code = """
             PROGRAM {{{0}}};  
@@ -1136,6 +1160,44 @@ class PositiveLanguageTests:
         return code
 
     @staticmethod
+    def scenario_if_without_else_using_begin_end_with_literals():
+        code = """
+                PROGRAM {{{0}}};                   
+                BEGIN             
+                    if 2 > 1 then begin
+                        writeln('inside if');
+                    end;
+                    writeln('outside if')
+                END.                                         
+            """
+        return code
+
+    @staticmethod
+    def scenario_if_with_else_without_begin_end_with_literals():
+        code = """
+                PROGRAM {{{0}}};                   
+                BEGIN             
+                    if 2 > 1 then
+                        writeln('inside if')
+                    else
+                        writeln('inside else');
+                END.                                         
+            """
+        return code
+
+    @staticmethod
+    def scenario_if_without_else_without_begin_end_with_literals():
+        code = """
+                PROGRAM {{{0}}};                   
+                BEGIN             
+                    if 2 > 1 then
+                        writeln('inside if');
+                    writeln('outside if')
+                END.                                         
+            """
+        return code
+
+    @staticmethod
     def scenario_if_with_else_using_begin_end_with_variables():
         code = """
                 PROGRAM {{{0}}};                   
@@ -1154,6 +1216,56 @@ class PositiveLanguageTests:
         return code
 
     @staticmethod
+    def scenario_if_without_else_using_begin_end_with_variables():
+        code = """
+                PROGRAM {{{0}}};                   
+                VAR
+                    x, y : INTEGER;
+                BEGIN             
+                    x := 2;
+                    y := 1;
+                    if x > y then begin
+                        writeln('inside if');
+                    end ;
+                    writeln('outside if');
+                END.                                         
+            """
+        return code
+
+    @staticmethod
+    def scenario_if_with_else_without_begin_end_with_variables():
+        code = """
+                PROGRAM {{{0}}};                   
+                VAR
+                    x, y : INTEGER;
+                BEGIN             
+                    x := 2;
+                    y := 1;
+                    if x > y then
+                        writeln('inside if')
+                    else
+                        writeln('inside else');
+                END.                                         
+            """
+        return code
+
+    @staticmethod
+    def scenario_if_without_else_without_begin_end_with_variables():
+        code = """
+                PROGRAM {{{0}}};                   
+                VAR
+                    x, y : INTEGER;
+                BEGIN             
+                    x := 2;
+                    y := 1;
+                    if x > y then
+                        writeln('inside if');
+                    writeln('outside else')
+                END.                                         
+            """
+        return code
+
+    @staticmethod
     def scenario_if_with_else_using_begin_end_with_expressions():
         code = """
                 PROGRAM {{{0}}};                   
@@ -1167,6 +1279,56 @@ class PositiveLanguageTests:
                     end else begin
                         writeln('inside else');
                     end;
+                END.                                         
+            """
+        return code
+
+    @staticmethod
+    def scenario_if_without_else_using_begin_end_with_expressions():
+        code = """
+                PROGRAM {{{0}}};                   
+                VAR
+                    x, y : INTEGER;
+                BEGIN             
+                    x := 2;
+                    y := 1;
+                    if x + 1 > y + x then begin
+                        writeln('inside if');
+                    end;
+                    writeln('outside else');
+                END.                                         
+            """
+        return code
+
+    @staticmethod
+    def scenario_if_with_else_without_begin_end_with_expressions():
+        code = """
+                PROGRAM {{{0}}};                   
+                VAR
+                    x, y : INTEGER;
+                BEGIN             
+                    x := 2;
+                    y := 1;
+                    if x + 1 > y + x then
+                        writeln('inside if')
+                    else
+                        writeln('inside else');
+                END.                                         
+            """
+        return code
+
+    @staticmethod
+    def scenario_if_without_else_without_begin_end_with_expressions():
+        code = """
+                PROGRAM {{{0}}};                   
+                VAR
+                    x, y : INTEGER;
+                BEGIN             
+                    x := 2;
+                    y := 1;
+                    if x + 1 > y + x then
+                        writeln('inside if');
+                    writeln('outside else');
                 END.                                         
             """
         return code

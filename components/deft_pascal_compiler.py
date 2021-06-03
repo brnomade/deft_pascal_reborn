@@ -87,10 +87,12 @@ class DeftPascalCompiler:
                          "PROCEDURE_DECLARATION",
                          "EXPRESSION",
                          "CLOSED_FOR_STATEMENT",
+                         "OPEN_FOR_STATEMENT",
                          "CLOSED_WHILE_STATEMENT",
                          "REPEAT_STATEMENT",
                          "COMPOUND_STATEMENT",
-                         "CLOSED_IF_STATEMENT"
+                         "CLOSED_IF_STATEMENT",
+                         "OPEN_IF_STATEMENT"
                          }
 
 
@@ -233,6 +235,7 @@ class DeftPascalCompiler:
         self._operator_table.append(BinaryOperator.operator_minus())
         self._operator_table.append(BinaryOperator.operator_divide())
         self._operator_table.append(BinaryOperator.operator_div())
+        self._operator_table.append(BinaryOperator.operator_mod())
         self._operator_table.append(BinaryOperator.operator_assignment())
         self._operator_table.append(BinaryOperator.operator_equal_to())
         self._operator_table.append(BinaryOperator.operator_not_equal_to())
@@ -251,6 +254,7 @@ class DeftPascalCompiler:
         self._operator_table.append(UnaryOperator.operator_uparrow())
         self._operator_table.append(NeutralOperator.operator_left_parentheses())
         self._operator_table.append(NeutralOperator.operator_right_parentheses())
+
 
         # initialize the control stack for BEGIN and END
         #self._stack_begin.append(self._GLB_MAIN_BEGIN)
@@ -735,10 +739,80 @@ class DeftPascalCompiler:
 
         return working_stack
 
-
     def _closed_for_statement(self, action_name, input_list, working_stack):
         """
         CLOSED_FOR_STATEMENT
+        input_list will have: FOR identifier := Tree(expression) TO/DOWNTO Tree(expression) DO BEGIN Tree(assignment_statement END
+        expression is a Tree of multiple objects
+        assignment_statement is a Tree of multiple objects
+        """
+        working_stack = []
+
+        # process reserved word FOR
+        keyword = BaseKeyword.from_token(input_list.pop(0))
+        working_stack.append(keyword)
+
+        # process the control variable (or expression)
+        control_variable_stack = self._internal_compile(input_list.pop(0), [])
+        working_stack = working_stack + control_variable_stack
+
+        # consume the operator :=
+        token = input_list.pop(0)
+        operator = self._operator_table.retrieve(token.type, equal_level_only=False)
+        if not operator:
+            raise SystemError("Operator table not working correctly")
+
+        control_variable_stack.append(operator)
+        working_stack.append(operator)
+
+        # process the 'initial_value' (or expression) on the for
+        expression_stack = self._internal_compile(input_list.pop(0), [])
+        expression = IntegerExpression.from_list(control_variable_stack + expression_stack)
+
+        if expression is None:
+            msg = "[{0}] expected integer expression but found: {1}"
+            _MODULE_LOGGER_.error(msg.format(action_name, expression_stack))
+
+        else:
+            expression = IntegerExpression.from_list(expression_stack)
+            working_stack.append(expression)
+
+        # emit reserved word to / downto
+        keyword = BaseKeyword.from_token(input_list.pop(0))
+        working_stack.append(keyword)
+
+        # process the 'final_value' on the for
+        expression_stack = self._internal_compile(input_list.pop(0), [])
+        expression = IntegerExpression.from_list(control_variable_stack + expression_stack)
+
+        if expression is None:
+            msg = "[{0}] expected integer expression but found: {1}"
+            _MODULE_LOGGER_.error(msg.format(action_name, expression_stack))
+
+        else:
+            expression = IntegerExpression.from_list(expression_stack)
+            working_stack.append(expression)
+
+        # emit reserved word do
+        keyword = BaseKeyword.from_token(input_list.pop(0))
+        working_stack.append(keyword)
+
+        # generate the intermediate code
+        self._ic.init(action_name)
+        self._ic.push(working_stack)
+        self._ic.flush()
+
+        _MODULE_LOGGER_.debug("[{0}] {1}".format(action_name, working_stack))
+
+        # process statements nested inside the for
+        self._increase_scope(action_name)
+        result = self._internal_compile(input_list.pop(0), [])
+        self._decrease_scope()
+        return result
+
+    def _open_for_statement(self, action_name, input_list, working_stack):
+        """
+        OPEN_FOR_STATEMENT
         input_list will have: FOR identifier := Tree(expression) TO/DOWNTO Tree(expression) DO BEGIN Tree(assignment_statement END
         expression is a Tree of multiple objects
         assignment_statement is a Tree of multiple objects
@@ -1198,5 +1272,75 @@ class DeftPascalCompiler:
         self._increase_scope(action_name)
         self._internal_compile(token, [])
         self._decrease_scope()
+
+        return working_stack
+
+    def _open_if_statement(self, action_name, input_list, working_stack):
+        """
+        _open_if_statement
+        input_list -> [Token(RESERVED_STATEMENT_IF, 'if'),
+                        Tree(expression, [...]),
+                       Token(RESERVED_STATEMENT_THEN, 'then'),
+                        Tree(compound_statement, [...]
+                       Token(RESERVED_STATEMENT_ELSE, 'else'),
+                        Tree(compound_statement, [...]
+                      ]
+        """
+        working_stack = []
+
+        # process reserved word IF
+        keyword = BaseKeyword.from_token(input_list.pop(0))
+        working_stack.append(keyword)
+
+        # process boolean expression
+        expression_stack = self._internal_compile(input_list.pop(0), [])
+        expression = BaseExpression.from_list(expression_stack)
+
+        if expression is None:
+            msg = "[{0}] incompatible types in expression: {1}"
+            _MODULE_LOGGER_.error(msg.format(action_name, expression))
+
+        elif not expression.type == "RESERVED_TYPE_BOOLEAN":
+            msg = "[{0}] expected boolean expression but found: {1}"
+            _MODULE_LOGGER_.error(msg.format(action_name, expression.type))
+
+        else:
+            working_stack.append(expression)
+
+        # process reserved word THEN
+        keyword = BaseKeyword.from_token(input_list.pop(0))
+        working_stack.append(keyword)
+
+        # generate the intermediate code
+        self._ic.init(action_name)
+        self._ic.push(working_stack)
+        self._ic.flush()
+        _MODULE_LOGGER_.debug("[{0}] {1}".format(action_name, working_stack))
+
+        # process statements after IF and before ELSE
+        token = input_list.pop(0)
+        self._increase_scope(action_name)
+        self._internal_compile(token, [])
+        self._decrease_scope()
+
+        ## switch the action name to match the ELSE part of the IF
+        #action_name = action_name + "_ELSE"
+
+        # process reserved word ELSE
+        #working_stack = []
+        #keyword = BaseKeyword.from_token(input_list.pop(0))
+        #working_stack.append(keyword)
+
+        # generate the intermediate code
+        #self._ic.init(action_name)
+        #self._ic.push(working_stack)
+        #self._ic.flush()
+        #_MODULE_LOGGER_.debug("[{0}] {1}".format(action_name, working_stack))
+
+        # process statements after ELSE
+        #token = input_list.pop(0)
+        #self._increase_scope(action_name)
+        #self._internal_compile(token, [])
+        #self._decrease_scope()
 
         return working_stack

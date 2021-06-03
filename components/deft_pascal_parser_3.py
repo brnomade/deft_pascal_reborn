@@ -229,6 +229,11 @@ class DeftPascalParser:
                                       | closed_while_statement
                                       | closed_for_statement
                                       
+        _non_labeled_open_statement : open_if_statement 
+                                    | open_for_statement
+                                    |
+        
+
                                       
         // WHILE
         
@@ -248,7 +253,9 @@ class DeftPascalParser:
        
        closed_if_statement : RESERVED_STATEMENT_IF _boolean_expression RESERVED_STATEMENT_THEN _closed_statement RESERVED_STATEMENT_ELSE _closed_statement
 
-
+       open_if_statement : RESERVED_STATEMENT_IF _boolean_expression RESERVED_STATEMENT_THEN _statement
+                         | RESERVED_STATEMENT_IF _boolean_expression RESERVED_STATEMENT_THEN _closed_statement RESERVED_STATEMENT_ELSE _open_statement
+ 
        
        // control_variable : IDENTIFIER
         
@@ -259,12 +266,6 @@ class DeftPascalParser:
 
         _final_value : expression
 
-
-
-        //
-
-        _non_labeled_open_statement : |
-        
         // PROCEDURE STATEMENT (PROCEDURE INVOCATION)
         
         procedure_call : IDENTIFIER _params
