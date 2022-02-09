@@ -45,7 +45,7 @@ class PositiveLanguageTests:
 
 
     @staticmethod
-    def scenario_decimal_numbers():
+    def scenario_numbers_decimal():
         code = """
             PROGRAM {{{0}}};                 
             CONST                                    
@@ -66,7 +66,7 @@ class PositiveLanguageTests:
 
 
     @staticmethod
-    def scenario_binary_numbers():
+    def scenario_numbers_binary():
         code = """
             PROGRAM {{{0}}};                 
             CONST                                    
@@ -81,7 +81,7 @@ class PositiveLanguageTests:
 
 
     @staticmethod
-    def scenario_octal_numbers():
+    def scenario_numbers_octal():
         code = """
             PROGRAM {{{0}}};                 
             CONST                                    
@@ -96,7 +96,7 @@ class PositiveLanguageTests:
 
 
     @staticmethod
-    def scenario_hexadecimal_numbers():
+    def scenario_numbers_hexadecimal():
         code = """
             PROGRAM {{{0}}};                 
             CONST                                    
@@ -791,4 +791,293 @@ class PositiveLanguageTests:
         """
         return code
 
+    @staticmethod
+    def scenario_procedure_declaration_without_parameters():
+        code = """
+            PROGRAM {{{0}}};                   
+            PROCEDURE P1;
+            BEGIN
+            END;             
+            BEGIN             
+            END.                                         
+        """
+        return code
 
+    @staticmethod
+    def scenario_function_declaration_without_parameters():
+        code = """
+            PROGRAM {{{0}}};                   
+            FUNCTION F1 : INTEGER;
+            BEGIN
+            END;             
+            BEGIN             
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_procedure_declaration_with_single_static_parameter():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            PROCEDURE P1( SP1 : INTEGER );
+            BEGIN
+            END;             
+            BEGIN             
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_function_declaration_with_single_static_parameter():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            FUNCTION F1( SP1 : INTEGER ) : INTEGER;
+            BEGIN
+            END;             
+            BEGIN             
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_procedure_declaration_with_multiple_static_parameter_same_type():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            PROCEDURE P1( SP1, SP2 : INTEGER );
+            BEGIN
+            END;             
+            BEGIN             
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_function_declaration_with_multiple_static_parameter_same_type():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            FUNCTION F1( SP1, SP2 : INTEGER ) : INTEGER;
+            BEGIN
+            END;             
+            BEGIN             
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_procedure_declaration_with_multiple_static_parameter_multiple_types():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            PROCEDURE P1( SP1 : INTEGER; SP2 : BOOLEAN );
+            BEGIN
+            END;             
+            BEGIN             
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_function_declaration_with_multiple_static_parameter_multiple_types():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            FUNCTION F1( SP1 : INTEGER; SP2 : BOOLEAN ) : INTEGER;
+            BEGIN
+            END;             
+            BEGIN             
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_procedure_declaration_with_single_variable_parameter():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            PROCEDURE P1( VAR SP1 : INTEGER );
+            BEGIN
+            END;             
+            BEGIN             
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_function_declaration_with_single_variable_parameter():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            FUNCTION F1( VAR SP1 : INTEGER ) : INTEGER;
+            BEGIN
+            END;             
+            BEGIN             
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_procedure_declaration_with_multiple_variable_parameter_same_type():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            PROCEDURE P1( VAR SP1, SP2 : INTEGER );
+            BEGIN
+            END;             
+            BEGIN             
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_function_declaration_with_multiple_variable_parameter_same_type():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            FUNCTION F1( VAR SP1, SP2 : INTEGER ) : INTEGER;
+            BEGIN
+            END;             
+            BEGIN             
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_procedure_declaration_with_multiple_variable_parameter_multiple_types():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            PROCEDURE P1( VAR SP1 : INTEGER; VAR SP2 : BOOLEAN );
+            BEGIN
+            END;             
+            BEGIN             
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_function_declaration_with_multiple_variable_parameter_multiple_types():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            FUNCTION F1( VAR SP1 : INTEGER; VAR SP2 : BOOLEAN ) : INTEGER;
+            BEGIN
+            END;             
+            BEGIN             
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_procedure_invocation_without_parameters():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            PROCEDURE P1;
+            BEGIN
+            END;             
+            BEGIN             
+               P1;                             
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_function_invocation_without_parameters_without_assignment():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            FUNCTION F1 : INTEGER;
+            BEGIN
+            END;             
+            BEGIN             
+               F1;                             
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_function_invocation_without_parameters_with_assignment():
+        code = """
+            PROGRAM {{{0}}};
+            VAR
+            V1 : INTEGER;                                                 
+            FUNCTION F1 : INTEGER;
+            BEGIN
+            END;             
+            BEGIN             
+               V1 := F1;                             
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_procedure_invocation_with_single_static_parameter():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            PROCEDURE P1( SP1 : INTEGER );
+            BEGIN
+            END;             
+            BEGIN             
+               P1(1);                             
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_function_invocation_with_single_static_parameter_without_assignment():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            FUNCTION F1( SP1 : INTEGER ) : INTEGER;
+            BEGIN
+            END;             
+            BEGIN             
+               F1(1);                             
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_function_invocation_with_single_static_parameter_with_assignment():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            VAR
+            V1 : INTEGER;
+            FUNCTION F1( SP1 : INTEGER ) : INTEGER;
+            BEGIN
+            END;             
+            BEGIN             
+               V1 := F1(1);                             
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_procedure_invocation_with_multiple_static_parameter():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            PROCEDURE P1( SP1, SP2 : INTEGER );
+            BEGIN
+            END;             
+            BEGIN             
+               P1(1,2);                             
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_function_invocation_with_multiple_static_parameter_without_assignment():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            FUNCTION F1( SP1, SP2 : INTEGER ) : INTEGER;
+            BEGIN
+            END;             
+            BEGIN             
+               F1(1,2);                             
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_function_invocation_in_expression_with_assignment():
+        code = """
+            PROGRAM {{{0}}};                                     
+            VAR
+            V1 : INTEGER;            
+            FUNCTION F1( SP1 : INTEGER ) : INTEGER;
+            BEGIN
+            END;             
+            BEGIN             
+               V1 := F1(1) + F1(2);                             
+            END.                                         
+        """
+        return code
