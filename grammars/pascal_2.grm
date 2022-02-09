@@ -59,7 +59,7 @@ block : label_declaration_part [DONE]
  constant_definition_part [DONE]
  type_definition_part [DONE]
  variable_declaration_part [DONE]
- procedure_and_function_declaration_part
+ procedure_and_function_declaration_part [DONE]
  statement_part [DONE]
  ;
 
@@ -278,71 +278,91 @@ variable_declaration_list :
 variable_declaration : identifier_list COLON type_denoter
  ;
 
+[DONE]
 procedure_and_function_declaration_part :
   proc_or_func_declaration_list semicolon
  |
  ;
 
+[DONE]
 proc_or_func_declaration_list :
    proc_or_func_declaration_list semicolon proc_or_func_declaration
  | proc_or_func_declaration
  ;
 
+[DONE]
 proc_or_func_declaration : procedure_declaration
  | function_declaration
  ;
 
+[DONE]
 procedure_declaration : procedure_heading semicolon directive
  | procedure_heading semicolon procedure_block
  ;
 
+[DONE]
 procedure_heading : procedure_identification
  | procedure_identification formal_parameter_list
  ;
 
+[DONE]
 directive : FORWARD
  | EXTERNAL
  ;
 
+[DONE]
 formal_parameter_list : LPAREN formal_parameter_section_list RPAREN ;
 
+[DONE]
 formal_parameter_section_list : formal_parameter_section_list semicolon formal_parameter_section
  | formal_parameter_section
  ;
 
+[DONE]
 formal_parameter_section : value_parameter_specification
  | variable_parameter_specification
  | procedural_parameter_specification
  | functional_parameter_specification
  ;
 
+[DONE]
 value_parameter_specification : identifier_list COLON identifier
  ;
 
+[DONE]
 variable_parameter_specification : VAR identifier_list COLON identifier
  ;
 
+[DONE]
 procedural_parameter_specification : procedure_heading ;
 
+[DONE]
 functional_parameter_specification : function_heading ;
 
+[DONE]
 procedure_identification : PROCEDURE identifier ;
 
+[DONE]
 procedure_block : block ;
 
+[DONE]
 function_declaration : function_heading semicolon directive
  | function_identification semicolon function_block
  | function_heading semicolon function_block
  ;
 
+[DONE]
 function_heading : FUNCTION identifier COLON result_type
  | FUNCTION identifier formal_parameter_list COLON result_type
  ;
 
+[DONE]
 result_type : identifier ;
 
+[DONE]
 function_identification : FUNCTION identifier ;
 
+[DONe]
 function_block : block ;
 
 [DONE]
@@ -569,6 +589,7 @@ unsigned_real : REALNUMBER
  ;
 
 /* functions with no params will be handled by plain identifier */
+[DONE]
 function_designator : identifier params
  ;
 

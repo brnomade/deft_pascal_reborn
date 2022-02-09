@@ -5,3 +5,6 @@ https://llvm.org/docs/index.html#
 https://lark-parser.readthedocs.io/en/latest/how_to_use/
 https://www.cs.cornell.edu/~asampson/blog/minisynth.html
 http://blog.erezsh.com/how-to-write-a-dsl-in-python-with-lark/
+
+https://cs.lmu.edu/~ray/notes/writingacompiler/
+https://ruslanspivak.com/lsbasi-part1/
