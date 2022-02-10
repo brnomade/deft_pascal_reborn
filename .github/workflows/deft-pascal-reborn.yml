@@ -36,17 +36,27 @@ jobs:
         python -m pip install coverage
         python -m pip install python-coveralls
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Code Style Compliance
+    - name: Parser - Code Style Compliance
+      run: |
+        flake8 --max-line-length 120 --show-source --statistics --exit-zero --max-complexity=10 components/deft_pascal_parser_3.py
+      continue-on-error: true
+    - name: Parser - Unit Test and Coverage report
+      run: |
+        coverage erase
+        coverage run -a -m --source=components unittest -v tests.test_deft_pascal_parser
+        coverage report -i -m
+      continue-on-error: true
+    - name: Parser - Complexity
+      run: |
+        mccabe --min 5 components/deft_pascal_parser_3.py
+      continue-on-error: true
+    - name: All - Code Style Compliance
       run: |
         flake8 . --exclude=tests,scrapbook,obsoletes,grammars,.github --max-line-length 120 --show-source --statistics --exit-zero --max-complexity=10
       continue-on-error: true
-    - name: Unit Test and Coverage report
+    - name: All - Unit Test and Coverage report
       run: |
         coverage erase
         coverage run -a -m unittest discover -v -s tests
         coverage report -i -m
-      continue-on-error: true
-    - name: Test with pytest
-      run: |
-        pytest
       continue-on-error: true
