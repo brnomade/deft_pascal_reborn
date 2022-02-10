@@ -48,7 +48,7 @@ jobs:
       continue-on-error: true
     - name: Parser - Complexity
       run: |
-        mccabe --min 5 components/deft_pascal_parser_3.py
+        python -m mccabe --min 5 components/deft_pascal_parser_3.py
       continue-on-error: true
     - name: All - Code Style Compliance
       run: |
