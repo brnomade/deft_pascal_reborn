@@ -58,6 +58,7 @@ jobs:
       run: |
         coverage erase
         coverage run -a -m unittest discover -v -s tests
+        coveralls -v
         coverage report -i -m
       continue-on-error: true
     - name: Coveralls GitHub Action
