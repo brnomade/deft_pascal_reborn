@@ -6,7 +6,7 @@ HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
 from unittest import TestCase
-from utils.compiler_utils import check_type_compatibility, convert_to_postfix, ExpressionOriginal
+from utils.compiler_utils import convert_to_postfix, ExpressionOriginal
 from components.symbols.operator_symbols import BinaryOperator, UnaryOperator, NeutralOperator
 from components.symbols.literals_symbols import BooleanLiteral, NumericLiteral
 from components.symbols.type_symbols import BasicType
@@ -34,7 +34,7 @@ class TestCompilerInternals(TestCase):
             elif i == ')':
                 t = NeutralOperator.operator_right_parentheses()
             else:
-                t = NumericLiteral(i, None, None, BasicType.reserved_type_integer(), int(i))
+                t = NumericLiteral.from_value(i, "INTEGER")
             token_list.append(t)
         return token_list
 
@@ -47,7 +47,7 @@ class TestCompilerInternals(TestCase):
         print("\npostfix expression: {0} \n".format([i.value for i in result]))
         #
         self.assertEqual(ExpressionOriginal(infix_expression).Evaluate(),
-                         [i.value for i in result]
+                         [int(i.value) if i.value.isnumeric() else i.value for i in result]
                          )
 
     def test_postfix_original_expression_5(self):
@@ -184,68 +184,68 @@ class TestCompilerInternals(TestCase):
         self._perform_postfix_conversion_test("1 + 1")
 
 
-    def test_type_check_scenario_assignment_unary_operation_compatible_type(self):
-        #
-        symbol_list = [
-            BooleanLiteral.false(),
-            BinaryOperator.operator_assignment(),
-            UnaryOperator.operator_not(),
-            BooleanLiteral.false(),
-        ]
-        #
-        result = check_type_compatibility(symbol_list)
-        self.assertTrue(result)
-
-    def test_type_check_scenario_assignment_unary_operation_not_compatible_type(self):
-        #
-        symbol_list = [
-            NumericLiteral("1", None, None, BasicType.reserved_type_integer(), 1),
-            BinaryOperator.operator_assignment(),
-            UnaryOperator.operator_not(),
-            BooleanLiteral.false(),
-        ]
-        #
-        result = check_type_compatibility(symbol_list)
-        self.assertFalse(result)
-
-    def test_type_check_scenario_expression_unary_operation_compatible_type(self):
-        #
-        symbol_list = [
-            UnaryOperator.operator_not(),
-            BooleanLiteral.false(),
-        ]
-        #
-        result = check_type_compatibility(symbol_list)
-        self.assertTrue(result)
-
-    def test_type_check_scenario_expression_unary_operation_not_compatible_type(self):
-        #
-        symbol_list = [
-            UnaryOperator.operator_not(),
-            NumericLiteral("1", None, None, BasicType.reserved_type_integer(), 1)
-        ]
-        #
-        result = check_type_compatibility(symbol_list)
-        self.assertFalse(result)
-
-    def test_type_check_scenario_assignment_single_level_not_compatible_types(self):
-        #
-        symbol_list = [
-            NumericLiteral("1", None, None, BasicType.reserved_type_integer(), 1),
-            BinaryOperator.operator_assignment(),
-            BooleanLiteral.false(),
-        ]
-        #
-        result = check_type_compatibility(symbol_list)
-        self.assertFalse(result)
-
-    def test_type_check_scenario_assignment_single_level_compatible_types(self):
-        #
-        symbol_list = [
-            BooleanLiteral.true(),
-            BinaryOperator.operator_assignment(),
-            BooleanLiteral.false(),
-        ]
-        #
-        result = check_type_compatibility(symbol_list)
-        self.assertTrue(result)
+    # def test_type_check_scenario_assignment_unary_operation_compatible_type(self):
+    #     #
+    #     symbol_list = [
+    #         BooleanLiteral.false(),
+    #         BinaryOperator.operator_assignment(),
+    #         UnaryOperator.operator_not(),
+    #         BooleanLiteral.false(),
+    #     ]
+    #     #
+    #     result = check_type_compatibility(symbol_list)
+    #     self.assertTrue(result)
+    #
+    # def test_type_check_scenario_assignment_unary_operation_not_compatible_type(self):
+    #     #
+    #     symbol_list = [
+    #         NumericLiteral("1", None, None, BasicType.reserved_type_integer(), 1),
+    #         BinaryOperator.operator_assignment(),
+    #         UnaryOperator.operator_not(),
+    #         BooleanLiteral.false(),
+    #     ]
+    #     #
+    #     result = check_type_compatibility(symbol_list)
+    #     self.assertFalse(result)
+    #
+    # def test_type_check_scenario_expression_unary_operation_compatible_type(self):
+    #     #
+    #     symbol_list = [
+    #         UnaryOperator.operator_not(),
+    #         BooleanLiteral.false(),
+    #     ]
+    #     #
+    #     result = check_type_compatibility(symbol_list)
+    #     self.assertTrue(result)
+    #
+    # def test_type_check_scenario_expression_unary_operation_not_compatible_type(self):
+    #     #
+    #     symbol_list = [
+    #         UnaryOperator.operator_not(),
+    #         NumericLiteral("1", None, None, BasicType.reserved_type_integer(), 1)
+    #     ]
+    #     #
+    #     result = check_type_compatibility(symbol_list)
+    #     self.assertFalse(result)
+    #
+    # def test_type_check_scenario_assignment_single_level_not_compatible_types(self):
+    #     #
+    #     symbol_list = [
+    #         NumericLiteral("1", None, None, BasicType.reserved_type_integer(), 1),
+    #         BinaryOperator.operator_assignment(),
+    #         BooleanLiteral.false(),
+    #     ]
+    #     #
+    #     result = check_type_compatibility(symbol_list)
+    #     self.assertFalse(result)
+    #
+    # def test_type_check_scenario_assignment_single_level_compatible_types(self):
+    #     #
+    #     symbol_list = [
+    #         BooleanLiteral.true(),
+    #         BinaryOperator.operator_assignment(),
+    #         BooleanLiteral.false(),
+    #     ]
+    #     #
+    #     result = check_type_compatibility(symbol_list)
+    #     self.assertTrue(result)

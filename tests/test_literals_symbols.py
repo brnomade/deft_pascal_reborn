@@ -9,6 +9,7 @@ from unittest.case import TestCase
 
 from components.symbols.literals_symbols import Literal, BooleanLiteral, NilLiteral, StringLiteral, NumericLiteral
 from components.symbols.type_symbols import BasicType
+from components.symbols.base_symbols import BaseType
 
 
 class TestLiteral(TestCase):
@@ -138,7 +139,7 @@ class TestStringLiteral(TestCase):
     def test_from_value_string(self):
         symbol = StringLiteral.from_value("string", "STRING_VALUE")
         self.assertEqual("string", symbol.name)
-        self.assertIsInstance(symbol.type, BasicType)
+        self.assertIsInstance(symbol.type, BaseType)
         self.assertEqual("string", symbol.value)
 
 

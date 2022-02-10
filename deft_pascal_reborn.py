@@ -25,7 +25,9 @@ class DeftPascalReborn:
         self._arguments = self._initialise_arguments_parser()
         self._splash_screen()
         self._present_script_settings()
-        self._validate_arguments()
+        if not self._validate_arguments():
+            print("\nConfiguration error. Terminating execution.\n")
+            sys.exit(1)
         self._compiler = None
 
     def _initialise_arguments_parser(self):
@@ -73,15 +75,18 @@ class DeftPascalReborn:
     def _validate_arguments(self):
         msg = "{0} does not exist or cannot be found at {1}"
         if not os.path.isfile(self._arguments.input_file):
-            print(msg.format("Input file"), self._arguments.input_file)
+            print(msg.format("Input file", self._arguments.input_file))
+            return False
 
         if not os.path.isfile(self._arguments.compiler_executable):
             print(msg.format("Compiler executable", self._arguments.compiler_executable))
+            return False
 
         if self._arguments.output_path:
             if not os.path.isdir(self._arguments.output_path):
-                print(msg.format("Output folder"), self._arguments.output_path)
-
+                print(msg.format("Output folder", self._arguments.output_path))
+                return False
+        return True
 
     def _adjust_verbosity(self):
         default_level = 4
@@ -122,23 +127,25 @@ class DeftPascalReborn:
 
 
     def _execute_syntax_chek(self, pascal_source):
-        error_log = self._compiler.check_syntax(pascal_source)
-        if error_log:
-            print(error_log)
+        log = self._compiler.check_syntax(pascal_source)
+        if log["ERROR"]:
+            print(log["ERROR"])
         #
-        if not error_log and self._arguments.save_steps:
+        if not log["ERROR"] and self._arguments.save_steps:
             self._save_to_file(self._compiler.ast.pretty(), "ast")
         #
-        return error_log
+        return log
 
 
     def _execute_compilation(self):
-        error_log = self._compiler.compile()
+        log = self._compiler.compile()
+        if log["ERROR"]:
+            print(log["ERROR"])
         #
-        if not error_log and self._arguments.save_steps:
+        if not log["ERROR"] and self._arguments.save_steps:
             self._save_to_file(self._compiler.intermediate_code, "ic")
         #
-        return error_log
+        return log
 
 
     def _execute_generate(self):
@@ -150,29 +157,90 @@ class DeftPascalReborn:
             return None
 
 
-    def _compile_in_gcc(self, path_to_c_code):
+    #def _compile_in_gcc(self, path_to_c_code):
+    #
+    #    home_dir = os.getcwd()
+    #    gcc_dir = os.path.dirname(self._arguments.compiler_executable)
+    #    gcc_exe = os.path.basename(self._arguments.compiler_executable)
+    #
+    #    print(gcc_dir, gcc_exe)
+    #
+    #    output_err = path_to_c_code.split(".")[0] + ".err"
+    #    output_out = path_to_c_code.split(".")[0] + ".out"
+    #    output_exe = path_to_c_code.split(".")[0] + ".exe"
+    #
+    #    # c_compiler = "{0} -v -print-search-dirs -print-libgcc-file-name -print-multi-directory -print-multi-lib -print-sysroot-headers-suffix -print-multi-os-directory -print-sysroot -o {1}".format(gcc_exe, output_exe)
+    #    c_compiler = "{0} -o {1}".format(self._arguments.compiler_executable, output_exe)
+    #    c_env = "{0} {1} > {2} 2> {3}".format(c_compiler, path_to_c_code, output_out, output_err)
+    #    _MAIN_LOGGER.info(c_env)
+    #
+    #    os.chdir(gcc_dir)
+    #    subprocess.run(c_env, shell=True)
+    #    os.chdir(home_dir)
+    #
+    #    result_out = "error"
+    #    if os.path.exists(os.path.join(home_dir, output_out)):
+    #        file = open(output_out)
+    #        result_out = file.read()
+    #        file.close()
+    #
+    #    result_err = "error"
+    #    if os.path.exists(os.path.join(home_dir, output_err)):
+    #        file = open(output_err)
+    #        result_err = file.read()
+    #        file.close()
+    #
+    #    return result_out + result_err
+
+    def _compile_in_c_compiler(self, path_to_c_code):
 
         home_dir = os.getcwd()
-        gcc_dir = os.path.dirname(self._arguments.compiler_executable)
-        gcc_exe = os.path.basename(self._arguments.compiler_executable)
+        compiler_dir = os.path.dirname(self._arguments.compiler_executable)
+        compiler_exe = os.path.basename(self._arguments.compiler_executable)
 
         output_err = path_to_c_code.split(".")[0] + ".err"
         output_out = path_to_c_code.split(".")[0] + ".out"
-        output_exe = path_to_c_code.split(".")[0] + ".exe"
 
-        c_compiler = "{0} -o {1}".format(gcc_exe, output_exe)
-        c_env = "{0} {1} > {2} 2> {3}".format(c_compiler, path_to_c_code, output_out, output_err)
+        if self._arguments.compiler == "CMOC":
+            """
+            cmoc is run via cygwin, so path_to_c_code needs to be adjusted
+            """
+            output_exe = path_to_c_code.split(".")[0] + ".bin"
+
+            if "c:\\" in path_to_c_code:
+                path_to_c_code = path_to_c_code.replace("c:\\", "/cygdrive/c/")
+            else:
+                path_to_c_code = path_to_c_code.replace("C:\\", "/cygdrive/c/")
+            path_to_c_code = path_to_c_code.replace("\\", "/")
+
+            if "c:\\" in path_to_c_code:
+                path_to_c_code = path_to_c_code.replace("c:\\", "/cygdrive/c/")
+            else:
+                path_to_c_code = path_to_c_code.replace("C:\\", "/cygdrive/c/")
+            path_to_c_code = path_to_c_code.replace("\\", "/")
+
+            c_compiler = "{0} --verbose -o{1} {2}".format(self._arguments.compiler_executable, output_exe, path_to_c_code)
+        else:
+            """
+            gcc is run via MinGW, so paths are as in windows
+            """
+            # c_compiler = "{0} -v -print-search-dirs -print-libgcc-file-name -print-multi-directory -print-multi-lib -print-sysroot-headers-suffix -print-multi-os-directory -print-sysroot -o {1}".format(gcc_exe, output_exe)
+            output_exe = path_to_c_code.split(".")[0] + ".exe"
+
+            c_compiler = "{0} -o {1} {2}".format(self._arguments.compiler_executable, output_exe, path_to_c_code)
+
+        c_env = "{0} > {1} 2> {2}".format(c_compiler, output_out, output_err)
         _MAIN_LOGGER.info(c_env)
 
-        os.chdir(gcc_dir)
+        os.chdir(compiler_dir)
         subprocess.run(c_env, shell=True)
         os.chdir(home_dir)
 
-        result_out = "error"
         if os.path.exists(os.path.join(home_dir, output_out)):
             file = open(output_out)
             result_out = file.read()
             file.close()
+            print(result_out)
 
         result_err = "error"
         if os.path.exists(os.path.join(home_dir, output_err)):
@@ -180,7 +248,7 @@ class DeftPascalReborn:
             result_err = file.read()
             file.close()
 
-        return result_out + result_err
+        return result_err
 
 
     def execute(self):
@@ -190,13 +258,13 @@ class DeftPascalReborn:
         pascal_source = open(self._arguments.input_file, "r").read()
         #
         log = self._execute_syntax_chek(pascal_source)
-        if log:
+        if log["ERROR"]:
             return None
         #
         if self._arguments.steps in ["SEMANTIC", "INTERMEDIATE", "BUILD"]:
             log = self._execute_compilation()
             #
-            if log:
+            if log["ERROR"]:
                 return None
             #
             if self._arguments.steps in ["INTERMEDIATE", "BUILD"]:
@@ -205,12 +273,10 @@ class DeftPascalReborn:
                     return None
                 #
                 if self._arguments.steps in ["BUILD"]:
-                    if self._arguments.compiler == "CMOC":
+                    log = self._compile_in_c_compiler(path_to_c_code)
+                    if log:
+                        print(log)
                         return None
-                    else:
-                        log = self._compile_in_gcc(path_to_c_code)
-                        if log:
-                            return None
                 #
         return True
 
@@ -218,9 +284,9 @@ class DeftPascalReborn:
 def main():
     dpr = DeftPascalReborn()
     if dpr.execute():
-        print("Compilation successful")
+        print("Compilation successful.")
     else:
-        print("Compilation failed!")
+        print("Compilation failed.")
 
 
 def setup_logging():
@@ -233,7 +299,6 @@ def setup_logging():
     _MAIN_LOGGER.addHandler(console_handler)
     _MAIN_LOGGER.setLevel(logging.DEBUG)
     _MAIN_LOGGER.propagate = False
-    _MAIN_LOGGER.info('finished logging setup!')
 
 
 if __name__ == "__main__":

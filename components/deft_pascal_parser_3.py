@@ -36,9 +36,8 @@ class DeftPascalParser:
                       
         _program_block : _block
         
-        _block : label_declaration_part constant_definition_part type_definition_part variable_declaration_part procedure_and_function_declaration_part _statement_part  
-                      
-                      
+        _block : label_declaration_part constant_definition_part type_definition_part variable_declaration_part _procedure_and_function_declaration_part _statement_part
+                             
         // LABEL DECLARATIONS
         
         label_declaration_part : RESERVED_DECLARATION_LABEL _label_list _SEMICOLON
@@ -48,7 +47,6 @@ class DeftPascalParser:
                     | _label
 
         _label : UNSIGNED_DECIMAL
-          
           
         // CONSTANT DECLARATIONS  
                       
@@ -96,7 +94,6 @@ class DeftPascalParser:
         //                     | CONSTANT_FALSE
         //                     | CONSTANT_NIL
            
-           
         // TYPE DECLARATION
        
         type_definition_part : RESERVED_DECLARATION_TYPE _type_definition_list
@@ -106,7 +103,6 @@ class DeftPascalParser:
                               | type_definition
                               
         type_definition : IDENTIFIER OPERATOR_EQUAL_TO _type_denoter _SEMICOLON
-
 
        // VARIABLE DECLARATION
        
@@ -232,17 +228,19 @@ class DeftPascalParser:
                                       | closed_while_statement
                                       | closed_for_statement
                                       
-                                      
+        _non_labeled_open_statement : open_if_statement 
+                                    | open_for_statement
+                                    |
+        
+
                                       
         // WHILE
         
         closed_while_statement : RESERVED_STATEMENT_WHILE _boolean_expression RESERVED_STATEMENT_DO _closed_statement
         
-        
         // REPEAT UNTIL                             
                                      
         repeat_statement : RESERVED_STATEMENT_REPEAT _statement_sequence RESERVED_STATEMENT_UNTIL _boolean_expression
-
 
         // FOR
         
@@ -250,12 +248,13 @@ class DeftPascalParser:
 
         closed_for_statement : RESERVED_STATEMENT_FOR variable_access OPERATOR_ASSIGNMENT _initial_value _direction _final_value RESERVED_STATEMENT_DO _closed_statement
         
-        
        // IF
        
        closed_if_statement : RESERVED_STATEMENT_IF _boolean_expression RESERVED_STATEMENT_THEN _closed_statement RESERVED_STATEMENT_ELSE _closed_statement
 
-
+       open_if_statement : RESERVED_STATEMENT_IF _boolean_expression RESERVED_STATEMENT_THEN _statement
+                         | RESERVED_STATEMENT_IF _boolean_expression RESERVED_STATEMENT_THEN _closed_statement RESERVED_STATEMENT_ELSE _open_statement
+ 
        
        // control_variable : IDENTIFIER
         
@@ -266,13 +265,6 @@ class DeftPascalParser:
 
         _final_value : expression
 
-
-
-        //
-
-        _non_labeled_open_statement : |
-        
-        
         // PROCEDURE STATEMENT (PROCEDURE INVOCATION)
         
         procedure_call : IDENTIFIER _params
@@ -292,7 +284,6 @@ class DeftPascalParser:
         binary_parameter : expression _COLON expression
         
         ternary_parameter : expression _COLON expression _COLON expression
-        
         
         // ASSIGNMENT STATEMENT
 
@@ -458,8 +449,8 @@ class DeftPascalParser:
         // regular expressions
              
         IDENTIFIER: /[_A-Za-z]+[A-Za-z0-9_]*/
-        CHARACTER : /\'[\ A-Za-z0-9!\"#$%^&\'()*+,\-.\/:;<=>?@\[\]]\'/
-        STRING_VALUE : /\'[\ A-Za-z0-9!\"#$%^&()*+,\-.\/:;<=>?@\[\]]{2,}\'/
+        CHARACTER : /\'[\ A-Za-z0-9!\"#$%^&\'()*+,\-._\/:;<=>?@\[\]]\'/
+        STRING_VALUE : /\'[\ A-Za-z0-9!\"#$%^&()*+,\-._\/:;<=>?@\[\]]{2,}\'/
         SIGNED_DECIMAL : /[+-]\d+/
         UNSIGNED_DECIMAL : /\d+/
         SIGNED_REAL : /[+-]\d+[.]\d+([Ee][+-]?\d+)?/
