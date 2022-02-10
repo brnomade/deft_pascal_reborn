@@ -32,7 +32,7 @@ class NodeBasedEmitter(AbstractEmitter):
             #include <stdbool.h>
             #include <string.h>
 
-        DECLARATION SECTION ((VARIABLE, CONSTANT and FUNCTIONS)
+        DECLARATION SECTION (VARIABLE, CONSTANT and FUNCTIONS)
             const char C1 ;
             const char C2[81] ;
             const char C5 ;
@@ -48,7 +48,7 @@ class NodeBasedEmitter(AbstractEmitter):
         FUNCTION DEFINITION SECTION (FOR EACH FUNCTION)
 
             HEADER SECTION
-               int main() {
+               int FUNCTION_NAME() {
 
             DECLARATION SECTION (VARIABLE, CONSTANT)
                 const char C1 = 'C' ;
@@ -100,7 +100,7 @@ class NodeBasedEmitter(AbstractEmitter):
     def new_node(cls):
         return {"header": "",
                 "declaration: "","
-                "f_declaration" : "",
+                "f_declaration": "",
                 "definition": "",
                 "body": "",
                 "closure": ""
@@ -251,13 +251,21 @@ class CEmitter(LinearEmitter):
         particle = "{0}"
         self.emit_line(particle.format(a_generic_string))
 
-    def emit_program_heading(self):
+    def emit_program_heading(self, include_standard, include_boolean, include_string):
         """
         PROGRAM_HEADING
         """
-        self.emit_header_line("#include <stdio.h>")
-        self.emit_header_line("#include <stdbool.h>")
-        self.emit_header_line("#include <string.h>")
+        libraries = []
+        if include_standard:
+            libraries.append("stdio")
+        if include_boolean:
+            libraries.append("stdbool")
+        if include_string:
+            libraries.append("string")
+
+        code = "#include <{0}.h>"
+        for library in libraries:
+            self.emit_header_line(code.format(library))
 
     def emit_type_definition(self):
         line = "typedef "

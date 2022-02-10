@@ -6,3 +6,4 @@ parameterized
 coverage
 PyYAML
 coveralls
+jinja2

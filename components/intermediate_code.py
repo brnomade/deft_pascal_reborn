@@ -46,7 +46,8 @@ class IntermediateCode:
                          "PROCEDURE_CALL",
                          "PROCEDURE_DECLARATION",
                          "CLOSED_IF_STATEMENT",
-                         "CLOSED_IF_STATEMENT_ELSE"
+                         "CLOSED_IF_STATEMENT_ELSE",
+                         "OPEN_IF_STATEMENT",
                          }
 
     def _log(self, log_type=INFO, log_info=""):
@@ -84,7 +85,6 @@ class IntermediateCode:
                                     "token_list": None
                                     }
 
-
     def push(self, an_input):
         if isinstance(an_input, list):
             self._temp_stack += an_input
@@ -120,9 +120,28 @@ class IntermediateCode:
         if self._target == "CMOC":
             self._emiter = CMOCEmitter(token_list[1].value)
         else:
-            self._emiter = CEmitter2(token_list[1].value)
-            #self._emiter = CEmitter(token_list[1].value)
-        self._emiter.emit_program_heading()
+            #self._emiter = CEmitter2(token_list[1].value)
+            self._emiter = CEmitter(token_list[1].value)
+
+        # identify which libraries to import based on the declared variables
+
+        boolean_library = False
+        string_library = False
+        standard_library = True
+
+        for i in range(0, self._top):
+            node = self._i_stack[i]
+            if node["action_name"] == "VARIABLE_DECLARATION_PART":
+                for variable in node["token_list"]:
+                    if variable.type.type == "RESERVED_TYPE_BOOLEAN":
+                        boolean_library = True
+                    elif variable.type.type == "RESERVED_TYPE_STRING":
+                        string_library = True
+
+        self._emiter.emit_program_heading(include_standard=standard_library,
+                                          include_boolean=boolean_library,
+                                          include_string=string_library
+                                          )
 
 
     def _constant_definition_part(self, token_list):
@@ -670,3 +689,28 @@ class IntermediateCode:
         self._emiter.emit_closed_if_statement_else()
 
 
+    def _open_if_statement(self, input_list):
+        """
+        CLOSED_if_STATEMENT
+        input_list -> Keyword(IF) Expression Keyword(THEN)
+        example ->  [Keyword('if'|RESERVED_STATEMENT_IF|if|scenario_fahrenheit_to_celsius_converter|0|[]),
+                    GenericExpression('GENERIC_EXPRESSION'|GENERIC_EXPRESSION|[Constant('LOOP'|RESERVED_TYPE_INTEGER|3|scenario_fahrenheit_to_celsius_converter|0|[]), Operator('>'|OPERATOR_GREATER_THEN|>|scenario_fahrenheit_to_celsius_converter|0|[]), Constant('10'|RESERVED_TYPE_INTEGER|10|scenario_fahrenheit_to_celsius_converter|0|[])]|None|None|[]),
+                    Keyword('then'|RESERVED_STATEMENT_THEN|then|scenario_fahrenheit_to_celsius_converter|0|[])]
+        Syntax: Pascal -> C
+        if LOOP > 10 then -> if ( LOOP > 10 )
+        """
+        # process keyword 'if'
+        token = input_list.pop(0)
+        if not isinstance(token, BaseKeyword):
+            self._log(ERROR, "Unknown symbol '{0}' received. Keyword expected.".format(token))
+        self._emiter.emit_closed_if_statement()
+
+        # extract 'expression'  and send it to processing
+        generic_expression = input_list.pop(0)
+        self._expression(generic_expression)
+
+        # process keyword 'then'
+        token = input_list.pop(0)
+        if not isinstance(token, BaseKeyword):
+            self._log(ERROR, "Unknown symbol '{0}' received. Keyword expected.".format(token))
+        self._emiter.emit_closed_if_statement_then()
