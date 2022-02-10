@@ -43,6 +43,6 @@ jobs:
     - name: Unit Test and Coverage report
       run: |
         coverage erase
-        coverage run -a -m unittest -v tests.test_deft_pascal_parser
+        coverage run -a -m --source=components unittest -v tests.test_deft_pascal_parser
         coverage report -i -m
       continue-on-error: true
