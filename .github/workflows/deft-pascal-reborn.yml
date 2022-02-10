@@ -25,20 +25,29 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         python -m pip install flake8 pytest
+        
+        python -m pip install pep8-naming
+        python -m pip install flake8-variables-names
+        python -m pip install flake8-eradicate
+        python -m pip install flake8-comprehensions
+        python -m pip install flake8-return        
+        
         python -m pip install coverage
         python -m pip install python-coveralls
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: Lint with flake8
+    - name: Code Style Compliance
       run: |
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 . --extend-exclude=tests,scrapbook,obsoletes,grammars --max-line-length 120 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       continue-on-error: true
-    - name: Coverage report
+    - name: Unit Test and Coverage report
       run: |
-        coverage run --omit */Lib/* -m unittest
-        coveralls -v
-        coverage report
+        coverage erase
+        coverage run -a -m unittest discover -v -s tests
+        coverage report -i -m
+      continue-on-error: true
     - name: Test with pytest
       run: |
         pytest
+      continue-on-error: true
