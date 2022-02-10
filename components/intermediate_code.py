@@ -85,6 +85,7 @@ class IntermediateCode:
                                     "token_list": None
                                     }
 
+
     def push(self, an_input):
         if isinstance(an_input, list):
             self._temp_stack += an_input

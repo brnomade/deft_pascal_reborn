@@ -114,6 +114,63 @@ class DeftPascalParser:
 
         variable_declaration : _identifier_list _COLON _type_denoter
 
+
+        // PROCEDURE AND FUNCTION DECLARATION
+        
+        procedure_and_function_declaration_part : proc_or_func_declaration_list _SEMICOLON
+                                                |
+
+        proc_or_func_declaration_list : proc_or_func_declaration_list _SEMICOLON proc_or_func_declaration
+                                      | proc_or_func_declaration
+ 
+        proc_or_func_declaration : procedure_declaration
+                                 | function_declaration
+                                 
+        procedure_declaration : procedure_heading _SEMICOLON directive
+                              | procedure_heading _SEMICOLON procedure_block
+ 
+        procedure_heading : procedure_identification
+                          | procedure_identification formal_parameter_list
+ 
+        directive : RESERVED_STATEMENT_FORWARD
+                  | RESERVED_STATEMENT_EXTERNAL
+
+        formal_parameter_list : LEFT_PARENTHESES formal_parameter_section_list RIGHT_PARENTHESES
+ 
+        formal_parameter_section_list : formal_parameter_section_list _SEMICOLON formal_parameter_section
+                                      | formal_parameter_section
+
+        formal_parameter_section : value_parameter_specification
+                                 | variable_parameter_specification
+                                 | procedural_parameter_specification
+                                 | functional_parameter_specification
+
+        value_parameter_specification : _identifier_list _COLON IDENTIFIER
+
+        variable_parameter_specification : RESERVED_DECLARATION_VAR _identifier_list _COLON IDENTIFIER
+
+        procedural_parameter_specification : procedure_heading
+
+        functional_parameter_specification : function_heading                 
+ 
+        procedure_identification : RESERVED_DECLARATION_PROCEDURE IDENTIFIER
+
+        procedure_block : _block
+        
+        function_declaration : function_heading _SEMICOLON directive
+                             | function_identification _SEMICOLON function_block
+                             | function_heading _SEMICOLON function_block
+        
+        function_heading : RESERVED_DECLARATION_FUNCTION IDENTIFIER _COLON result_type
+                         | RESERVED_DECLARATION_FUNCTION IDENTIFIER formal_parameter_list _COLON result_type
+        
+        result_type : IDENTIFIER
+
+        function_identification : RESERVED_DECLARATION_FUNCTION IDENTIFIER
+
+        function_block : _block
+
+
         // TYPE - IN BUILT TYPE DECLARATIONS
 
        _type_denoter : RESERVED_TYPE_REAL
@@ -126,6 +183,7 @@ class DeftPascalParser:
                      | RESERVED_TYPE_SET
                      | IDENTIFIER
                      | _new_type
+
 
         // TYPE - POINTER DECLARATION
 
@@ -143,65 +201,6 @@ class DeftPascalParser:
                      | RESERVED_TYPE_SET
                      | IDENTIFIER 
 
-        // PROCEDURE AND FUNCTION DECLARATIONS
-
-        _procedure_and_function_declaration_part : _proc_or_func_declaration_list _SEMICOLON
-                                                |
-
-        _proc_or_func_declaration_list : _proc_or_func_declaration_list _SEMICOLON _proc_or_func_declaration
-                                       | _proc_or_func_declaration
- 
-        _proc_or_func_declaration : procedure_declaration
-                                  | function_declaration
-
-        proc_or_func_directive : RESERVED_STATEMENT_FORWARD 
-                               | RESERVED_STATEMENT_EXTERNAL 
-
-        // PROCEDURE DECLARATIONS
-
-        procedure_declaration : _procedure_heading _SEMICOLON proc_or_func_directive
-                              | _procedure_heading _SEMICOLON procedure_block
- 
-        _procedure_heading : _procedure_identification
-                           | _procedure_identification formal_parameter_list
-
-        _procedure_identification : RESERVED_DECLARATION_PROCEDURE IDENTIFIER 
-
-        formal_parameter_list : LEFT_PARENTHESES _formal_parameter_section_list RIGHT_PARENTHESES 
-
-        _formal_parameter_section_list : _formal_parameter_section_list _SEMICOLON _formal_parameter_section
-                                      | _formal_parameter_section
-
-        _formal_parameter_section : value_parameter_specification
-                                 | variable_parameter_specification
-                                 | procedural_parameter_specification
-                                 | functional_parameter_specification
-
-        value_parameter_specification : _identifier_list _COLON _domain_type
-
-        variable_parameter_specification : RESERVED_DECLARATION_VAR _identifier_list _COLON IDENTIFIER
-
-        procedural_parameter_specification : _procedure_heading 
-
-        functional_parameter_specification : function_heading 
-
-        procedure_block : _block 
-        // procedure_block : label_declaration_part constant_definition_part type_definition_part variable_declaration_part _statement_part
-
-        // FUNCTION DECLARATIONS
-
-        function_declaration : function_heading _SEMICOLON proc_or_func_directive
-                             | function_identification _SEMICOLON function_block
-                             | function_heading _SEMICOLON function_block
- 
-        function_heading : RESERVED_DECLARATION_FUNCTION IDENTIFIER _COLON function_result_type
-                         | RESERVED_DECLARATION_FUNCTION IDENTIFIER formal_parameter_list _COLON function_result_type
-
-        function_result_type : IDENTIFIER
-
-        function_identification : RESERVED_DECLARATION_FUNCTION IDENTIFIER
-
-        function_block : _block 
 
         // STATEMENTS
 
@@ -333,6 +332,7 @@ class DeftPascalParser:
  
         _primary : variable_access
                  | _unsigned_constant
+                 | function_designator
                  | LEFT_PARENTHESES expression RIGHT_PARENTHESES
                  | OPERATOR_NOT _primary
                  
@@ -352,6 +352,10 @@ class DeftPascalParser:
                           | NUMBER_BINARY
  
         _unsigned_real : UNSIGNED_REAL
+       
+        // functions with no params are handled by plain identifier
+        
+        function_designator : IDENTIFIER _params
        
         // structure
         
@@ -402,7 +406,7 @@ class DeftPascalParser:
         RESERVED_STATEMENT_ELSE : "else"i
         RESERVED_STATEMENT_FORWARD : "forward"i
         RESERVED_STATEMENT_EXTERNAL : "external"i
-        
+
         // logical operators 
         
         OPERATOR_EQUAL_TO : "="

@@ -45,7 +45,7 @@ class PositiveLanguageTests:
 
 
     @staticmethod
-    def scenario_decimal_numbers():
+    def scenario_numbers_decimal():
         code = """
             PROGRAM {{{0}}};                 
             CONST                                    
@@ -66,7 +66,7 @@ class PositiveLanguageTests:
 
 
     @staticmethod
-    def scenario_binary_numbers():
+    def scenario_numbers_binary():
         code = """
             PROGRAM {{{0}}};                 
             CONST                                    
@@ -81,7 +81,7 @@ class PositiveLanguageTests:
 
 
     @staticmethod
-    def scenario_octal_numbers():
+    def scenario_numbers_octal():
         code = """
             PROGRAM {{{0}}};                 
             CONST                                    
@@ -96,7 +96,7 @@ class PositiveLanguageTests:
 
 
     @staticmethod
-    def scenario_hexadecimal_numbers():
+    def scenario_numbers_hexadecimal():
         code = """
             PROGRAM {{{0}}};                 
             CONST                                    

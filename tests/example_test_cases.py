@@ -119,26 +119,15 @@ class PascalExamples:
         code = """
             program divisors;
                 VAR NUMBER, DIVISOR : INTEGER;
-            procedure test(x:integer);
-            var
-                b : BOOLEAN;
-                s : STRING;
-            begin
-            writeln('hello');
-            end;
             BEGIN
                 FOR NUMBER := 100 DOWNTO 0 DO
                 BEGIN
-                    IF NUMBER < 0 THEN
-                        WRITELN('FIRST MESSAGE');
-                    WRITELN('SECOND MESSAGE'); 
                     IF NUMBER > 0 THEN
                     BEGIN
                         WRITELN('THE DIVISORS OF', NUMBER, 'ARE:');
                         FOR DIVISOR := 2 TO NUMBER DO
                             IF NUMBER MOD DIVISOR = 0 THEN
                                 WRITELN(DIVISOR);
-                        WRITELN('JUST A MESSAGE');
                     END;
                 END;
             END.
@@ -150,10 +139,10 @@ class PascalExamples:
         code = """
             program primes;
                 CONST 
-                    N = 1229;
+                    N=1229;
                     N1 = 35; (* N1 is SQRT OF N *)
                 VAR
-                    I, K, X, INC, LIM, SQUARE, L : INTEGER;
+                    I, K, X, INC, LIM, SQUARE, L : INTEGER
                     PRIM : BOOLEAN;
                     P, V : ARRAY[1..N] of INTEGER;
                     

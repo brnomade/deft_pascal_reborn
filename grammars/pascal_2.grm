@@ -59,7 +59,7 @@ block : label_declaration_part [DONE]
  constant_definition_part [DONE]
  type_definition_part [DONE]
  variable_declaration_part [DONE]
- procedure_and_function_declaration_part
+ procedure_and_function_declaration_part [DONE]
  statement_part [DONE]
  ;
 
@@ -324,7 +324,6 @@ formal_parameter_section : value_parameter_specification
  | procedural_parameter_specification
  | functional_parameter_specification
  ;
-
 
 [DONE]
 value_parameter_specification : identifier_list COLON identifier
@@ -591,6 +590,7 @@ unsigned_real : REALNUMBER
  ;
 
 /* functions with no params will be handled by plain identifier */
+[DONE]
 function_designator : identifier params
  ;
 

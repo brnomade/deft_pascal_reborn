@@ -195,7 +195,7 @@ class TestCompilerInternals(TestCase):
     #     #
     #     result = check_type_compatibility(symbol_list)
     #     self.assertTrue(result)
-    # 
+    #
     # def test_type_check_scenario_assignment_unary_operation_not_compatible_type(self):
     #     #
     #     symbol_list = [
@@ -207,7 +207,7 @@ class TestCompilerInternals(TestCase):
     #     #
     #     result = check_type_compatibility(symbol_list)
     #     self.assertFalse(result)
-    # 
+    #
     # def test_type_check_scenario_expression_unary_operation_compatible_type(self):
     #     #
     #     symbol_list = [
@@ -217,7 +217,7 @@ class TestCompilerInternals(TestCase):
     #     #
     #     result = check_type_compatibility(symbol_list)
     #     self.assertTrue(result)
-    # 
+    #
     # def test_type_check_scenario_expression_unary_operation_not_compatible_type(self):
     #     #
     #     symbol_list = [
@@ -227,7 +227,7 @@ class TestCompilerInternals(TestCase):
     #     #
     #     result = check_type_compatibility(symbol_list)
     #     self.assertFalse(result)
-    # 
+    #
     # def test_type_check_scenario_assignment_single_level_not_compatible_types(self):
     #     #
     #     symbol_list = [
@@ -238,7 +238,7 @@ class TestCompilerInternals(TestCase):
     #     #
     #     result = check_type_compatibility(symbol_list)
     #     self.assertFalse(result)
-    # 
+    #
     # def test_type_check_scenario_assignment_single_level_compatible_types(self):
     #     #
     #     symbol_list = [

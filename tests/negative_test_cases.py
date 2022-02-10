@@ -426,3 +426,67 @@ class NegativeLanguageTests:
         """)
         return code
 
+    @staticmethod
+    def scenario_procedure_invocation_with_value_when_reference_expected_raises_compiler_error():
+        code = ("identifier expected instead of number", "", """"
+            PROGRAM {{{0}}};                                                 
+            PROCEDURE P1( VAR SP1 : INTEGER );
+            BEGIN
+            END;             
+            BEGIN             
+               P1(1);                             
+            END.                                         
+        """)
+        return code
+
+    @staticmethod
+    def scenario_procedure_invocation_with_parameters_when_none_expected_raises_compiler_error():
+        code = ("no parameters expected by procedure", "", """
+            PROGRAM {{{0}}};                                                 
+            PROCEDURE P1( );
+            BEGIN
+            END;             
+            BEGIN             
+               P1(1);                             
+            END.                                         
+        """)
+        return code
+
+    @staticmethod
+    def scenario_procedure_invocation_with_incorrect_number_of_parameters_raises_compiler_error():
+        code = ("incorrect number of parameters passed", "", """
+            PROGRAM {{{0}}};                                                 
+            PROCEDURE P1( SP1 : INTEGER );
+            BEGIN
+            END;             
+            BEGIN             
+               P1(1,2);                             
+            END.                                         
+        """)
+        return code
+
+    @staticmethod
+    def scenario_procedure_invocation_in_expression_raises_compiler_error():
+        code = ("incorrect use of procedure in expression", "", """
+            PROGRAM {{{0}}};                                                 
+            PROCEDURE P1( SP1 : INTEGER );
+            BEGIN
+            END;             
+            BEGIN             
+               P1(1) + P1(2);                             
+            END.                                         
+        """)
+        return code
+
+    @staticmethod
+    def scenario_function_invocation_in_expression_without_assignment_raises_compiler_error():
+        code = ("no assignment for function in expression", "", """
+            PROGRAM {{{0}}};                                     
+            FUNCTION F1( SP1 : INTEGER ) : INTEGER;
+            BEGIN
+            END;             
+            BEGIN             
+               F1(1) + F1(2);                             
+            END.                                         
+        """)
+        return code
