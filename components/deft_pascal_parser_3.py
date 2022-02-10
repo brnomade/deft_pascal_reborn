@@ -117,7 +117,7 @@ class DeftPascalParser:
 
         // PROCEDURE AND FUNCTION DECLARATION
         
-        procedure_and_function_declaration_part : proc_or_func_declaration_list _SEMICOLON
+        _procedure_and_function_declaration_part : proc_or_func_declaration_list _SEMICOLON
                                                 |
 
         proc_or_func_declaration_list : proc_or_func_declaration_list _SEMICOLON proc_or_func_declaration

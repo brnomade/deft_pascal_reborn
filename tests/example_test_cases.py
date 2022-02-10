@@ -35,7 +35,6 @@ class PascalExamples:
         """
         return code
 
-
     @staticmethod
     def example_fahrenheit_to_celsius_converter():
         code = """
@@ -84,7 +83,6 @@ class PascalExamples:
         """
         return code
 
-
     @staticmethod
     def example_hello_world():
         code = """
@@ -94,7 +92,6 @@ class PascalExamples:
             END.
         """
         return code
-
 
     @staticmethod
     def example_two_for_with_hello_world():
@@ -135,17 +132,16 @@ class PascalExamples:
         return code
 
     @staticmethod
-    def example_primes():
+    def not_ready_primes():
         code = """
             program primes;
                 CONST 
-                    N=1229;
+                    N = 1229;
                     N1 = 35; (* N1 is SQRT OF N *)
                 VAR
                     I, K, X, INC, LIM, SQUARE, L : INTEGER
                     PRIM : BOOLEAN;
                     P, V : ARRAY[1..N] of INTEGER;
-                    
                 BEGIN
                     WRITE(2:6, 3:6); 
                     L := -2;            
