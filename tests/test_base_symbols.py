@@ -47,30 +47,30 @@ class TestBaseSymbol(TestCase):
         symbol = BaseSymbol('test_symbol')
         self.assertEqual('BaseSymbol', symbol.category)
 
-    def test_references_property(self):
-        symbol = BaseSymbol('test_symbol')
-        symbol.push_reference("test_reference")
-        self.assertIsInstance(symbol.references, list)
+    #def test_references_property(self):
+    #    symbol = BaseSymbol('test_symbol')
+    #    symbol.push_reference("test_reference")
+    #    self.assertIsInstance(symbol.references, list)
 
-    def test_has_reference_property_empty(self):
-        symbol = BaseSymbol('test_symbol')
-        self.assertFalse(symbol.has_references)
+    #def test_has_reference_property_empty(self):
+    #    symbol = BaseSymbol('test_symbol')
+    #    self.assertFalse(symbol.has_references)
 
-    def test_has_reference_property_has_value(self):
-        symbol = BaseSymbol('test_symbol')
-        symbol.push_reference("test_reference")
-        self.assertTrue(symbol.has_references)
+    #def test_has_reference_property_has_value(self):
+    #    symbol = BaseSymbol('test_symbol')
+    #    symbol.push_reference("test_reference")
+    #    self.assertTrue(symbol.has_references)
 
-    def test_push_reference(self):
-        symbol = BaseSymbol('test_symbol')
-        symbol.push_reference('test_reference')
-        self.assertEqual('test_reference', symbol.references[0])
+    #def test_push_reference(self):
+    #    symbol = BaseSymbol('test_symbol')
+    #    symbol.push_reference('test_reference')
+    #    self.assertEqual('test_reference', symbol.references[0])
 
-    def test_pop_reference(self):
-        symbol = BaseSymbol('test_symbol')
-        symbol.push_reference('test_reference_1')
-        symbol.push_reference('test_reference_2')
-        self.assertEqual('test_reference_2', symbol.pop_reference())
+    #def test_pop_reference(self):
+    #    symbol = BaseSymbol('test_symbol')
+    #    symbol.push_reference('test_reference_1')
+    #    symbol.push_reference('test_reference_2')
+    #    self.assertEqual('test_reference_2', symbol.pop_reference())
 
     # def test_is_pointer(self):
     #    symbol = BaseSymbol('test_symbol')
@@ -138,10 +138,10 @@ class TestGenericExpression(TestCase):
         symbol = BaseExpression("generic")
         self.assertIsInstance(symbol, BaseExpression)
 
-    def test_from_list(self):
-        symbol = BaseExpression.from_list([1, 2, 3])
-        self.assertEqual([1,2,3], symbol.value)
-        self.assertEqual('GENERIC_EXPRESSION', symbol.name)
-        self.assertEqual('GENERIC_EXPRESSION', symbol.type)
+    #def test_from_list(self):
+    #    symbol = BaseExpression.from_list([1, 2, 3])
+    #    self.assertEqual([1,2,3], symbol.value)
+    #    self.assertEqual('GENERIC_EXPRESSION', symbol.name)
+    #    self.assertEqual('GENERIC_EXPRESSION', symbol.type)
 
 

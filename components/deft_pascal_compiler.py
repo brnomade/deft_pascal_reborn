@@ -8,20 +8,24 @@ HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 from lark import Tree, Token
 from components.deft_pascal_parser_3 import DeftPascalParser
 from components.symbol_table import SymbolTable
-from components.symbols.base_symbols import BaseSymbol, BaseKeyword, BaseExpression
+from components.symbols.base_symbols import BaseKeyword, BaseExpression
 from components.symbols.operator_symbols import Operator, BinaryOperator, UnaryOperator, NeutralOperator
-from components.symbols.identifier_symbols import Identifier, PointerIdentifier, ProcedureIdentifier, ConstantIdentifier
-from components.symbols.literals_symbols import Literal, BooleanLiteral, NilLiteral, NumericLiteral, StringLiteral
+from components.symbols.identifier_symbols import Identifier, TypeIdentifier, ProcedureIdentifier, InBuiltProcedureWrite, ProcedureExternalIdentifier, ProcedureForwardIdentifier, ConstantIdentifier
+from components.symbols.literals_symbols import BooleanLiteral, NilLiteral, NumericLiteral, StringLiteral
 from components.symbols.type_symbols import PointerType, BasicType, StringType
 from components.symbols.expression_symbols import ConstantExpression, IntegerExpression, BooleanExpression
 from components.intermediate_code import IntermediateCode
-# from utils.compiler_utils import check_type_compatibility, token_is_an_operator
+from components.parameters import ActualParameter, FormalParameter
+
 import copy
 import logging
-from logging import ERROR, WARNING, INFO, DEBUG
 
 
-_LOG_ROLL_ = []
+_LOG_ROLL_ = {"ERROR": [],
+              "WARNING": [],
+              "INFO": [],
+              "DEBUG": []
+              }
 
 
 class LogRequestsHandler(logging.Handler):
@@ -29,13 +33,15 @@ class LogRequestsHandler(logging.Handler):
         """Record any errors raised by the compiler.
         """
         msg = record.getMessage()
-        if record.levelname.upper() == "ERROR":
-            _LOG_ROLL_.append(msg)
+        _LOG_ROLL_[record.levelname.upper()].append(msg)
+
+        #if record.levelname.upper() == "ERROR":
+        #    _LOG_ROLL_["error"].append(msg)
 
 
 _MODULE_LOGGER_ = logging.getLogger("deft_pascal_reborn")
 _MODULE_LOGGER_.addHandler(LogRequestsHandler())
-_MODULE_LOGGER_.setLevel(DEBUG)
+_MODULE_LOGGER_.setLevel(logging.DEBUG)
 
 
 class DeftPascalCompiler:
@@ -58,8 +64,8 @@ class DeftPascalCompiler:
 
         self._stack_emiter = []
         self._stack_scope = []
-        self._stack_begin = []
-        self._stack_end = []
+        #self._stack_begin = []
+        #self._stack_end = []
 
         # self._error_list = []
 
@@ -78,12 +84,15 @@ class DeftPascalCompiler:
                          "RESERVED_STRUCTURE_END",
                          "ASSIGNMENT_STATEMENT",
                          "PROCEDURE_CALL",
+                         "PROCEDURE_DECLARATION",
                          "EXPRESSION",
                          "CLOSED_FOR_STATEMENT",
+                         "OPEN_FOR_STATEMENT",
                          "CLOSED_WHILE_STATEMENT",
                          "REPEAT_STATEMENT",
                          "COMPOUND_STATEMENT",
-                         "CLOSED_IF_STATEMENT"
+                         "CLOSED_IF_STATEMENT",
+                         "OPEN_IF_STATEMENT"
                          }
 
 
@@ -93,7 +102,15 @@ class DeftPascalCompiler:
             self._ast = self._parser.ast
         else:
             self._ast = None
-        return error_list
+
+        _LOG_ROLL_["ERROR"].clear()
+        _LOG_ROLL_["WARNING"].clear()
+        _LOG_ROLL_["DEBUG"].clear()
+        _LOG_ROLL_["INFO"].clear()
+
+        _LOG_ROLL_["ERROR"] = error_list
+
+        return _LOG_ROLL_
 
     def compile(self, ast=None):
         if not ast and not self._ast:
@@ -102,7 +119,12 @@ class DeftPascalCompiler:
         if not ast and self._ast:
             ast = self._ast
 
-        _LOG_ROLL_.clear()
+        _LOG_ROLL_["ERROR"].clear()
+        _LOG_ROLL_["WARNING"].clear()
+        _LOG_ROLL_["DEBUG"].clear()
+        _LOG_ROLL_["INFO"].clear()
+
+        # _LOG_ROLL_.clear()
         for i in ast.children:
             self._internal_compile(i, [])
 
@@ -122,8 +144,8 @@ class DeftPascalCompiler:
     def generate(self):
         return self._ic.generate()
 
-    def _log(self, log_type=INFO, log_info=""):
-        pass
+    #def _log(self, log_type=INFO, log_info=""):
+    #    pass
         # emit log
         # msg = "[{0}/{1}] {2}".format(self._symbol_table.current_scope, self._symbol_table.current_level, log_info)
         # if log_type == ERROR:
@@ -204,8 +226,8 @@ class DeftPascalCompiler:
         self._symbol_table.append(BasicType.reserved_type_text())
 
         # add the in-built procedures to the symbol table
-        self._symbol_table.append(ProcedureIdentifier.in_built_procedure_write())
-        self._symbol_table.append(ProcedureIdentifier.in_built_procedure_writeln())
+        self._symbol_table.append(InBuiltProcedureWrite.in_built_procedure_write())
+        self._symbol_table.append(InBuiltProcedureWrite.in_built_procedure_writeln())
 
         # add all operators to the operator table
         self._operator_table.append(BinaryOperator.operator_multiply())
@@ -213,6 +235,7 @@ class DeftPascalCompiler:
         self._operator_table.append(BinaryOperator.operator_minus())
         self._operator_table.append(BinaryOperator.operator_divide())
         self._operator_table.append(BinaryOperator.operator_div())
+        self._operator_table.append(BinaryOperator.operator_mod())
         self._operator_table.append(BinaryOperator.operator_assignment())
         self._operator_table.append(BinaryOperator.operator_equal_to())
         self._operator_table.append(BinaryOperator.operator_not_equal_to())
@@ -232,9 +255,10 @@ class DeftPascalCompiler:
         self._operator_table.append(NeutralOperator.operator_left_parentheses())
         self._operator_table.append(NeutralOperator.operator_right_parentheses())
 
+
         # initialize the control stack for BEGIN and END
-        self._stack_begin.append(self._GLB_MAIN_BEGIN)
-        self._stack_end.append(self._GLB_MAIN_END)
+        #self._stack_begin.append(self._GLB_MAIN_BEGIN)
+        #self._stack_end.append(self._GLB_MAIN_END)
 
         # initialise the intermediate_code engine
         self._ic.init(action_name)
@@ -262,10 +286,15 @@ class DeftPascalCompiler:
         RESERVED_STRUCTURE_BEGIN
         currently implemented as a token.
         """
-        action = self._stack_begin.pop(-1)
-        self._stack_begin.append(self._GLB_BLOCK_BEGIN)
-        if not action == self._GLB_MAIN_BEGIN:
-            self._stack_end.append(self._GLB_BLOCK_END)
+        if self._symbol_table.current_level == 2:
+            action = self._GLB_MAIN_BEGIN
+        else:
+            action = self._GLB_BLOCK_BEGIN
+
+        #action = self._stack_begin.pop(-1)
+        #self._stack_begin.append(self._GLB_BLOCK_BEGIN)
+        #if not action == self._GLB_MAIN_BEGIN:
+        #    self._stack_end.append(self._GLB_BLOCK_END)
 
         self._ic.init(action)
         self._ic.push(input_token)
@@ -277,10 +306,18 @@ class DeftPascalCompiler:
         RESERVED_STRUCTURE_END
         currently implemented as a token.
         """
-        action = self._stack_end.pop(-1)
+        if self._symbol_table.current_level == 2:
+            action = self._GLB_MAIN_END
+        else:
+            action = self._GLB_BLOCK_END
+
         self._ic.init(action)
         self._ic.push(input_token)
         self._ic.flush()
+
+        if action == self._GLB_MAIN_END:
+            for i in self._symbol_table.instances_of(ProcedureForwardIdentifier):
+                _MODULE_LOGGER_.error("unresolved forward reference to '{0}'".format(i))
 
 
     def _constant_definition_part(self, action_name, input_list, working_stack):
@@ -350,7 +387,7 @@ class DeftPascalCompiler:
                         self._ic.push(new_constant)
 
                         # log successful declaration
-                        self._log(DEBUG, "[{0}] new constant declared : {1}".format(action_name, new_constant))
+                        _MODULE_LOGGER_.debug("[{0}] new constant declared : {1}".format(action_name, new_constant))
 
                     else:
                         _MODULE_LOGGER_.error("[{0}] constant '{1}' not compatible with type limitations".format(action_name, new_constant))
@@ -439,7 +476,14 @@ class DeftPascalCompiler:
             string_dimension = input_list.pop()
             input_list.pop()    # discard the (
 
-        type_identifier = input_list.pop().value.upper()
+        # type_identifier = input_list.pop().value.upper()
+        type_identifier = input_list.pop()
+        if type_identifier.type == "IDENTIFIER":
+            # identifier is of a custom type and their definition is case sensitive/relevant
+            type_identifier = type_identifier.value
+        else:
+            # identifier is a basic type and those are stored in the symbol table as uppercase
+            type_identifier = type_identifier.value.upper()
 
         # check if a pointer is being declared - if so, pop it out
         is_pointer = False
@@ -457,8 +501,8 @@ class DeftPascalCompiler:
 
             if is_pointer:
                 aux = type_symbol
-                type_symbol = PointerType.reserved_type_pointer()
-                type_symbol.type = aux
+                type_symbol = PointerType.for_type(type_symbol)
+                # type_symbol.type = aux
 
             # process each identifier for the given variable_type
             for token in input_list:
@@ -484,7 +528,7 @@ class DeftPascalCompiler:
                         self._ic.push(new_variable)
 
                         # log successful declaration
-                        self._log(DEBUG, "[{0}] new identifier declared : {1}".format(action_name, new_variable))
+                        _MODULE_LOGGER_.debug("[{0}] new identifier declared : {1}".format(action_name, new_variable))
 
         else:
 
@@ -550,7 +594,9 @@ class DeftPascalCompiler:
 
         if working_stack:
 
-            identifier = working_stack[-1]
+            # the working stack can contain only the variable or variable and dereference operator.
+            # the identifier is always at position 0
+            identifier = working_stack[0]
 
             # check the identifier receiving the assignment is variable.
             if isinstance(identifier, ConstantIdentifier):
@@ -590,7 +636,7 @@ class DeftPascalCompiler:
                     self._ic.push(working_stack)
                     self._ic.flush()
 
-                    self._log(DEBUG, "[{0}] : {1}".format(action_name, working_stack))
+                    _MODULE_LOGGER_.debug("[{0}] : {1}".format(action_name, working_stack))
 
         return working_stack
 
@@ -657,7 +703,7 @@ class DeftPascalCompiler:
         working_stack.append(keyword)
         self._ic.push(working_stack)
         self._ic.flush()
-        self._log(DEBUG, "[{0}] {1}".format(action_name, working_stack))
+        _MODULE_LOGGER_.debug("[{0}] {1}".format(action_name, working_stack))
 
         # process statements
         working_stack = []
@@ -689,10 +735,9 @@ class DeftPascalCompiler:
             self._ic.push(working_stack)
             self._ic.flush()
 
-            self._log(DEBUG, "[{0}] {1}".format(action_name, working_stack))
+            _MODULE_LOGGER_.debug("[{0}] {1}".format(action_name, working_stack))
 
         return working_stack
-
 
     def _closed_for_statement(self, action_name, input_list, working_stack):
         """
@@ -757,10 +802,84 @@ class DeftPascalCompiler:
         self._ic.push(working_stack)
         self._ic.flush()
 
-        self._log(DEBUG, "[{0}] {1}".format(action_name, working_stack))
+        _MODULE_LOGGER_.debug("[{0}] {1}".format(action_name, working_stack))
 
         # process statements nested inside the for
-        return self._internal_compile(input_list.pop(0), [])
+        self._increase_scope(action_name)
+        result = self._internal_compile(input_list.pop(0), [])
+        self._decrease_scope()
+        return result
+
+    def _open_for_statement(self, action_name, input_list, working_stack):
+        """
+        OPEN_FOR_STATEMENT
+        input_list will have: FOR identifier := Tree(expression) TO/DOWNTO Tree(expression) DO BEGIN Tree(assignment_statement END
+        expression is a Tree of multiple objects
+        assignment_statement is a Tree of multiple objects
+        """
+        working_stack = []
+
+        # process reserved word FOR
+        keyword = BaseKeyword.from_token(input_list.pop(0))
+        working_stack.append(keyword)
+
+        # process the control variable (or expression)
+        control_variable_stack = self._internal_compile(input_list.pop(0), [])
+        working_stack = working_stack + control_variable_stack
+
+        # consume the operator :=
+        token = input_list.pop(0)
+        operator = self._operator_table.retrieve(token.type, equal_level_only=False)
+        if not operator:
+            raise SystemError("Operator table not working correctly")
+
+        control_variable_stack.append(operator)
+        working_stack.append(operator)
+
+        # process the 'initial_value' (or expression) on the for
+        expression_stack = self._internal_compile(input_list.pop(0), [])
+        expression = IntegerExpression.from_list(control_variable_stack + expression_stack)
+
+        if expression is None:
+            msg = "[{0}] expected integer expression but found: {1}"
+            _MODULE_LOGGER_.error(msg.format(action_name, expression_stack))
+
+        else:
+            expression = IntegerExpression.from_list(expression_stack)
+            working_stack.append(expression)
+
+        # emit reserved word to / downto
+        keyword = BaseKeyword.from_token(input_list.pop(0))
+        working_stack.append(keyword)
+
+        # process the 'final_value' on the for
+        expression_stack = self._internal_compile(input_list.pop(0), [])
+        expression = IntegerExpression.from_list(control_variable_stack + expression_stack)
+
+        if expression is None:
+            msg = "[{0}] expected integer expression but found: {1}"
+            _MODULE_LOGGER_.error(msg.format(action_name, expression_stack))
+
+        else:
+            expression = IntegerExpression.from_list(expression_stack)
+            working_stack.append(expression)
+
+        # emit reserved word do
+        keyword = BaseKeyword.from_token(input_list.pop(0))
+        working_stack.append(keyword)
+
+        # generate the intermediate code
+        self._ic.init(action_name)
+        self._ic.push(working_stack)
+        self._ic.flush()
+
+        _MODULE_LOGGER_.debug("[{0}] {1}".format(action_name, working_stack))
+
+        # process statements nested inside the for
+        self._increase_scope(action_name)
+        result = self._internal_compile(input_list.pop(0), [])
+        self._decrease_scope()
+        return result
 
     def _closed_while_statement(self, action_name, input_list, working_stack):
         """
@@ -795,10 +914,14 @@ class DeftPascalCompiler:
         self._ic.push(working_stack)
         self._ic.flush()
 
-        self._log(DEBUG, "[{0}] {1}".format(action_name, working_stack))
+        _MODULE_LOGGER_.debug("[{0}] {1}".format(action_name, working_stack))
 
         # process statements nested inside the while
-        return self._internal_compile(input_list.pop(0), [])
+        self._increase_scope(action_name)
+        result = self._internal_compile(input_list.pop(0), [])
+        self._decrease_scope()
+        return result
+
 
     def _type_definition_part(self, action_name, input_list, working_stack):
         """
@@ -844,11 +967,9 @@ class DeftPascalCompiler:
             _MODULE_LOGGER_.error(msg.format(action_name, identifier))
 
         else:
-
             # type_identifier - it must exist in the symbol table
             type_symbol = self._symbol_table.retrieve(type_identifier, equal_level_only=False)
             if type_symbol:
-
                 # at this point we know:
                 # the type being declared is pointer or not
                 # the type being declared references a custom or a basic type
@@ -860,7 +981,10 @@ class DeftPascalCompiler:
                 if is_pointer:
                     type_class = PointerType
 
-                new_type_symbol = type_class(identifier, type_symbol.type, None)
+                # TODO: Address the pointer type definition
+
+                new_type_symbol = TypeIdentifier(identifier, type_symbol)
+                # new_type_symbol = type_class(identifier, type_symbol.type, None)
 
                 # push the new type to the symbol_table
                 self._symbol_table.append(new_type_symbol)
@@ -869,7 +993,7 @@ class DeftPascalCompiler:
                 self._ic.push(new_type_symbol)
 
                 # log successful declaration
-                self._log(DEBUG, "[{0}] new type defined {1}".format(action_name, new_type_symbol))
+                _MODULE_LOGGER_.debug("[{0}] new type defined {1}".format(action_name, new_type_symbol))
 
             else:
 
@@ -889,7 +1013,7 @@ class DeftPascalCompiler:
         token = input_list.pop(0)
 
         # ensure in built procedures use a lowercase name
-        if ProcedureIdentifier.name_is_reserved_for_in_built_procedure(token.value):
+        if token.value.upper() in ["WRITE", "WRITELN"]:
             token.value = token.value.lower()
 
         identifier = self._symbol_table.retrieve(token.value, equal_level_only=False)
@@ -901,8 +1025,14 @@ class DeftPascalCompiler:
             input_list.pop(0)
             input_list.pop(-1)
 
+            # calculate the number of parameters in the procedure call
+            parameters_counter = len(input_list) - input_list.count(",")
+            if not identifier.accepts_parameters_count(parameters_counter):
+                msg = "[{0}] :  '{1}' parameters passed to procedure {2} but '{3}' expected."
+                _MODULE_LOGGER_.error(msg.format(action_name, parameters_counter, identifier.name, identifier.argument_counter))
+
             # process each parameter expression, discard the commas used as separators
-            parameters_counter = 0
+            parameter_index = 0
             for token in input_list:
                 if isinstance(token, Token):
                     if not token.type == "COMMA":
@@ -910,15 +1040,13 @@ class DeftPascalCompiler:
                         _MODULE_LOGGER_.error(msg.format(action_name, token))
 
                 elif isinstance(token, Tree):
-                    parameters_counter = parameters_counter + 1
+                    parameter_index = parameter_index + 1
 
                     value_to_print_stack = self._internal_compile(token.children[0], [])
+                    expression_value_to_print = BaseExpression.from_list(value_to_print_stack)
+
                     expression_field_width = None
                     expression_decimal_field = None
-
-                    # type checking the expression passed as parameter
-                    expression_value_to_print = BaseExpression.from_list(value_to_print_stack)
-                    # TODO: check if the expression type is compatible with the procedure parameter type definition
 
                     if token.data.upper() in ["BINARY_PARAMETER", "TERNARY_PARAMETER"]:
                         temp_stack = self._internal_compile(token.children[1], [])
@@ -929,34 +1057,32 @@ class DeftPascalCompiler:
                         expression_decimal_field = IntegerExpression.from_list(temp_stack)
 
                     if (expression_field_width or expression_decimal_field) and identifier.name.upper() not in ["WRITE", "WRITELN"]:
-                        msg = "[{0}] formatting parameters incompatible with {1}}. Formatting will be ignored."
+                        msg = "[{0}] Formatting parameters incompatible with {1}}. Formatting will be ignored."
                         _MODULE_LOGGER_.warning(msg.format(action_name, identifier.name))
                         expression_field_width = None
                         expression_decimal_field = None
 
-                    # create the parameter as a generic expression
-                    generic_expression = BaseExpression.from_list([expression_value_to_print,
-                                                                   expression_field_width,
-                                                                   expression_decimal_field])
-                    # push to the working stack
-                    working_stack.append(generic_expression)
+                    # create the actual parameter
+                    parameter = ActualParameter(expression_value_to_print, expression_field_width, expression_decimal_field)
+
+                    if not identifier.is_parameter_compatible(parameter, parameter_index):
+                        msg = "[{0}] :  Incompatible parameter '{1}' passed to procedure {2}"
+                        _MODULE_LOGGER_.error(msg.format(action_name, parameter, identifier))
+
+                    else:
+                        # push to the working stack
+                        working_stack.append(parameter)
 
                 else:
-
-                    msg = "[{0}] :  Unknown object '{1}' passed to procedure {2} parameter."
+                    msg = "[{0}] :  Unknown parameter '{1}' passed to procedure {2}"
                     _MODULE_LOGGER_.error(msg.format(action_name, token, identifier))
-
-            if identifier.value and not identifier.parameter_counter == parameters_counter:
-
-                msg = "[{0}] :  '{1}' parameters passed to procedure {2} but '{3}' expected."
-                _MODULE_LOGGER_.error(msg.format(action_name, parameters_counter, identifier.name, identifier.parameter_counter))
 
             # generate the intermediate code
             self._ic.init(action_name)
             self._ic.push(working_stack)
             self._ic.flush()
 
-            self._log(DEBUG, "[{0}] {1} {2} {3}".format(action_name, identifier, parameters_counter, working_stack))
+            _MODULE_LOGGER_.debug("[{0}] {1} {2} {3}".format(action_name, identifier, parameters_counter, working_stack))
 
         else:
 
@@ -964,6 +1090,120 @@ class DeftPascalCompiler:
             _MODULE_LOGGER_.error(msg.format(action_name, token.value))
 
         return working_stack
+
+
+    def _procedure_declaration(self, action_name, input_list, working_stack):
+        """
+        input_list -> [Token(RESERVED_DECLARATION_PROCEDURE, 'PROCEDURE'),
+                       Token(IDENTIFIER, 'first_procedure'),
+                       Tree(procedure_block, [])
+                       OR proc_or_func_directive	forward
+                       OR proc_or_func_directive	external
+                      ]
+
+        """
+        # initialise the intermediate code engine
+        self._ic.init(action_name)
+
+        # discard the reserved word PROCEDURE
+        input_list.pop(0)
+
+        # retrieve the identifier for the new procedure
+        identifier = input_list.pop(0).value
+
+        # the procedure declaration in hand can be an external, a forward or a standard one
+        # this is identified by the token after the identifier. it can be a proc_or_func_directive or a procedure_block
+        if input_list[-1].data.upper() == "PROC_OR_FUNC_DIRECTIVE":
+            if input_list[-1].children[0].value.upper() == "FORWARD":
+                pi_class = ProcedureForwardIdentifier
+            elif input_list[-1].children[0].value.upper() == "EXTERNAL":
+                pi_class = ProcedureExternalIdentifier
+            else:
+                raise KeyError("unexpected keyword '{0}' in proc_or_func_directive".format(input_list[0].value))
+            input_list.pop(-1)
+
+        else:
+            pi_class = ProcedureIdentifier
+
+        pi = pi_class(identifier, 'RESERVED_TYPE_POINTER', None)
+
+        # store procedure identifier in the symbol table
+        symbol = self._symbol_table.retrieve(identifier, equal_level_only=False)
+        if not symbol:
+            self._symbol_table.append(pi)
+            _MODULE_LOGGER_.debug("[{0}] new procedure defined {1}".format(action_name, pi))
+
+        elif isinstance(symbol, ProcedureForwardIdentifier):
+            # replace in the symbol_table a forward declaration with the actual declaration
+            self._symbol_table.replace(identifier, pi)
+            _MODULE_LOGGER_.debug("[{0}] forward procedure '{1}' resolved".format(action_name, identifier))
+
+        else:
+            msg = "[{0}] identifier '{1}' already declared"
+            _MODULE_LOGGER_.error(msg.format(action_name, identifier))
+
+        self._ic.push(pi)
+        self._ic.flush()
+
+        self._increase_scope(pi.name)
+
+        # process the procedure parameters if those are present
+        if len(input_list) > 0 and input_list[0].data.upper() == "FORMAL_PARAMETER_LIST":
+            argument_list = input_list.pop(0).children
+
+            # discard open and close parameters characters -> (  )
+            argument_list.pop(0)
+            argument_list.pop(-1)
+
+            # process each argument
+            for ast in argument_list:
+                if ast.data.upper() == "VALUE_PARAMETER_SPECIFICATION":
+
+                    # process the type of the argument list
+                    token = ast.children.pop(-1)
+                    if token.type == "IDENTIFIER":
+                        # identifier is of a custom type and their definition is case sensitive/relevant
+                        type_identifier = self._symbol_table.retrieve(token.value, equal_level_only=False)
+                    else:
+                        # identifier is a basic type and those are stored in the symbol table as uppercase
+                        type_identifier = self._symbol_table.retrieve(token.value.upper(), equal_level_only=False)
+
+                    if type_identifier:
+                        # process the arguments
+                        for token in ast.children:
+                            if token.type == "IDENTIFIER":
+                                # create the variables using the parameter_type
+                                new_variable = Identifier(token.value, type_identifier, None)
+
+                                # add the new variable to the symbol_table
+                                self._symbol_table.append(new_variable)
+
+                                # create the formal parameter
+                                argument = FormalParameter(token.value, type_identifier)
+
+                                # add the variable as formal argument to the procedure
+                                pi.add_argument(argument)
+                    else:
+                        msg = "[{0}] unknown type '{1}' reference in procedure declaration."
+                        _MODULE_LOGGER_.error(msg.format(action_name, identifier))
+
+                else:
+                    _MODULE_LOGGER_.warning("parameter class '{0}' not yet supported".format(ast))
+
+        if len(input_list) > 0 and input_list[0].data.upper() == "PROCEDURE_BLOCK":
+            # process the procedure body -> PROCEDURE_BLOCK
+            for ast in input_list[0].children:
+                if ast.data.upper() == "PROCEDURE_DECLARATION" and len(ast.children) > 0:
+                    msg = "nested procedure or function definition is currently not supported. '{0}' will be ignored."
+                    _MODULE_LOGGER_.warning(msg.format(ast.children[1]))
+                else:
+                    self._internal_compile(ast, [])
+            input_list.pop(0)
+
+        self._decrease_scope()
+
+        return working_stack
+
 
     def _closed_if_statement(self, action_name, input_list, working_stack):
         """
@@ -1005,11 +1245,13 @@ class DeftPascalCompiler:
         self._ic.init(action_name)
         self._ic.push(working_stack)
         self._ic.flush()
-        self._log(DEBUG, "[{0}] {1}".format(action_name, working_stack))
+        _MODULE_LOGGER_.debug("[{0}] {1}".format(action_name, working_stack))
 
         # process statements after IF and before ELSE
         token = input_list.pop(0)
+        self._increase_scope(action_name)
         self._internal_compile(token, [])
+        self._decrease_scope()
 
         # switch the action name to match the ELSE part of the IF
         action_name = action_name + "_ELSE"
@@ -1023,11 +1265,82 @@ class DeftPascalCompiler:
         self._ic.init(action_name)
         self._ic.push(working_stack)
         self._ic.flush()
-        self._log(DEBUG, "[{0}] {1}".format(action_name, working_stack))
+        _MODULE_LOGGER_.debug("[{0}] {1}".format(action_name, working_stack))
 
         # process statements after ELSE
         token = input_list.pop(0)
+        self._increase_scope(action_name)
         self._internal_compile(token, [])
+        self._decrease_scope()
 
         return working_stack
 
+    def _open_if_statement(self, action_name, input_list, working_stack):
+        """
+        _open_if_statement
+        input_list -> [Token(RESERVED_STATEMENT_IF, 'if'),
+                        Tree(expression, [...]),
+                       Token(RESERVED_STATEMENT_THEN, 'then'),
+                        Tree(compound_statement, [...]
+                       Token(RESERVED_STATEMENT_ELSE, 'else'),
+                        Tree(compound_statement, [...]
+                      ]
+        """
+        working_stack = []
+
+        # process reserved word IF
+        keyword = BaseKeyword.from_token(input_list.pop(0))
+        working_stack.append(keyword)
+
+        # process boolean expression
+        expression_stack = self._internal_compile(input_list.pop(0), [])
+        expression = BaseExpression.from_list(expression_stack)
+
+        if expression is None:
+            msg = "[{0}] incompatible types in expression: {1}"
+            _MODULE_LOGGER_.error(msg.format(action_name, expression))
+
+        elif not expression.type == "RESERVED_TYPE_BOOLEAN":
+            msg = "[{0}] expected boolean expression but found: {1}"
+            _MODULE_LOGGER_.error(msg.format(action_name, expression.type))
+
+        else:
+            working_stack.append(expression)
+
+        # process reserved word THEN
+        keyword = BaseKeyword.from_token(input_list.pop(0))
+        working_stack.append(keyword)
+
+        # generate the intermediate code
+        self._ic.init(action_name)
+        self._ic.push(working_stack)
+        self._ic.flush()
+        _MODULE_LOGGER_.debug("[{0}] {1}".format(action_name, working_stack))
+
+        # process statements after IF and before ELSE
+        token = input_list.pop(0)
+        self._increase_scope(action_name)
+        self._internal_compile(token, [])
+        self._decrease_scope()
+
+        ## switch the action name to match the ELSE part of the IF
+        #action_name = action_name + "_ELSE"
+
+        # process reserved word ELSE
+        #working_stack = []
+        #keyword = BaseKeyword.from_token(input_list.pop(0))
+        #working_stack.append(keyword)
+
+        # generate the intermediate code
+        #self._ic.init(action_name)
+        #self._ic.push(working_stack)
+        #self._ic.flush()
+        #_MODULE_LOGGER_.debug("[{0}] {1}".format(action_name, working_stack))
+
+        # process statements after ELSE
+        #token = input_list.pop(0)
+        #self._increase_scope(action_name)
+        #self._internal_compile(token, [])
+        #self._decrease_scope()
+
+        return working_stack

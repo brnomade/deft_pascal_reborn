@@ -5,7 +5,7 @@ DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original D
 HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
-from components.symbols.base_symbols import BaseIdentifier
+from components.symbols.base_symbols import BaseIdentifier, BaseExpression, BaseType
 import logging
 
 
@@ -18,9 +18,27 @@ class Identifier(BaseIdentifier):
         pass
 
 
+class TypeIdentifier(BaseIdentifier):
+
+    def __init__(self, a_name, a_type):
+        if not (isinstance(a_type, BaseType) or isinstance(a_type, TypeIdentifier)):
+            raise ValueError("TypeIdentifier expects an instance of BaseType or TypeIdentifier")
+        super().__init__(a_name,
+                         a_type if isinstance(a_type, BaseType) else a_type.type,
+                         None)
+
+    def __str__(self):
+        return "{0}({1}|{2})".format(self.category, self.name, self.type)
+
+    def __repr__(self):
+        return "{0}({1}|{2})".format(self.category, self.name, self.type)
+
+
 class ConstantIdentifier(BaseIdentifier):
 
     def __init__(self, a_name, an_expression):
+        if not isinstance(an_expression, BaseExpression):
+            raise ValueError("ConstantIdentifier expects an instance of BaseExpression")
         super().__init__(a_name, None, an_expression)
 
     @property
@@ -98,21 +116,46 @@ class ProcedureIdentifier(BaseIdentifier):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._parameter_counter = 0
-        self._parameter_list = []
+        self._argument_list = []
 
     @classmethod
-    def name_is_reserved_for_in_built_procedure(cls, name):
-        return True if name.upper() in ["WRITE", "WRITELN"] else False
-
-    @classmethod
-    def unlimited_parameters_list_size(cls):
+    def unlimited_arguments_counter(cls):
         return -1
+
+    def add_argument(self, a_symbol):
+        assert type(a_symbol).__name__ == "FormalParameter"
+        self._argument_list.append(a_symbol)
+
+    @property
+    def arguments(self):
+        return self._argument_list
+
+    @property
+    def argument_counter(self):
+        return len(self._argument_list)
+
+    def is_parameter_compatible(self, a_symbol, argument_index):
+        assert type(a_symbol).__name__ == "ActualParameter"
+        assert isinstance(argument_index, int)
+        if argument_index > self.argument_counter or argument_index < 1:
+            return None
+        else:
+            return a_symbol.type == self._argument_list[argument_index - 1].type
+
+    def accepts_parameters_count(self, parameter_count):
+        return self.argument_counter == parameter_count
+
+
+class InBuiltProcedureWrite(ProcedureIdentifier):
 
     @classmethod
     def in_built_procedure_write(cls):
-        write = cls('write', 'RESERVED_TYPE_POINTER', None)
-        write.parameter_counter = cls.unlimited_parameters_list_size()
+
+        # TODO: Revisit the use of type POINTER for procedures.
+        # TODO: probably procedures need to be of a NULL type so that they cannot be mixed in expressions.
+        # TODO: the default "type" could be initialised in the class constructor instead of passing by parameter here.
+
+        write = cls('write', 'RESERVED_TYPE_POINTER')
         return write
 
     @classmethod
@@ -121,21 +164,44 @@ class ProcedureIdentifier(BaseIdentifier):
         write.name = "writeln"
         return write
 
+    def add_argument(self, a_symbol):
+        raise AttributeError("procedure write cannot be extended with new arguments")
+
     @property
-    def parameter_counter(self):
-        return self._parameter_counter
+    def arguments(self):
+        raise AttributeError("procedure write cannot be inquired about its arguments")
 
-    @parameter_counter.setter
-    def parameter_counter(self, new_counter):
-        if not isinstance(new_counter, int):
-            raise ValueError("parameter_counter expects an integer value")
-        self._parameter_counter = new_counter
+    @property
+    def argument_counter(self):
+        return self.unlimited_arguments_counter()
 
-    def add_parameter_expression(self, an_expression):
-        if (self._parameter_counter == self.unlimited_parameters_list_size()) or (len(self._parameter_list) < self._parameter_counter):
-            self._parameter_list.append(an_expression)
-            return True
-            #TODO - type check of the incoming expression against what is expected by the procedure parameter
-        else:
-            _MODULE_LOGGER.error("PrcedureIdentifier accepts only '{0}' parameters. Received '{1}'".format(self.parameter_counter, an_expression))
-            return False
+    def is_parameter_compatible(self, a_symbol, argument_index):
+        assert type(a_symbol).__name__ == "ActualParameter"
+        assert isinstance(argument_index, int)
+        return a_symbol.type.type in ["RESERVED_TYPE_INTEGER","RESERVED_TYPE_REAL",
+                                      "RESERVED_TYPE_SET", "RESERVED_TYPE_CHAR",
+                                      "RESERVED_TYPE_BOOLEAN", "RESERVED_TYPE_STRING"]
+
+    def accepts_parameters_count(self, parameter_count):
+        return True
+
+
+class ProcedureForwardIdentifier(ProcedureIdentifier):
+
+    @classmethod
+    def in_built_procedure_write(cls):
+        raise TypeError("in built procedure not compatible with forward procedure type")
+
+    @classmethod
+    def in_built_procedure_writeln(cls):
+        raise TypeError("in built procedure not compatible with forward procedure type")
+
+
+class ProcedureExternalIdentifier(ProcedureIdentifier):
+    @classmethod
+    def in_built_procedure_write(cls):
+        raise TypeError("in built procedure not compatible with forward procedure type")
+
+    @classmethod
+    def in_built_procedure_writeln(cls):
+        raise TypeError("in built procedure not compatible with forward procedure type")

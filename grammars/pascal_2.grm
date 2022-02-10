@@ -362,7 +362,7 @@ result_type : identifier ;
 [DONE]
 function_identification : FUNCTION identifier ;
 
-[DONe]
+[DONE]
 function_block : block ;
 
 [DONE]
@@ -437,6 +437,7 @@ open_with_statement : WITH record_variable_list DO open_statement
 closed_with_statement : WITH record_variable_list DO closed_statement
  ;
 
+[DONE]
 open_if_statement : IF boolean_expression THEN statement
  | IF boolean_expression THEN closed_statement ELSE open_statement
  ;

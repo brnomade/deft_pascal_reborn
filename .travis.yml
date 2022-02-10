@@ -1,9 +1,9 @@
-dist: xenial
+dist: bionic
 language: python
 python:
   - "3.8"
 compiler:
-  - gcc
+  - clang
 install:
   - pip install coverage
   - pip install python-coveralls
@@ -12,6 +12,9 @@ before_script:
   - curl -L https://codeclimate.com/downloads/test-reporter/test-reporter-latest-linux-amd64 > ./cc-test-reporter
   - chmod +x ./cc-test-reporter
   - ./cc-test-reporter before-build
+  - gcc --version
+  - clang --version
+  - cc --version
 script:
   - coverage run --omit */Lib/* -m unittest
 after_script:

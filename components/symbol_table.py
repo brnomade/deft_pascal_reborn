@@ -24,6 +24,16 @@ class SymbolTable:
         result = self.retrieve(name, equal_level_only)
         return result is not None
 
+    def instances_of(self, a_class):
+        """
+        returns a list containing all the names of objects that are instances of a_class
+        """
+        result = []
+        for level_dictionary in self._symbol_table.values():
+            for symbol in level_dictionary.values():
+                if isinstance(symbol, a_class):
+                    result.append(symbol.name)
+        return result
 
     def append(self, a_symbol):
         """
@@ -56,19 +66,52 @@ class SymbolTable:
         return result
 
 
-    def retrieve(self, name, equal_level_only=True):
-        if self.current_level not in self._symbol_table:
+    def _retrieve_from_level(self, name, level):
+        if level not in self._symbol_table:
             result = None
-        elif name not in self._symbol_table[self.current_level]:
-            if equal_level_only:
-                result = None
-            else:
-                result = self._get_from_lower_scope(name)
+        elif name not in self._symbol_table[level]:
+            result = None
         else:
-            result = self._symbol_table[self.current_level][name]
-        #
+            result = self._symbol_table[level][name]
         return result
 
+
+    def _recursive_retrieve(self, name, level):
+        result = self._retrieve_from_level(name, level)
+        if not result and level > 0:
+            result = self._recursive_retrieve(name, level - 1)
+        return result
+
+
+    def retrieve(self, name, equal_level_only=True):
+        if equal_level_only:
+            return self._retrieve_from_level(name, self.current_level)
+        else:
+            return self._recursive_retrieve(name, self.current_level)
+        #                 if self.current_level not in self._symbol_table:
+        #                 result = None
+        #             elif name not in self._symbol_table[self.current_level]:
+        #                 result = None
+        #             else:
+        #                 result = self._symbol_table[self.current_level][name]
+        #         else:
+        #             if self.current_level not in self._symbol_table:
+        #                 result = self._get_from_lower_scope(name)
+        #
+        #                 if name not in self._symbol_table[self.current_level]:
+        #
+        #         if self.current_level not in self._symbol_table:
+        #             result = None
+        #         elif name not in self._symbol_table[self.current_level]:
+        #             if equal_level_only:
+        #                 result = None
+        #             else:
+        #                 result = self._get_from_lower_scope(name)
+        #         else:
+        #             result = self._symbol_table[self.current_level][name]
+        #         #
+        #         return result
+        #
 
     def _get_from_lower_scope(self, name):
         for i in range(self.current_level - 1, -1, -1):
@@ -90,6 +133,16 @@ class SymbolTable:
             raise KeyError("symbol '{0}' not present at level '{0}-{1}'".format(self.current_level, self.current_scope))
         #
         return self._symbol_table[self.current_level].pop(name)
+
+
+    def replace(self, name, symbol):
+        """
+        The incoming symbol will replace an already present symbol identified by name at the current level
+        """
+        if not self.contains(name, equal_level_only=True):
+            raise KeyError("symbol '{0}' not present at level '{1}'".format(name, self.current_level))
+        else:
+            self._symbol_table[self.current_level][name] = symbol
 
 
     @property
@@ -115,6 +168,7 @@ class SymbolTable:
 
     def decrease_level(self):
         if self._current_level > 0:
+            self.purge_all_from_current_scope()
             self._stack_scope.pop()
             self._current_level = self._current_level - 1
             return self._stack_scope[-1]

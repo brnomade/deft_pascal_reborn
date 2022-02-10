@@ -17,69 +17,117 @@ import platform
 param_remove_file_after_test = True
 
 
-def compile_in_gcc(input_c):
-    home_dir = os.getcwd()
+# def compile_in_gcc(input_c):
+#     home_dir = os.getcwd()
+#
+#     mig_dir = "C:\\MinGW\\bin"
+#
+#     if platform.system() == "Windows":
+#         sources_path = "output\\sources"
+#         bin_path = "output\\bin"
+#         logs_path = "output\\logs"
+#     else:
+#         sources_path = ""
+#         bin_path = ""
+#         logs_path = ""
+#
+#     input_source = os.path.join(home_dir, sources_path, input_c)
+#     output_err = os.path.join(home_dir, logs_path, input_c.split(".")[0] + ".err")
+#     output_out = os.path.join(home_dir, logs_path, input_c.split(".")[0] + ".out")
+#     output_exe = os.path.join(home_dir, bin_path, input_c.split(".")[0] + ".exe")
+#     #
+#     if platform.system() == "Windows":
+#         gcc_name = "gcc.exe"
+#     else:
+#         gcc_name = "gcc"
+#     #
+#     # c_compiler = "{0} -S -c -o {1}".format(gcc_name, output_exe)
+#     # c_env = "{0} {1} > {2} 2> {3}".format(c_compiler, input_source, output_out, output_err)
+#     c_compiler = "{0} -S -c".format(gcc_name)
+#     c_env = "{0} {1} > {2} 2> {3}".format(c_compiler, input_source, output_out, output_err)
+#
+#     print(c_env)
+#     #
+#     if platform.system() == "Windows":
+#         os.chdir(mig_dir)
+#     #
+#     subprocess.run(c_env, shell=True)
+#     #
+#     if platform.system() == "Windows":
+#         os.chdir(home_dir)
+#     #
+#     result_out = "error"
+#     if os.path.exists(os.path.join(home_dir, output_out)):
+#         file = open(output_out)
+#         result_out = file.read()
+#         file.close()
+#         if result_out:
+#             print(result_out)
+#         if param_remove_file_after_test:
+#             os.remove(output_out)
+#
+#     result_err = "error"
+#     if os.path.exists(os.path.join(home_dir, output_err)):
+#         file = open(output_err)
+#         result_err = file.read()
+#         file.close()
+#         if result_err:
+#             print(result_err)
+#         if param_remove_file_after_test:
+#             os.remove(output_err)
+#
+#     if param_remove_file_after_test:
+#         os.remove(input_c)
+#
+#     return result_out + result_err
 
-    mig_dir = "C:\\MinGW\\bin"
+
+def compile_in_c_compiler(path_to_c_code):
 
     if platform.system() == "Windows":
-        sources_path = "output\\sources"
-        bin_path = "output\\bin"
-        logs_path = "output\\logs"
+        home_dir = os.getcwd()
+        compiler_exe = "C:\\MinGW\\bin\\gcc.exe"
+        compiler_dir = os.path.dirname(compiler_exe)
+        compiler_options = "-Wall -std=gnu99 -O2"
     else:
-        sources_path = ""
-        bin_path = ""
-        logs_path = ""
+        home_dir = os.getcwd()
+        # compiler_exe = "gcc --version -dumpspecs -dumpversion -dumpmachine -v"
+        compiler_exe = "cc"
+        compiler_dir = ""
+        compiler_options = "-Wall -std=gnu99 -O2"
 
-    input_source = os.path.join(home_dir, sources_path, input_c)
-    output_err = os.path.join(home_dir, logs_path, input_c.split(".")[0] + ".err")
-    output_out = os.path.join(home_dir, logs_path, input_c.split(".")[0] + ".out")
-    output_exe = os.path.join(home_dir, bin_path, input_c.split(".")[0] + ".exe")
-    #
-    if platform.system() == "Windows":
-        gcc_name = "gcc.exe"
-    else:
-        gcc_name = "gcc"
-    #
-    # c_compiler = "{0} -S -c -o {1}".format(gcc_name, output_exe)
-    # c_env = "{0} {1} > {2} 2> {3}".format(c_compiler, input_source, output_out, output_err)
-    c_compiler = "{0} -S -c".format(gcc_name)
-    c_env = "{0} {1} > {2} 2> {3}".format(c_compiler, input_source, output_out, output_err)
+    if not os.path.exists(path_to_c_code):
+        raise FileNotFoundError("file not found : '{0}'".format(path_to_c_code))
+
+    output_err = path_to_c_code.split(".")[0] + ".err"
+    output_out = path_to_c_code.split(".")[0] + ".out"
+    output_exe = path_to_c_code.split(".")[0] + ".exe"
+
+    c_compiler = "{0} {1} -o {2} {3}".format(compiler_exe, compiler_options, output_exe, path_to_c_code)
+    c_env = "{0} > {1} 2> {2}".format(c_compiler, output_out, output_err)
 
     print(c_env)
-    #
+
     if platform.system() == "Windows":
-        os.chdir(mig_dir)
-    #
-    subprocess.run(c_env, shell=True)
-    #
-    if platform.system() == "Windows":
+        os.chdir(compiler_dir)
+        subprocess.run(c_env, shell=True)
         os.chdir(home_dir)
-    #
-    result_out = "error"
+    else:
+        subprocess.run(c_env, shell=True)
+
     if os.path.exists(os.path.join(home_dir, output_out)):
         file = open(output_out)
         result_out = file.read()
         file.close()
-        if result_out:
-            print(result_out)
-        if param_remove_file_after_test:
-            os.remove(output_out)
+        print(result_out)
 
     result_err = "error"
     if os.path.exists(os.path.join(home_dir, output_err)):
         file = open(output_err)
         result_err = file.read()
         file.close()
-        if result_err:
-            print(result_err)
-        if param_remove_file_after_test:
-            os.remove(output_err)
 
-    if param_remove_file_after_test:
-        os.remove(input_c)
-
-    return result_out + result_err
+    return result_err
 
 
 def run_in_shell(c_file_filename):
@@ -123,20 +171,18 @@ class TestGeneratorPositiveScenarios(TestCase):
         source_code = function_callable()
         if "{{{0}}}" in source_code:
             source_code = source_code.replace("{{{0}}}", name)
-        #
+
         compiler = DeftPascalCompiler(cmoc=False)
-        error_log = compiler.check_syntax(source_code)
-        if error_log:
-            print(error_log)
-        self.assertEqual([], error_log)
-        #
-        print(compiler.ast.pretty())
-        #
-        error_log = compiler.compile()
-        if error_log:
-            print(error_log)
-        self.assertEqual([], error_log)
-        #
+        log = compiler.check_syntax(source_code)
+        if log["ERROR"]:
+            print(log["ERROR"])
+        self.assertEqual([], log["ERROR"])
+
+        log = compiler.compile()
+        if log["ERROR"]:
+            print(log["ERROR"])
+        self.assertEqual([], log["ERROR"])
+
         ic = compiler.intermediate_code
         print(ic)
         #
@@ -154,10 +200,13 @@ class TestGeneratorPositiveScenarios(TestCase):
             file = open(filename, "w")
             file.write(output_code)
             file.close()
-        #
-        output = compile_in_gcc(filename)
+
+        output = compile_in_c_compiler(filename)
+        print(output)
+
         self.assertNotIn("error", output)
         self.assertNotIn("warning", output)
+        print("compilation finished successfully.")
 
 
 class TestGeneratorExampleScenarios(TestCase):
@@ -176,20 +225,18 @@ class TestGeneratorExampleScenarios(TestCase):
         source_code = function_callable()
         if "{{{0}}}" in source_code:
             source_code = source_code.replace("{{{0}}}", name)
-        #
-        compiler = DeftPascalCompiler(cmoc=False)
-        error_log = compiler.check_syntax(source_code)
-        if error_log:
-            print(error_log)
-        self.assertEqual([], error_log)
-        #
-        print(compiler.ast.pretty())
-        #
-        error_log = compiler.compile()
-        if error_log:
-            print(error_log)
-        self.assertEqual([], error_log)
-        #
+
+        compiler = DeftPascalCompiler()
+        log = compiler.check_syntax(source_code)
+        if log["ERROR"]:
+            print(log["ERROR"])
+        self.assertEqual([], log["ERROR"])
+
+        log = compiler.compile()
+        if log["ERROR"]:
+            print(log["ERROR"])
+        self.assertEqual([], log["ERROR"])
+
         ic = compiler.intermediate_code
         print(ic)
         #
@@ -207,8 +254,10 @@ class TestGeneratorExampleScenarios(TestCase):
             file = open(filename, "w")
             file.write(output_code)
             file.close()
-        #
-        output = compile_in_gcc(filename)
+
+        output = compile_in_c_compiler(filename)
+        print(output)
+
         self.assertNotIn("error", output)
         self.assertNotIn("warning", output)
-        #
+        print("compilation finished successfully.")

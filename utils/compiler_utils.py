@@ -101,34 +101,6 @@ class Expression:
     def __init__(self, expression):
         self.infix_tokens = expression
         self.postfix_tokens = []
-        # self.precedence_rules = {"OPERATOR_ARITHMETIC_NEGATION": 70,
-        #                          "OPERATOR_ARITHMETIC_NEUTRAL": 70,
-        #                          "OPERATOR_STARSTAR": 60,
-        #                          "OPERATOR_DIVIDE": 50,
-        #                          "OPERATOR_DIV": 50,
-        #                          "OPERATOR_MOD": 50,
-        #                          "OPERATOR_MULTIPLY": 50,
-        #                          "OPERATOR_ABS": 40,
-        #                          "OPERATOR_PLUS": 30,
-        #                          "OPERATOR_MINUS": 30,
-        #                          "OPERATOR_LSL": 20,
-        #                          "OPERATOR_LSR": 20,
-        #                          "OPERATOR_XOR": 20,
-        #                          "OPERATOR_SHL": 20,
-        #                          "OPERATOR_SHR": 20,
-        #                          "OPERATOR_NOT": 10,
-        #                          "OPERATOR_AND": 10,
-        #                          "OPERATOR_OR": 10,
-        #                          "OPERATOR_IN": 5,
-        #                          "OPERATOR_EQUAL_TO": 5,
-        #                          "OPERATOR_NOT_EQUAL_TO": 5,
-        #                          "OPERATOR_LESS_THEN": 5,
-        #                          "OPERATOR_GREATER_THAN": 5,
-        #                          "OPERATOR_LESS_OR_EQUAL_TO": 5,
-        #                          "OPERATOR_GREATER_OR_EQUAL_TO": 5,
-        #                          "OPERATOR_ASSIGNMENT": 1,
-        #                          "LEFT_PARENTHESES": 0
-        #                          }
 
     def infix_to_postfix(self):
         # logger.info("infix_to_postfix\n")
@@ -167,55 +139,8 @@ def convert_to_postfix(expression):
     return Expression(expression.copy()).infix_to_postfix()
 
 
-#def compatibility_for_operator(operator_name):
-#    # this is defined from the symbol_left perspective.
-#    if operator_name in glb_compatibility_matrix:
-#        return glb_compatibility_matrix[operator_name]
-
-
-# def check_type_compatibility(expression):
-#     """
-#     expression - is a list of tokens.
-#     """
-#     #
-#     compatible = True
-#     stack = []
-#     postfix_expression = convert_to_postfix(expression)
-#     for token in postfix_expression:
-#
-#         if isinstance(token, Operator):
-#             symbol_right = stack.pop()
-#             symbol_right = symbol_right if isinstance(symbol_right, BaseType) else symbol_right.type
-#
-#             if isinstance(token, UnaryOperator):
-#                 result = token.evaluate_to_type(symbol_right)
-#
-#             elif isinstance(token, BinaryOperator):
-#                 symbol_left = stack.pop()
-#                 symbol_left = symbol_left if isinstance(symbol_left, BaseType) else symbol_left.type
-#                 result = token.evaluate_to_type(symbol_right=symbol_right, symbol_left=symbol_left)
-#
-#             if result:
-#                 stack.append(result)
-#
-#             else:
-#                 return None
-#
-#         else:
-#             stack.append(token)
-#
-#     return stack[-1]
-
-
-def token_is_an_operator(token):
-    return "OPERATOR_" in token.type
-
-
-# def identifier_from_token(parser_token, context_label, context_level):
-#     """
-#     return an Identifier (i.e. an identifier for anything different than TYPEs) from a parser input_token
-#     """
-#     return Identifier(parser_token.value, context_label, context_level, parser_token.type, parser_token.value)
+#def token_is_an_operator(token):
+#    return "OPERATOR_" in token.type
 
 
 def compile_in_gcc(input_c, remove_file_after_test=True):
@@ -252,8 +177,11 @@ def compile_in_gcc(input_c, remove_file_after_test=True):
     #
     if platform.system() == "Windows":
         os.chdir(mig_dir)
-    #
-    subprocess.run(c_env, shell=True)
+        env_variables = os.environ.copy()
+        env_variables["PATH"] = mig_dir + ";" + env_variables["PATH"]
+        subprocess.run(c_env, shell=True, env=env_variables)
+    else:
+        subprocess.run(c_env, shell=True)
     #
     if platform.system() == "Windows":
         os.chdir(home_dir)
@@ -298,5 +226,15 @@ def run_in_shell(c_file_filename):
         print(msg.format("Compiler executable", executable_file))
     return subprocess.run(executable_file)
 
+
+def _execute_syntax_chek(compiler, pascal_source):
+    log = compiler.check_syntax(pascal_source)
+    if log["ERROR"]:
+        print(log["ERROR"])
+    #
+    if not log["ERROR"] and self._arguments.save_steps:
+        self._save_to_file(self._compiler.ast.pretty(), "ast")
+    #
+    return log
 
 
