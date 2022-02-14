@@ -19,9 +19,9 @@ class ConfigurationForTestTDD:
 
     @classmethod
     def tdd_tests_to_run(cls):
-        return [(123,
-                 "example_divisors",
-                 PascalExamples.example_divisors)
+        return [(12,
+                 "scenario_function_declaration_with_single_static_parameter",
+                 PositiveLanguageTests.scenario_function_declaration_with_single_static_parameter)
                 ]
 
 
@@ -50,21 +50,26 @@ class TestTDD(TestCase):
             else:
                 raise ModuleNotFoundError("Unknown Test Class")
 
+    def _display_log(self, log_dictionary):
+        for info_level in ["WARNING", "DEBUG", "ERROR"]:
+            print("\n{0}\n{1}".format(info_level, log_dictionary[info_level]))
 
     def _execute_step_1(self, source_code):
         print("Running syntax and semantic check")
         compiler = DeftPascalCompiler()
-        error_log = compiler.check_syntax(source_code)
-        if error_log["ERROR"]:
-            print(error_log)
-        self.assertEqual([], error_log["ERROR"])
+        output_log = compiler.check_syntax(source_code)
+        if output_log["ERROR"]:
+            print(output_log["ERROR"])
+        self.assertEqual([], output_log["ERROR"])
         print(compiler.ast.pretty())
+        self._display_log(output_log)
         #
         error_log = compiler.compile()
-        if error_log["ERROR"]:
-            print(error_log["ERROR"])
-        self.assertEqual([], error_log["ERROR"])
-
+        if output_log["ERROR"]:
+            print(output_log["ERROR"])
+        self.assertEqual([], output_log["ERROR"])
+        #
+        self._display_log(output_log)
 
     def _execute_negative_test(self, name, inbound):
         print("Run negative test '{0}'".format(name))
@@ -104,20 +109,21 @@ class TestTDD(TestCase):
     def _execute_step_1_2(self, source_code):
         print("Run syntax check, semantic check and generating intermediate code")
         compiler = DeftPascalCompiler()
-        error_log = compiler.check_syntax(source_code)
-        if error_log["ERROR"]:
-            print(error_log)
-        self.assertEqual([], error_log["ERROR"])
+        output_log = compiler.check_syntax(source_code)
+        if output_log["ERROR"]:
+            print(output_log["ERROR"])
+        self.assertEqual([], output_log["ERROR"])
         print(compiler.ast.pretty())
         #
-        error_log = compiler.compile()
-        if error_log["ERROR"]:
-            print(error_log["ERROR"])
-        self.assertEqual([], error_log["ERROR"])
+        output_log = compiler.compile()
+        if output_log["ERROR"]:
+            print(output_log["ERROR"])
+        self.assertEqual([], output_log["ERROR"])
         print(compiler.intermediate_code)
+        #
+        self._display_log(output_log)
 
-
-    def _execute_step_1_2_3(self, source_code):
+def _execute_step_1_2_3(self, source_code):
         print("Run syntax check, semantic check, generating intermediate code, generating c code and compiling in gcc")
         compiler = DeftPascalCompiler()
 

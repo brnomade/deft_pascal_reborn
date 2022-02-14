@@ -117,56 +117,60 @@ class DeftPascalParser:
 
         // PROCEDURE AND FUNCTION DECLARATION
         
-        _procedure_and_function_declaration_part : proc_or_func_declaration_list _SEMICOLON
-                                                |
+        _procedure_and_function_declaration_part : _proc_or_func_declaration_list _SEMICOLON
+                                                 |
 
-        proc_or_func_declaration_list : proc_or_func_declaration_list _SEMICOLON proc_or_func_declaration
-                                      | proc_or_func_declaration
+        _proc_or_func_declaration_list : _proc_or_func_declaration_list _SEMICOLON _proc_or_func_declaration
+                                       | _proc_or_func_declaration
  
-        proc_or_func_declaration : procedure_declaration
-                                 | function_declaration
-                                 
-        procedure_declaration : procedure_heading _SEMICOLON directive
-                              | procedure_heading _SEMICOLON procedure_block
+        _proc_or_func_declaration : procedure_declaration
+                                  | function_declaration
+                                  | procedure_declaration_with_directive
+                                  | function_declaration_with_directive
+                                  
+        procedure_declaration_with_directive : procedure_heading _SEMICOLON directive
+ 
+        procedure_declaration : procedure_heading _SEMICOLON procedure_block
  
         procedure_heading : procedure_identification
-                          | procedure_identification formal_parameter_list
+                          | procedure_identification parameter_list
  
         directive : RESERVED_STATEMENT_FORWARD
                   | RESERVED_STATEMENT_EXTERNAL
 
-        formal_parameter_list : LEFT_PARENTHESES formal_parameter_section_list RIGHT_PARENTHESES
+        parameter_list : LEFT_PARENTHESES _formal_parameter_section_list RIGHT_PARENTHESES
  
-        formal_parameter_section_list : formal_parameter_section_list _SEMICOLON formal_parameter_section
-                                      | formal_parameter_section
+        _formal_parameter_section_list : _formal_parameter_section_list _SEMICOLON _formal_parameter_section
+                                       | _formal_parameter_section
 
-        formal_parameter_section : value_parameter_specification
-                                 | variable_parameter_specification
-                                 | procedural_parameter_specification
-                                 | functional_parameter_specification
+        _formal_parameter_section : value_parameter_specification
+                                  | variable_parameter_specification
+                                  | procedural_parameter_specification
+                                  | functional_parameter_specification
 
-        value_parameter_specification : _identifier_list _COLON IDENTIFIER
+        value_parameter_specification : _identifier_list _COLON _domain_type
 
         variable_parameter_specification : RESERVED_DECLARATION_VAR _identifier_list _COLON IDENTIFIER
 
         procedural_parameter_specification : procedure_heading
 
-        functional_parameter_specification : function_heading                 
+        functional_parameter_specification : _function_heading                 
  
         procedure_identification : RESERVED_DECLARATION_PROCEDURE IDENTIFIER
 
         procedure_block : _block
         
-        function_declaration : function_heading _SEMICOLON directive
-                             | function_identification _SEMICOLON function_block
-                             | function_heading _SEMICOLON function_block
-        
-        function_heading : RESERVED_DECLARATION_FUNCTION IDENTIFIER _COLON result_type
-                         | RESERVED_DECLARATION_FUNCTION IDENTIFIER formal_parameter_list _COLON result_type
-        
-        result_type : IDENTIFIER
+        function_declaration_with_directive : _function_heading _SEMICOLON directive 
 
-        function_identification : RESERVED_DECLARATION_FUNCTION IDENTIFIER
+        function_declaration : _function_identification _SEMICOLON function_block
+                             | _function_heading _SEMICOLON function_block
+        
+        _function_heading : RESERVED_DECLARATION_FUNCTION IDENTIFIER _COLON return_type
+                          | RESERVED_DECLARATION_FUNCTION IDENTIFIER parameter_list _COLON return_type
+        
+        return_type : _type_denoter
+
+        _function_identification : RESERVED_DECLARATION_FUNCTION IDENTIFIER
 
         function_block : _block
 

@@ -10,7 +10,10 @@ from components.deft_pascal_parser_3 import DeftPascalParser
 from components.symbol_table import SymbolTable
 from components.symbols.base_symbols import BaseKeyword, BaseExpression
 from components.symbols.operator_symbols import Operator, BinaryOperator, UnaryOperator, NeutralOperator
-from components.symbols.identifier_symbols import Identifier, TypeIdentifier, ProcedureIdentifier, InBuiltProcedureWrite, ProcedureExternalIdentifier, ProcedureForwardIdentifier, ConstantIdentifier
+from components.symbols.identifier_symbols import Identifier, TypeIdentifier, \
+    ProcedureIdentifier, InBuiltProcedureWrite, ProcedureExternalIdentifier, ProcedureForwardIdentifier, \
+    ConstantIdentifier, \
+    FunctionIdentifier, FunctionExternalIdentifier, FunctionForwardIdentifier
 from components.symbols.literals_symbols import BooleanLiteral, NilLiteral, NumericLiteral, StringLiteral
 from components.symbols.type_symbols import PointerType, BasicType, StringType
 from components.symbols.expression_symbols import ConstantExpression, IntegerExpression, BooleanExpression
@@ -85,6 +88,9 @@ class DeftPascalCompiler:
                          "ASSIGNMENT_STATEMENT",
                          "PROCEDURE_CALL",
                          "PROCEDURE_DECLARATION",
+                         "FUNCTION_DECLARATION",
+                         "PROCEDURE_DECLARATION_WITH_DIRECTIVE",
+                         "FUNCTION_DECLARATION_WITH_DIRECTIVE",
                          "EXPRESSION",
                          "CLOSED_FOR_STATEMENT",
                          "OPEN_FOR_STATEMENT",
@@ -1091,8 +1097,117 @@ class DeftPascalCompiler:
 
         return working_stack
 
+    def _procedure_declaration_with_directive(self, action_name, input_list, working_stack):
+        return self._generic_procedure_or_function_declaration_with_directive(action_name, input_list, working_stack)
+
+    def _function_declaration_with_directive(self, action_name, input_list, working_stack):
+        return self._generic_procedure_or_function_declaration_with_directive(action_name, input_list, working_stack)
 
     def _procedure_declaration(self, action_name, input_list, working_stack):
+        return self._generic_procedure_or_function_declaration(action_name, input_list, working_stack)
+
+    def _function_declaration(self, action_name, input_list, working_stack):
+        """
+         Tree('function_declaration', [Tree('function_heading', "
+         "[Token('RESERVED_DECLARATION_FUNCTION', 'FUNCTION'), Token('IDENTIFIER', "
+         "'F1'), Tree('formal_parameter_list', [Token('LEFT_PARENTHESES', '('), "
+         "Tree('formal_parameter_section_list', [Tree('formal_parameter_section_list', "
+         "[Tree('formal_parameter_section', [Tree('value_parameter_specification', "
+         "[Token('IDENTIFIER', 'SP1'), Token('IDENTIFIER', 'INTEGER')])])]), "
+         "Tree('formal_parameter_section', [Tree('value_parameter_specification', "
+         "[Token('IDENTIFIER', 'SP2'), Token('IDENTIFIER', 'BOOLEAN')])])]), "
+         "Token('RIGHT_PARENTHESES', ')')]), Tree('result_type', [Token('IDENTIFIER', "
+         "'INTEGER')])]), Tree('function_block', [Tree('label_declaration_part', []), "
+         "Tree('constant_definition_part', []), Tree('type_definition_part', []), "
+         "Tree('variable_declaration_part', []), Tree('compound_statement', "
+         "[Token('RESERVED_STRUCTURE_BEGIN', 'BEGIN'), Token('RESERVED_STRUCTURE_END', "
+         "'END')])])])
+        """
+        return self._generic_procedure_or_function_declaration(action_name, input_list, working_stack)
+
+
+    def _generic_procedure_or_function_declaration_with_directive(self, action_name, input_list, working_stack):
+        """
+        Example:
+            input_list -> [Token(RESERVED_DECLARATION_PROCEDURE, 'PROCEDURE'),
+                       Token(IDENTIFIER, 'first_procedure'),
+                       Tree(procedure_block, [])
+                       OR proc_or_func_directive	forward
+                       OR proc_or_func_directive	external
+                      ]
+
+        OR
+
+        input_list -> [Token('RESERVED_DECLARATION_FUNCTION', 'FUNCTION'),
+                       Token('IDENTIFIER', 'first_function'),
+                       Tree('parameter_list', [ ... ]),
+                       Tree('return_type', [Token('IDENTIFIER', 'INTEGER')]),
+                       Tree('directive', [Token('RESERVED_STATEMENT_FORWARD', 'FORWARD')])]
+
+        """
+        # initialise the intermediate code engine
+        self._ic.init(action_name)
+
+        # set the context
+        context = input_list.pop(0)
+
+        # the procedure or function declaration in hand can be an external or a forward declaration
+        # confirm a directive is present and verify its type
+        if input_list[-1].data.upper() != "DIRECTIVE":
+            raise KeyError("Internal Error - Unexpected keyword '{0}' in action '{1}'".format(input_list[-1].data, action_name))
+        else:
+            directive = input_list[-1].children[0].value.upper()
+            if directive not in ["FORWARD", "EXTERNAL"]:
+                raise KeyError("Internal Error - Unknown directive '{0}' in action '{1}'".format(input_list[-1].data, action_name))
+            input_list.pop(-1)
+
+        # retrieve the token identifier for the new procedure or function
+        identifier = input_list.pop(0).value
+
+        if context == "FUNCTION":
+
+            # if we are dealing with a function, a type declaration is expected
+            if input_list[-1].data.upper() != "RETURN_TYPE":
+                raise KeyError("Internal Error - Unexpected keyword '{0}' in action '{1}'".format(input_list[-1].data, action_name))
+            else:
+                type_identifier = input_list.pop(-1).children[0]
+                if type_identifier.type == "IDENTIFIER":
+                    # identifier is of a custom type and their definition is case sensitive/relevant
+                    type_identifier = type_identifier.value
+                else:
+                    # identifier is a basic type and those are stored in the symbol table as uppercase
+                    type_identifier = type_identifier.value.upper()
+
+                type_symbol = self._symbol_table.retrieve(type_identifier, equal_level_only=False)
+                if not type_symbol:
+                    msg = "[{0}] unknown type '{1}' reference in function declaration."
+                    _MODULE_LOGGER_.error(msg.format(action_name, type_identifier))
+
+            # with the identifier and type create a function object
+            if directive == "FORWARD":
+                new_function = FunctionForwardIdentifier(identifier, type_symbol, None)
+            elif directive == "EXTERNAL":
+                new_function = FunctionExternalIdentifier(identifier, type_symbol, None)
+
+            # push the new function into the symbol_table
+            self._symbol_table.append(new_function)
+
+            # push the new function into the intermediate_code engine
+            self._ic.push(new_function)
+
+            # log successful declaration
+            _MODULE_LOGGER_.debug("[{0}] new function declared : {1}".format(action_name, new_function))
+
+        elif context == "PROCEDURE":
+            if directive == "FORWARD":
+                pi_class = ProcedureForwardIdentifier
+            elif directive == "EXTERNAL":
+                pi_class = ProcedureExternalIdentifier
+        else:
+            raise ValueError("Internal Error - Unknown context '{0}' in action '{1}'".format(context, action_name))
+
+
+    def _generic_procedure_or_function_declaration(self, action_name, input_list, working_stack):
         """
         input_list -> [Token(RESERVED_DECLARATION_PROCEDURE, 'PROCEDURE'),
                        Token(IDENTIFIER, 'first_procedure'),
@@ -1104,26 +1219,43 @@ class DeftPascalCompiler:
         """
         # initialise the intermediate code engine
         self._ic.init(action_name)
+        context = action_name.lower().replace("_declaration", "")
 
-        # discard the reserved word PROCEDURE
+        # discard the token reserved word PROCEDURE / FUNCTION
         input_list.pop(0)
 
-        # retrieve the identifier for the new procedure
+        # retrieve the token identifier for the new procedure or function
         identifier = input_list.pop(0).value
 
-        # the procedure declaration in hand can be an external, a forward or a standard one
-        # this is identified by the token after the identifier. it can be a proc_or_func_directive or a procedure_block
+        # the procedure or function declaration in hand can be an external, a forward or a standard one
+        # this is identified by the token after the identifier.
+        # it can be a proc_or_func_directive, a procedure_block or a function_block
         if input_list[-1].data.upper() == "PROC_OR_FUNC_DIRECTIVE":
             if input_list[-1].children[0].value.upper() == "FORWARD":
-                pi_class = ProcedureForwardIdentifier
+                if context == "function":
+                    pi_class = FunctionForwardIdentifier
+                elif context == "procedure":
+                    pi_class = ProcedureForwardIdentifier
+                else:
+                    raise ValueError("Internal Error - Unknown context '{0}' in Forward directive".format(action_name))
             elif input_list[-1].children[0].value.upper() == "EXTERNAL":
-                pi_class = ProcedureExternalIdentifier
+                if context == "function":
+                    pi_class = FunctionExternalIdentifier
+                elif context == "procedure":
+                    pi_class = ProcedureExternalIdentifier
+                else:
+                    raise ValueError("Internal Error - Unknown context '{0}' in External directive".format(action_name))
             else:
                 raise KeyError("unexpected keyword '{0}' in proc_or_func_directive".format(input_list[0].value))
             input_list.pop(-1)
 
         else:
-            pi_class = ProcedureIdentifier
+            if context == "function":
+                pi_class = FunctionIdentifier
+            elif context == "procedure":
+                pi_class = ProcedureIdentifier
+            else:
+                raise ValueError("Internal Error - Unknown context '{0}'".format(action_name))
 
         pi = pi_class(identifier, 'RESERVED_TYPE_POINTER', None)
 
@@ -1131,23 +1263,23 @@ class DeftPascalCompiler:
         symbol = self._symbol_table.retrieve(identifier, equal_level_only=False)
         if not symbol:
             self._symbol_table.append(pi)
-            _MODULE_LOGGER_.debug("[{0}] new procedure defined {1}".format(action_name, pi))
+            _MODULE_LOGGER_.debug("[{0}] new {2} defined {1}".format(action_name, pi, context))
 
-        elif isinstance(symbol, ProcedureForwardIdentifier):
+        elif isinstance(symbol, ProcedureForwardIdentifier) or isinstance(symbol, FunctionForwardIdentifier):
             # replace in the symbol_table a forward declaration with the actual declaration
             self._symbol_table.replace(identifier, pi)
-            _MODULE_LOGGER_.debug("[{0}] forward procedure '{1}' resolved".format(action_name, identifier))
+            _MODULE_LOGGER_.debug("[{0}] forward {2} '{1}' resolved".format(action_name, identifier, context))
 
         else:
-            msg = "[{0}] identifier '{1}' already declared"
-            _MODULE_LOGGER_.error(msg.format(action_name, identifier))
+            msg = "[{0}] {2} '{1}' already declared"
+            _MODULE_LOGGER_.error(msg.format(action_name, identifier, context))
 
         self._ic.push(pi)
         self._ic.flush()
 
         self._increase_scope(pi.name)
 
-        # process the procedure parameters if those are present
+        # process the procedure / function parameters if those are present
         if len(input_list) > 0 and input_list[0].data.upper() == "FORMAL_PARAMETER_LIST":
             argument_list = input_list.pop(0).children
 
@@ -1184,19 +1316,20 @@ class DeftPascalCompiler:
                                 # add the variable as formal argument to the procedure
                                 pi.add_argument(argument)
                     else:
-                        msg = "[{0}] unknown type '{1}' reference in procedure declaration."
-                        _MODULE_LOGGER_.error(msg.format(action_name, identifier))
+                        msg = "[{0}] unknown type '{1}' reference in {2} declaration."
+                        _MODULE_LOGGER_.error(msg.format(action_name, type_identifier, identifier))
 
                 else:
-                    _MODULE_LOGGER_.warning("parameter class '{0}' not yet supported".format(ast))
+                    _MODULE_LOGGER_.error("parameter class '{0}' not yet supported".format(ast))
 
-        if len(input_list) > 0 and input_list[0].data.upper() == "PROCEDURE_BLOCK":
-            # process the procedure body -> PROCEDURE_BLOCK
+        # process the procedure or function body
+        if len(input_list) > 0 and input_list[0].data.upper() in ["PROCEDURE_BLOCK", "FUNCTION_BLOCK"]:
             for ast in input_list[0].children:
-                if ast.data.upper() == "PROCEDURE_DECLARATION" and len(ast.children) > 0:
-                    msg = "nested procedure or function definition is currently not supported. '{0}' will be ignored."
-                    _MODULE_LOGGER_.warning(msg.format(ast.children[1]))
+                if (ast.data.upper() in ["PROCEDURE_DECLARATION", "FUNCTION_DECLARATION]"]) and len(ast.children) > 0:
+                    msg = "nested {1} definition is currently not supported. '{0}' will be ignored."
+                    _MODULE_LOGGER_.error(msg.format(ast.children[1], context))
                 else:
+
                     self._internal_compile(ast, [])
             input_list.pop(0)
 

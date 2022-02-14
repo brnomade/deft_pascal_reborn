@@ -111,8 +111,7 @@ class PointerIdentifier(BaseIdentifier):
     def is_pointer(self):
         return True
 
-
-class ProcedureIdentifier(BaseIdentifier):
+class AbstractProcedureIdentifier(BaseIdentifier):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -146,8 +145,19 @@ class ProcedureIdentifier(BaseIdentifier):
         return self.argument_counter == parameter_count
 
 
-class InBuiltProcedureWrite(ProcedureIdentifier):
+class ProcedureIdentifier(AbstractProcedureIdentifier):
+    @classmethod
+    def do_nothing(cls):
+        pass
 
+
+class FunctionIdentifier(AbstractProcedureIdentifier):
+    @classmethod
+    def do_nothing(cls):
+        pass
+
+
+class InBuiltProcedureWrite(ProcedureIdentifier):
     @classmethod
     def in_built_procedure_write(cls):
 
@@ -186,8 +196,27 @@ class InBuiltProcedureWrite(ProcedureIdentifier):
         return True
 
 
-class ProcedureForwardIdentifier(ProcedureIdentifier):
+class FunctionForwardIdentifier(FunctionIdentifier):
+    @classmethod
+    def in_built_procedure_write(cls):
+        raise TypeError("in built procedure not compatible with forward procedure type")
 
+    @classmethod
+    def in_built_procedure_writeln(cls):
+        raise TypeError("in built procedure not compatible with forward procedure type")
+
+
+class ProcedureForwardIdentifier(ProcedureIdentifier):
+    @classmethod
+    def in_built_procedure_write(cls):
+        raise TypeError("in built procedure not compatible with forward procedure type")
+
+    @classmethod
+    def in_built_procedure_writeln(cls):
+        raise TypeError("in built procedure not compatible with forward procedure type")
+
+
+class FunctionExternalIdentifier(FunctionIdentifier):
     @classmethod
     def in_built_procedure_write(cls):
         raise TypeError("in built procedure not compatible with forward procedure type")

@@ -755,7 +755,8 @@ class PositiveLanguageTests:
             VAR V1, V2 : INTEGER;                             
             BEGIN                                        
                FOR V1 := 1 TO 10 DO                       
-                  V2 := V1;                               
+                  V2 := V1;  
+                  writeln(V2)                             
             END.                                       
         """
         return code
@@ -1175,7 +1176,10 @@ class PositiveLanguageTests:
         code = """
             PROGRAM {{{0}}};                                                 
             PROCEDURE P1( SP1 : INTEGER );
+            VAR
+            P1_V1 : INTEGER;
             BEGIN
+            P1_V1 := 0;
             END;             
             BEGIN             
             END.                                         
@@ -1186,9 +1190,14 @@ class PositiveLanguageTests:
     def scenario_function_declaration_with_single_static_parameter():
         code = """
             PROGRAM {{{0}}};                                                 
-            FUNCTION F1( SP1 : INTEGER ) : INTEGER;
+            FUNCTION F1( SP1 : INTEGER ) : INTEGER ; FORWARD; 
+            FUNCTION F1( SP1 : INTEGER ) : INTEGER ;
+            VAR
+            F1_V1 : INTEGER;
             BEGIN
-            END;             
+            F1_V1 := SP1;
+            F1 := F1_V1;
+            END;            
             BEGIN             
             END.                                         
         """
@@ -1308,8 +1317,10 @@ class PositiveLanguageTests:
             PROGRAM {{{0}}};                                                 
             FUNCTION F1( VAR SP1 : INTEGER; VAR SP2 : BOOLEAN ) : INTEGER;
             BEGIN
+                writeln("F1");
             END;             
-            BEGIN             
+            BEGIN           
+                writeln("MAIN");  
             END.                                         
         """
         return code
