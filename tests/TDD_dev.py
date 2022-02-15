@@ -20,8 +20,8 @@ class ConfigurationForTestTDD:
     @classmethod
     def tdd_tests_to_run(cls):
         return [(12,
-                 "scenario_function_declaration_with_single_static_parameter",
-                 PositiveLanguageTests.scenario_function_declaration_with_single_static_parameter)
+                 "scenario_function_declaration_with_directive_with_single_static_parameter_returning_string_type_with_dimension",
+                 PositiveLanguageTests.scenario_function_declaration_with_directive_with_single_static_parameter_returning_string_type_with_dimension)
                 ]
 
 

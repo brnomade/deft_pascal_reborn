@@ -1160,18 +1160,6 @@ class PositiveLanguageTests:
         return code
 
     @staticmethod
-    def scenario_function_declaration_without_parameters():
-        code = """
-            PROGRAM {{{0}}};                   
-            FUNCTION F1 : INTEGER;
-            BEGIN
-            END;             
-            BEGIN             
-            END.                                         
-        """
-        return code
-
-    @staticmethod
     def scenario_procedure_declaration_with_single_static_parameter():
         code = """
             PROGRAM {{{0}}};                                                 
@@ -1187,10 +1175,34 @@ class PositiveLanguageTests:
         return code
 
     @staticmethod
-    def scenario_function_declaration_with_single_static_parameter():
+    def scenario_function_declaration_without_directive_without_parameters():
+        code = """
+            PROGRAM {{{0}}};                   
+            FUNCTION F1 : INTEGER;
+            BEGIN
+            F1 := 0;
+            END;             
+            BEGIN             
+            WRITELN('main');
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_function_declaration_with_directive_without_parameters():
+        code = """
+            PROGRAM {{{0}}};                   
+            FUNCTION F1 : INTEGER; FORWARD;
+            BEGIN             
+            WRITELN('main');
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_function_declaration_without_directive_with_single_static_parameter_returning_base_type():
         code = """
             PROGRAM {{{0}}};                                                 
-            FUNCTION F1( SP1 : INTEGER ) : INTEGER ; FORWARD; 
             FUNCTION F1( SP1 : INTEGER ) : INTEGER ;
             VAR
             F1_V1 : INTEGER;
@@ -1199,6 +1211,241 @@ class PositiveLanguageTests:
             F1 := F1_V1;
             END;            
             BEGIN             
+            WRITELN('main');
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_function_declaration_with_directive_with_single_static_parameter_returning_base_type():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            FUNCTION F1( SP1 : INTEGER ) : INTEGER ; FORWARD; 
+            BEGIN             
+            WRITELN('main');
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_function_declaration_forward_directive_resolution():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            FUNCTION F1( SP1 : INTEGER ) : INTEGER ; FORWARD; 
+            FUNCTION F1( SP1 : INTEGER ) : INTEGER ; 
+            BEGIN
+            F1 := 0
+            END;
+            BEGIN             
+            WRITELN('main');
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_function_declaration_without_directive_with_single_static_parameter_returning_string_type_without_dimension():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            FUNCTION F1( SP1 : INTEGER ) : STRING ;
+            VAR
+            F1_V1 : INTEGER;
+            BEGIN
+            F1_V1 := SP1;
+            F1 := F1_V1;
+            END;            
+            BEGIN             
+            WRITELN('main');
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_function_declaration_with_directive_with_single_static_parameter_returning_string_type_without_dimension():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            FUNCTION F1( SP1 : INTEGER ) : STRING ; FORWARD; 
+            BEGIN             
+            WRITELN('main');
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_function_declaration_without_directive_with_single_static_parameter_returning_string_type_with_dimension():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            FUNCTION F1( SP1 : INTEGER ) : STRING ( 30 ) ;
+            VAR
+            F1_V1 : INTEGER;
+            BEGIN
+            F1_V1 := SP1;
+            F1 := F1_V1;
+            END;            
+            BEGIN             
+            WRITELN('main');
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_function_declaration_with_directive_with_single_static_parameter_returning_string_type_with_dimension():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            FUNCTION F1( SP1 : INTEGER ) : STRING ( 30 ) ; FORWARD; 
+            BEGIN             
+            WRITELN('main');
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_function_declaration_without_directive_with_single_static_parameter_returning_pointer_type():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            FUNCTION F1( SP1 : INTEGER ) : ^INTEGER ;
+            VAR
+            F1_V1 : ^INTEGER;
+            BEGIN
+            F1 := ^F1_V1;
+            END;            
+            BEGIN             
+            WRITELN('main');
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_function_declaration_with_directive_with_single_static_parameter_returning_pointer_type():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            FUNCTION F1( SP1 : INTEGER ) : ^INTEGER ; FORWARD; 
+            BEGIN             
+            WRITELN('main');
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_function_declaration_without_directive_with_multiple_static_parameter_same_type():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            FUNCTION F1( SP1, SP2 : INTEGER ) : INTEGER;
+            BEGIN
+            F1 := 0;
+            END;             
+            BEGIN             
+            WRITELN('main');
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_function_declaration_with_directive_with_multiple_static_parameter_same_type():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            FUNCTION F1( SP1, SP2 : INTEGER ) : INTEGER; FORWARD;
+            BEGIN             
+            WRITELN('main');
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_function_declaration_without_directive_with_multiple_static_parameter_multiple_types():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            FUNCTION F1( SP1 : INTEGER; SP2 : BOOLEAN ) : INTEGER;
+            BEGIN
+            F1 := 0;
+            END;             
+            BEGIN             
+            WRITELN('main');
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_function_declaration_with_directive_with_multiple_static_parameter_multiple_types():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            FUNCTION F1( SP1 : INTEGER; SP2 : BOOLEAN ) : INTEGER; FORWARD;
+            BEGIN             
+            WRITELN('main');
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_function_declaration_without_directive_with_single_variable_parameter():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            FUNCTION F1( VAR SP1 : INTEGER ) : INTEGER;
+            BEGIN
+            F1 := 0;
+            END;             
+            BEGIN             
+            WRITELN('main');
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_function_declaration_with_directive_with_single_variable_parameter():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            FUNCTION F1( VAR SP1 : INTEGER ) : INTEGER; FORWARD;
+            BEGIN             
+            WRITELN('main');
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_function_declaration_without_directive_with_multiple_variable_parameter_same_type():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            FUNCTION F1( VAR SP1, SP2 : INTEGER ) : INTEGER;
+            BEGIN
+            F1 := 0;
+            END;             
+            BEGIN             
+            WRITELN('main');
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_function_declaration_with_directive_with_multiple_variable_parameter_same_type():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            FUNCTION F1( VAR SP1, SP2 : INTEGER ) : INTEGER; FORWARD;
+            BEGIN             
+            WRITELN('main');
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_function_declaration_without_directive_with_multiple_variable_parameter_multiple_types():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            FUNCTION F1( VAR SP1 : INTEGER; VAR SP2 : BOOLEAN ) : INTEGER;
+            BEGIN
+                F1 := 0;
+            END;             
+            BEGIN           
+            WRITELN('main');
+            END.                                         
+        """
+        return code
+
+    @staticmethod
+    def scenario_function_declaration_with_directive_with_multiple_variable_parameter_multiple_types():
+        code = """
+            PROGRAM {{{0}}};                                                 
+            FUNCTION F1( VAR SP1 : INTEGER; VAR SP2 : BOOLEAN ) : INTEGER; FORWARD;
+            BEGIN           
+            WRITELN('main');
             END.                                         
         """
         return code
@@ -1208,18 +1455,6 @@ class PositiveLanguageTests:
         code = """
             PROGRAM {{{0}}};                                                 
             PROCEDURE P1( SP1, SP2 : INTEGER );
-            BEGIN
-            END;             
-            BEGIN             
-            END.                                         
-        """
-        return code
-
-    @staticmethod
-    def scenario_function_declaration_with_multiple_static_parameter_same_type():
-        code = """
-            PROGRAM {{{0}}};                                                 
-            FUNCTION F1( SP1, SP2 : INTEGER ) : INTEGER;
             BEGIN
             END;             
             BEGIN             
@@ -1240,34 +1475,10 @@ class PositiveLanguageTests:
         return code
 
     @staticmethod
-    def scenario_function_declaration_with_multiple_static_parameter_multiple_types():
-        code = """
-            PROGRAM {{{0}}};                                                 
-            FUNCTION F1( SP1 : INTEGER; SP2 : BOOLEAN ) : INTEGER;
-            BEGIN
-            END;             
-            BEGIN             
-            END.                                         
-        """
-        return code
-
-    @staticmethod
     def scenario_procedure_declaration_with_single_variable_parameter():
         code = """
             PROGRAM {{{0}}};                                                 
             PROCEDURE P1( VAR SP1 : INTEGER );
-            BEGIN
-            END;             
-            BEGIN             
-            END.                                         
-        """
-        return code
-
-    @staticmethod
-    def scenario_function_declaration_with_single_variable_parameter():
-        code = """
-            PROGRAM {{{0}}};                                                 
-            FUNCTION F1( VAR SP1 : INTEGER ) : INTEGER;
             BEGIN
             END;             
             BEGIN             
@@ -1288,18 +1499,6 @@ class PositiveLanguageTests:
         return code
 
     @staticmethod
-    def scenario_function_declaration_with_multiple_variable_parameter_same_type():
-        code = """
-            PROGRAM {{{0}}};                                                 
-            FUNCTION F1( VAR SP1, SP2 : INTEGER ) : INTEGER;
-            BEGIN
-            END;             
-            BEGIN             
-            END.                                         
-        """
-        return code
-
-    @staticmethod
     def scenario_procedure_declaration_with_multiple_variable_parameter_multiple_types():
         code = """
             PROGRAM {{{0}}};                                                 
@@ -1307,20 +1506,6 @@ class PositiveLanguageTests:
             BEGIN
             END;             
             BEGIN             
-            END.                                         
-        """
-        return code
-
-    @staticmethod
-    def scenario_function_declaration_with_multiple_variable_parameter_multiple_types():
-        code = """
-            PROGRAM {{{0}}};                                                 
-            FUNCTION F1( VAR SP1 : INTEGER; VAR SP2 : BOOLEAN ) : INTEGER;
-            BEGIN
-                writeln("F1");
-            END;             
-            BEGIN           
-                writeln("MAIN");  
             END.                                         
         """
         return code

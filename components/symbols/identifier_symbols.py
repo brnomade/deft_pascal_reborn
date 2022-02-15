@@ -111,6 +111,7 @@ class PointerIdentifier(BaseIdentifier):
     def is_pointer(self):
         return True
 
+
 class AbstractProcedureIdentifier(BaseIdentifier):
 
     def __init__(self, *args, **kwargs):

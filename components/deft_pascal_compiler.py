@@ -1098,10 +1098,7 @@ class DeftPascalCompiler:
         return working_stack
 
     def _procedure_declaration_with_directive(self, action_name, input_list, working_stack):
-        return self._generic_procedure_or_function_declaration_with_directive(action_name, input_list, working_stack)
-
-    def _function_declaration_with_directive(self, action_name, input_list, working_stack):
-        return self._generic_procedure_or_function_declaration_with_directive(action_name, input_list, working_stack)
+        raise NotImplementedError
 
     def _procedure_declaration(self, action_name, input_list, working_stack):
         return self._generic_procedure_or_function_declaration(action_name, input_list, working_stack)
@@ -1126,7 +1123,7 @@ class DeftPascalCompiler:
         return self._generic_procedure_or_function_declaration(action_name, input_list, working_stack)
 
 
-    def _generic_procedure_or_function_declaration_with_directive(self, action_name, input_list, working_stack):
+    def _function_declaration_with_directive(self, action_name, input_list, working_stack):
         """
         Example:
             input_list -> [Token(RESERVED_DECLARATION_PROCEDURE, 'PROCEDURE'),
@@ -1141,7 +1138,7 @@ class DeftPascalCompiler:
         input_list -> [Token('RESERVED_DECLARATION_FUNCTION', 'FUNCTION'),
                        Token('IDENTIFIER', 'first_function'),
                        Tree('parameter_list', [ ... ]),
-                       Tree('return_type', [Token('IDENTIFIER', 'INTEGER')]),
+                       Tree('return_type', [Token('IDENTIFIER', 'TYPE')]),
                        Tree('directive', [Token('RESERVED_STATEMENT_FORWARD', 'FORWARD')])]
 
         """
@@ -1150,8 +1147,10 @@ class DeftPascalCompiler:
 
         # set the context
         context = input_list.pop(0)
+        if context != "FUNCTION":
+            raise ValueError("Internal Error - Unknown context '{0}' in action '{1}'".format(context, action_name))
 
-        # the procedure or function declaration in hand can be an external or a forward declaration
+        # the function declaration in hand can be an external or a forward declaration
         # confirm a directive is present and verify its type
         if input_list[-1].data.upper() != "DIRECTIVE":
             raise KeyError("Internal Error - Unexpected keyword '{0}' in action '{1}'".format(input_list[-1].data, action_name))
@@ -1161,16 +1160,35 @@ class DeftPascalCompiler:
                 raise KeyError("Internal Error - Unknown directive '{0}' in action '{1}'".format(input_list[-1].data, action_name))
             input_list.pop(-1)
 
-        # retrieve the token identifier for the new procedure or function
+        # retrieve the token identifier for the new function
         identifier = input_list.pop(0).value
 
-        if context == "FUNCTION":
+        # verify if the function identifier has already been declared by checking the symbol table
+        symbol = self._symbol_table.retrieve(identifier, equal_level_only=False)
+        if symbol:
 
-            # if we are dealing with a function, a type declaration is expected
+            msg = "[{0}] {2} '{1}' already declared"
+            _MODULE_LOGGER_.error(msg.format(action_name, identifier, context))
+
+        else:
+
+            # a new function is being declared
             if input_list[-1].data.upper() != "RETURN_TYPE":
-                raise KeyError("Internal Error - Unexpected keyword '{0}' in action '{1}'".format(input_list[-1].data, action_name))
+
+                raise KeyError("Unexpected keyword '{0}' in action '{1}'".format(input_list[-1].data, action_name))
+
             else:
-                type_identifier = input_list.pop(-1).children[0]
+
+                # as we are dealing with a function, a type declaration is expected
+                type_identifier = input_list.pop(-1).children
+
+                string_dimension = None
+                if type_identifier[-1].type == "RIGHT_PARENTHESES":  # handling the string with dimension special case
+                    type_identifier.pop(-1)  # discard the )
+                    string_dimension = type_identifier.pop(-1)
+                    type_identifier.pop(-1)  # discard the (
+
+                type_identifier = type_identifier[0]
                 if type_identifier.type == "IDENTIFIER":
                     # identifier is of a custom type and their definition is case sensitive/relevant
                     type_identifier = type_identifier.value
@@ -1178,33 +1196,90 @@ class DeftPascalCompiler:
                     # identifier is a basic type and those are stored in the symbol table as uppercase
                     type_identifier = type_identifier.value.upper()
 
+                # retrieve the type from the symbol table
                 type_symbol = self._symbol_table.retrieve(type_identifier, equal_level_only=False)
                 if not type_symbol:
-                    msg = "[{0}] unknown type '{1}' reference in function declaration."
+
+                    msg = "[{0}] unknown type '{1}' used in function declaration."
                     _MODULE_LOGGER_.error(msg.format(action_name, type_identifier))
 
-            # with the identifier and type create a function object
-            if directive == "FORWARD":
-                new_function = FunctionForwardIdentifier(identifier, type_symbol, None)
-            elif directive == "EXTERNAL":
-                new_function = FunctionExternalIdentifier(identifier, type_symbol, None)
+                else:
 
-            # push the new function into the symbol_table
-            self._symbol_table.append(new_function)
+                    # handle scenario function returns a string
+                    if string_dimension:
+                        type_symbol = copy.copy(type_symbol)
+                        type_symbol.dimension = string_dimension
 
-            # push the new function into the intermediate_code engine
-            self._ic.push(new_function)
+                    # with the identifier and type create a new function object
+                    if directive == "FORWARD":
+                        new_function = FunctionForwardIdentifier(identifier, type_symbol, None)
+                    elif directive == "EXTERNAL":
+                        new_function = FunctionExternalIdentifier(identifier, type_symbol, None)
 
-            # log successful declaration
-            _MODULE_LOGGER_.debug("[{0}] new function declared : {1}".format(action_name, new_function))
+                    # add new function to symbol table as we know it is not yet declared
+                    self._symbol_table.append(new_function)
 
-        elif context == "PROCEDURE":
-            if directive == "FORWARD":
-                pi_class = ProcedureForwardIdentifier
-            elif directive == "EXTERNAL":
-                pi_class = ProcedureExternalIdentifier
-        else:
-            raise ValueError("Internal Error - Unknown context '{0}' in action '{1}'".format(context, action_name))
+                    # push the new function into the intermediate_code engine
+                    self._ic.push(new_function)
+                    self._ic.flush()
+
+                    # increase scope in preparation for processing the function parameters
+                    self._increase_scope(new_function.name)
+
+                    # process the function parameters if those are present
+                    if len(input_list) > 0 and input_list[0].data.upper() == "PARAMETER_LIST":
+
+                        argument_list = input_list.pop(0).children
+
+                        # discard open and close parameters characters -> (  )
+                        argument_list.pop(0)
+                        argument_list.pop(-1)
+
+                        # process each argument
+                        for ast in argument_list:
+                            if ast.data.upper() == "VALUE_PARAMETER_SPECIFICATION":
+
+                                # process the type of the argument list
+                                token = ast.children.pop(-1)
+                                if token.type == "IDENTIFIER":
+                                    # identifier is of a custom type and their definition is case sensitive/relevant
+                                    type_identifier = self._symbol_table.retrieve(token.value, equal_level_only=False)
+                                else:
+                                    # identifier is a basic type and those are stored in the symbol table as uppercase
+                                    type_identifier = self._symbol_table.retrieve(token.value.upper(), equal_level_only=False)
+
+                                if type_identifier:
+                                    # process the arguments
+                                    for token in ast.children:
+                                        if token.type == "IDENTIFIER":
+                                            # create the variables using the parameter_type
+                                            new_variable = Identifier(token.value, type_identifier, None)
+
+                                            # add the new variable to the symbol_table
+                                            self._symbol_table.append(new_variable)
+
+                                            # create the formal parameter
+                                            argument = FormalParameter(token.value, type_identifier)
+
+                                            # add the variable as formal argument to the procedure
+                                            new_function.add_argument(argument)
+                                else:
+                                    msg = "[{0}] unknown type '{1}' reference in {2} declaration."
+                                    _MODULE_LOGGER_.error(msg.format(action_name, type_identifier, identifier))
+
+                            else:
+                                _MODULE_LOGGER_.error("parameter class '{0}' not yet supported".format(ast))
+
+                        # log successful declaration
+                        _MODULE_LOGGER_.debug("[{0}] new function declared : {1}".format(action_name, new_function))
+
+                    else:
+                        # log successful declaration
+                        _MODULE_LOGGER_.debug("[{0}] new function declared : {1}".format(action_name, new_function))
+
+                    self._decrease_scope()
+
+        return working_stack
 
 
     def _generic_procedure_or_function_declaration(self, action_name, input_list, working_stack):

@@ -128,13 +128,20 @@ class DeftPascalParser:
                                   | procedure_declaration_with_directive
                                   | function_declaration_with_directive
                                   
-        procedure_declaration_with_directive : procedure_heading _SEMICOLON directive
+        procedure_declaration_with_directive : _procedure_heading _SEMICOLON directive
  
-        procedure_declaration : procedure_heading _SEMICOLON procedure_block
+        function_declaration_with_directive : _function_heading _SEMICOLON directive 
+
+        procedure_declaration : _procedure_heading _SEMICOLON procedure_block
  
-        procedure_heading : procedure_identification
-                          | procedure_identification parameter_list
+        function_declaration : _function_heading _SEMICOLON function_block
+
+        _procedure_heading : RESERVED_DECLARATION_PROCEDURE IDENTIFIER
+                           | RESERVED_DECLARATION_PROCEDURE IDENTIFIER parameter_list
  
+        _function_heading : RESERVED_DECLARATION_FUNCTION IDENTIFIER _COLON return_type
+                          | RESERVED_DECLARATION_FUNCTION IDENTIFIER parameter_list _COLON return_type
+
         directive : RESERVED_STATEMENT_FORWARD
                   | RESERVED_STATEMENT_EXTERNAL
 
@@ -145,35 +152,16 @@ class DeftPascalParser:
 
         _formal_parameter_section : value_parameter_specification
                                   | variable_parameter_specification
-                                  | procedural_parameter_specification
-                                  | functional_parameter_specification
 
         value_parameter_specification : _identifier_list _COLON _domain_type
 
-        variable_parameter_specification : RESERVED_DECLARATION_VAR _identifier_list _COLON IDENTIFIER
-
-        procedural_parameter_specification : procedure_heading
-
-        functional_parameter_specification : _function_heading                 
- 
-        procedure_identification : RESERVED_DECLARATION_PROCEDURE IDENTIFIER
+        variable_parameter_specification : RESERVED_DECLARATION_VAR _identifier_list _COLON _domain_type
 
         procedure_block : _block
-        
-        function_declaration_with_directive : _function_heading _SEMICOLON directive 
-
-        function_declaration : _function_identification _SEMICOLON function_block
-                             | _function_heading _SEMICOLON function_block
-        
-        _function_heading : RESERVED_DECLARATION_FUNCTION IDENTIFIER _COLON return_type
-                          | RESERVED_DECLARATION_FUNCTION IDENTIFIER parameter_list _COLON return_type
+                
+        function_block : _block
         
         return_type : _type_denoter
-
-        _function_identification : RESERVED_DECLARATION_FUNCTION IDENTIFIER
-
-        function_block : _block
-
 
         // TYPE - IN BUILT TYPE DECLARATIONS
 
