@@ -6,7 +6,7 @@ HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
 from unittest import TestCase
-from components.deft_pascal_compiler import DeftPascalCompiler
+from compiler.deft_pascal_compiler import DeftPascalCompiler
 from parameterized import parameterized
 from tests.declarations_test_suit import TestSuit
 import os

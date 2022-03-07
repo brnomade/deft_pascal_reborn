@@ -1293,7 +1293,7 @@ class PositiveLanguageTests:
             PROGRAM {{{0}}};                                                 
             FUNCTION F1( SP1 : INTEGER ) : STRING ( 30 ) ; FORWARD; 
             BEGIN             
-            WRITELN('main');
+            WRITELN(F1(1));
             END.                                         
         """
         return code

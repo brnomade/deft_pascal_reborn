@@ -6,12 +6,9 @@ HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
 from unittest import TestCase
-from components.deft_pascal_compiler import DeftPascalCompiler
+from compiler.deft_pascal_compiler import DeftPascalCompiler
 from utils.compiler_utils import compile_in_gcc
-from tests.negative_test_cases import NegativeLanguageTests
 from tests.positive_test_cases import PositiveLanguageTests
-from tests.example_test_cases import PascalExamples
-from tests.tdd_test_cases import TDD
 import os
 
 

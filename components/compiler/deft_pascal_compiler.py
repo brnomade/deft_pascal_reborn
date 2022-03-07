@@ -19,6 +19,7 @@ from components.symbols.type_symbols import PointerType, BasicType, StringType
 from components.symbols.expression_symbols import ConstantExpression, IntegerExpression, BooleanExpression
 from components.intermediate_code import IntermediateCode
 from components.parameters import ActualParameter, FormalParameter
+from compiler import compiler_core
 
 import copy
 import logging
@@ -1123,15 +1124,6 @@ class DeftPascalCompiler:
     def _function_declaration_with_directive(self, action_name, input_list, working_stack):
         """
         Example:
-            input_list -> [Token(RESERVED_DECLARATION_PROCEDURE, 'PROCEDURE'),
-                       Token(IDENTIFIER, 'first_procedure'),
-                       Tree(procedure_block, [])
-                       OR proc_or_func_directive	forward
-                       OR proc_or_func_directive	external
-                      ]
-
-        OR
-
         input_list -> [Token('RESERVED_DECLARATION_FUNCTION', 'FUNCTION'),
                        Token('IDENTIFIER', 'first_function'),
                        Tree('parameter_list', [ ... ]),
@@ -1279,6 +1271,15 @@ class DeftPascalCompiler:
         return working_stack
 
     def _procedure_declaration_with_directive(self, action_name, input_list, working_stack):
+        """
+        Example:
+            input_list -> [Token(RESERVED_DECLARATION_PROCEDURE, 'PROCEDURE'),
+                       Token(IDENTIFIER, 'first_procedure'),
+                       Tree(procedure_block, [])
+                       OR proc_or_func_directive	forward
+                       OR proc_or_func_directive	external
+                      ]
+        """
         raise NotImplementedError
 
     def _generic_procedure_or_function_declaration(self, action_name, input_list, working_stack):

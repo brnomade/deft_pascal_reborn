@@ -5,16 +5,14 @@ DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original D
 HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
-from components.abstract_emiter import CEmitter, CEmitter2, CMOCEmitter
-from components.symbols.base_symbols import BaseSymbol, BaseKeyword, BaseType, BaseExpression
-from components.symbols.operator_symbols import Operator, UnaryOperator
+from emiters.abstract_emiter import CEmitter, CMOCEmitter
+from components.symbols.base_symbols import BaseSymbol, BaseKeyword, BaseExpression
+from components.symbols.operator_symbols import Operator
 from components.symbols.type_symbols import PointerType, BasicType, StringType
-from components.symbols.identifier_symbols import Identifier, PointerIdentifier, TypeIdentifier, ProcedureForwardIdentifier, ProcedureExternalIdentifier, ProcedureIdentifier
+from components.symbols.identifier_symbols import Identifier, PointerIdentifier, TypeIdentifier, ProcedureForwardIdentifier, ProcedureExternalIdentifier
 from components.symbols.literals_symbols import Literal
-from utils import compiler_utils
 import logging
 from logging import ERROR, WARNING, INFO
-import copy
 
 
 class IntermediateCode:
