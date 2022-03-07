@@ -1097,8 +1097,6 @@ class DeftPascalCompiler:
 
         return working_stack
 
-    def _procedure_declaration_with_directive(self, action_name, input_list, working_stack):
-        raise NotImplementedError
 
     def _procedure_declaration(self, action_name, input_list, working_stack):
         return self._generic_procedure_or_function_declaration(action_name, input_list, working_stack)
@@ -1121,7 +1119,6 @@ class DeftPascalCompiler:
          "'END')])])])
         """
         return self._generic_procedure_or_function_declaration(action_name, input_list, working_stack)
-
 
     def _function_declaration_with_directive(self, action_name, input_list, working_stack):
         """
@@ -1281,6 +1278,8 @@ class DeftPascalCompiler:
 
         return working_stack
 
+    def _procedure_declaration_with_directive(self, action_name, input_list, working_stack):
+        raise NotImplementedError
 
     def _generic_procedure_or_function_declaration(self, action_name, input_list, working_stack):
         """
