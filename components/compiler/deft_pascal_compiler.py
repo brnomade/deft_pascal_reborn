@@ -19,7 +19,6 @@ from components.symbols.type_symbols import PointerType, BasicType, StringType
 from components.symbols.expression_symbols import ConstantExpression, IntegerExpression, BooleanExpression
 from components.intermediate_code import IntermediateCode
 from components.parameters import ActualParameter, FormalParameter
-from compiler import compiler_core
 
 import copy
 import logging

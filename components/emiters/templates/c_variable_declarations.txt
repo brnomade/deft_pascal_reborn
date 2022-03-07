@@ -1,0 +1,16 @@
+{%- macro generic_variable_declaration(input_list) %}
+    {%- for variable in input_list %}
+        {%- if variable.block == "generic" %}
+{{variable.type}} {{variable.name}} ;
+        {%- endif %}
+        {%- if variable.block == "identifier" %}
+{{variable.type}} {{variable.name}} ;
+        {%- endif %}
+        {%- if variable.block == "string" %}
+{{variable.type}} {{variable.name}}[{{variable.dimension}}] ;
+        {%- endif %}
+        {%- if variable.block == "pointer" %}
+{{variable.type}} *{{variable.name}} ;
+        {%- endif %}
+    {%- endfor %}
+{%- endmacro %}

@@ -5,7 +5,8 @@ DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original D
 HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
-from emiters.abstract_emiter import CEmitter, CMOCEmitter
+from components.emiters.abstract_emiter import CEmitter, CMOCEmitter
+from components.emiters.emiters import CProgramTemplateEmiter
 from components.symbols.base_symbols import BaseSymbol, BaseKeyword, BaseExpression
 from components.symbols.operator_symbols import Operator
 from components.symbols.type_symbols import PointerType, BasicType, StringType
@@ -21,6 +22,7 @@ class IntermediateCode:
 
     def __init__(self, cmoc=False, stack_size=1000):
         self._emiter = None
+        self._emiter2 = None
         self._target = None
         if cmoc:
             self._target = "CMOC"
@@ -122,7 +124,9 @@ class IntermediateCode:
             #self._emiter = CEmitter2(token_list[1].value)
             self._emiter = CEmitter(token_list[1].value)
 
-        # identify which libraries to import based on the declared variables
+        self._emiter2 = CProgramTemplateEmiter('my_teste_1')
+
+    # identify which libraries to import based on the declared variables
 
         boolean_library = False
         string_library = False
@@ -130,7 +134,7 @@ class IntermediateCode:
 
         for i in range(0, self._top):
             node = self._i_stack[i]
-            if node["action_name"] == "VARIABLE_DECLARATION_PART":
+            if node["action_name"] in ["CONSTANT_DEFINITION_PART", "VARIABLE_DECLARATION_PART"]:
                 for variable in node["token_list"]:
                     if variable.type.type == "RESERVED_TYPE_BOOLEAN":
                         boolean_library = True
@@ -142,6 +146,17 @@ class IntermediateCode:
                                           include_string=string_library
                                           )
 
+        libraries = ['stdio']
+        for i in range(0, self._top):
+            node = self._i_stack[i]
+            if node["action_name"] in ["CONSTANT_DEFINITION_PART", "VARIABLE_DECLARATION_PART"]:
+                for variable in node["token_list"]:
+                    if variable.type.type == "RESERVED_TYPE_BOOLEAN":
+                        libraries.append('stdbool')
+                    elif variable.type.type == "RESERVED_TYPE_STRING":
+                        libraries.append('string')
+        self._emiter2.set_include_statements(libraries)
+        print(self._emiter2.write_file())
 
     def _constant_definition_part(self, token_list):
         """
@@ -174,6 +189,8 @@ class IntermediateCode:
         """
         # TODO: When managing procedure definitions, this code will need to adjust to emit at the correct level
 
+        constant_definitions = []
+
         for token in token_list:
             assert token.category == "ConstantIdentifier", "ConstantIdentifier expected but found {0}".format(token)
 
@@ -191,20 +208,44 @@ class IntermediateCode:
                                                                       inner_literal.type.dimension,
                                                                       inner_literal.value_to_c)
 
+                    constant_definitions.append({"block": "string",
+                                                 "type": inner_c_type,
+                                                 "name": token.name,
+                                                 "dimension": inner_literal.type.dimension,
+                                                 "value": inner_literal.value_to_c})
+
                 elif inner_type in ["RESERVED_TYPE_CHAR"]:
                     self._emiter.emit_constant_definition_part_char(token.name, inner_c_type)
-                    self._expression(token.value)
+                    # self._expression(token.value)
                     self._emiter.emit_statement_terminator()
+
+                    constant_definitions.append({"block": "char",
+                                                 "type": inner_c_type,
+                                                 "name": token.name,
+                                                 "value": self._expression_to_string(token.value)})
 
                 elif inner_type in ["RESERVED_TYPE_POINTER"]:
                     self._emiter.emit_constant_definition_part_pointer(token.name, inner_c_type)
                     self._expression(token.value)
                     self._emiter.emit_statement_terminator()
 
+                    constant_definitions.append({"block": "pointer",
+                                                 "type": inner_c_type,
+                                                 "name": token.name,
+                                                 "value": token.value})
+
                 else:
                     self._emiter.emit_constant_definition_part_generic_left_side(token.name)
-                    self._expression(token.value)
+                    # self._expression(token.value)
                     self._emiter.emit_constant_definition_part_generic_right_side()
+
+                    constant_definitions.append({"block": "generic",
+                                                 "type": inner_c_type,
+                                                 "name": token.name,
+                                                 "value": self._expression_to_string(token.value)})
+
+        self._emiter2.set_constant_declarations(constant_definitions)
+        print(self._emiter2.write_file())
 
 
     def _type_definition_part(self, token_list):
@@ -249,6 +290,8 @@ class IntermediateCode:
                                                             ]
 
         """
+        variable_definitions = []
+
         for token in token_list:
             # TODO: Need to separate better the instances that are arriving here:
             # They could be Identifiers subclass? Currently a TypeIdentifier could be received
@@ -257,16 +300,40 @@ class IntermediateCode:
             if isinstance(token, Identifier):
                 if isinstance(token.type, StringType):
                     self._emiter.emit_variable_declaration_part_string(token.type.type_to_c, token.name, token.type.dimension)
+                    variable_definitions.append({"block": "string",
+                                                 "type": token.type.type_to_c,
+                                                 "name": token.name,
+                                                 "dimension": token.type.dimension})
+
                 elif isinstance(token.type, TypeIdentifier):
                     self._emiter.emit_variable_declaration_part_generic(token.type.name, token.name)
+                    variable_definitions.append({"block": "identifier",
+                                                 "type": token.type.name,
+                                                 "name": token.name})
+
                 elif isinstance(token.type, PointerType):
                     self._emiter.emit_variable_declaration_part_pointer(token.type.type_to_c, token.name)
+                    variable_definitions.append({"block": "pointer",
+                                                 "type": token.type.type_to_c,
+                                                 "name": token.name})
+
                 else:
                     self._emiter.emit_variable_declaration_part_generic(token.type.type_to_c, token.name)
+                    variable_definitions.append({"block": "generic",
+                                                 "type": token.type.type_to_c,
+                                                 "name": token.name})
+
             elif isinstance(token, PointerIdentifier):
                 self._emiter.emit_variable_declaration_part_pointer(token.type.type_to_c, token.name)
+                variable_definitions.append({"block": "pointer",
+                                             "type": token.type.type_to_c,
+                                             "name": token.name})
+
             else:
                 raise NotImplementedError
+
+        self._emiter2.set_variable_declarations(variable_definitions)
+        print(self._emiter2.write_file())
 
     def _reserved_structure_begin_program(self, token_list):
         """
@@ -364,6 +431,40 @@ class IntermediateCode:
 
             # emit line terminator
             self._emiter.emit_statement_terminator()
+
+
+    def _expression_to_string(self, a_generic_expression):
+        # Process the incoming generic EXPRESSION
+        assert isinstance(a_generic_expression, BaseExpression), a_generic_expression
+
+        result = ""
+        while a_generic_expression.value:
+            token = a_generic_expression.value.pop(0)
+            if isinstance(token, BaseKeyword):
+
+                self._log(ERROR, "Incorrect keyword '{0}' received.".format(token))
+
+            if isinstance(token, Operator):
+
+                result += token.to_c
+
+            elif isinstance(token, Literal):
+
+                result += token.value_to_c
+
+            elif isinstance(token, Identifier):
+
+                result += token.name
+
+            elif isinstance(token, BaseSymbol):
+
+                result += token.name
+
+            else:
+
+                self._log(WARNING, "expression action for token '{0}' not yet implemented".format(token))
+
+        return result
 
 
     def _expression(self, a_generic_expression):

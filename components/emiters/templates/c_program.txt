@@ -1,0 +1,37 @@
+/*
+DEFT Pascal Reborn
+Auto Generated code
+PROJECT.......: Deft Pascal Reborn
+COPYRIGHT.....: Copyright (C) 2020- Andre L Ballista
+DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original Deft Pascal compiler
+HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
+*/
+
+// include statements
+{%- for header in include_statements %}
+#include <{{header}}.h>
+{%- endfor %}
+
+// constant declarations
+{%- import 'c_constant_declarations.txt' as global_constants -%}
+{{global_constants.generic_constant_declaration(constant_declarations)}}
+
+// variable declarations
+{%- import 'c_variable_declarations.txt' as global_variables -%}
+{{global_variables.generic_variable_declaration(variable_declarations)}}
+
+// procedure declarations
+{%- import 'c_procedure_declarations.txt' as global_procedures -%}
+{{global_procedures.generic_procedure_declaration(procedure_declarations)}}
+
+
+{% block procedure_declarations %} {% endblock %}
+
+{% block procedure_implementations %} {% endblock %}
+
+int main(){
+
+{% block main_code %} {% endblock %}
+
+return 0;
+}

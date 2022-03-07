@@ -1,0 +1,7 @@
+{%- macro generic_procedure_declaration(input_list) %}
+    {%- for procedure in input_list %}
+        {%- if procedure.block == "generic" %}
+void {{procedure.name}}({{constant.value}})
+        {%- endif %}
+    {%- endfor %}
+{%- endmacro %}

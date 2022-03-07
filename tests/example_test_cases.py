@@ -18,19 +18,32 @@ class PascalExamples:
     def example_program_definition_2():
         code = """
             program test;                          
-            const                                 
-              PI = 3.1415;                        
+            const             
+              ZZ = 1 + 2 + 3 + 4;  
+              INT_1 = 1;
+              BOO_1 = True;
+              CHA_1 = 'C';    
+              STR_1 = 'ABCDEFG';                
+              PI = 3.1415;  
             var                                   
               a : real;
-              b : integer;                         
+              b : integer;    
+              c : BOOLEAN;
+              d : CHAR;
+              e : ^CHAR;                     
+            procedure multiply_and_print(i: integer; r: real); forward;
+            procedure divide_and_print(i: integer; r: real); forward;
+            procedure sum_and_print(i: integer; r: real); forward;
+            procedure subtract_and_print(i: integer; r: real); forward;
+              
             procedure multiply_and_print(i: integer; r: real);  
             begin                                 
               writeln(i * r);                         
             end;                                  
+
             begin                                 
               a := PI;                            
-              b := 10;                        
-              multiply_and_print(b, a);           
+              b := 10;                                  
             end.                                 
         """
         return code

@@ -1,0 +1,16 @@
+{%- macro generic_constant_declaration(input_list) %}
+    {%- for constant in input_list %}
+        {%- if constant.block == "generic" %}
+const {{constant.type}} {{constant.name}} = {{constant.value}} ;
+        {%- endif %}
+        {%- if constant.block == "char" %}
+const {{constant.type}} {{constant.name}} = {{constant.value}} ;
+        {%- endif %}
+        {%- if constant.block == "string" %}
+const {{constant.type}} {{constant.name}}[{{constant.dimension}}] = {{constant.value}} ;
+        {%- endif %}
+        {%- if constant.block == "pointer" %}
+const {{constant.type}}* {{constant.name}} = {{constant.value}} ; // THIS CODE IS NOT CHECKED
+        {%- endif %}
+    {%- endfor %}
+{%- endmacro %}
