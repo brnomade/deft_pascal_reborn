@@ -26,6 +26,9 @@ class AbstractTemplateEmiter:
     def set(self, placeholder, value):
         self._inputs[placeholder] = value
 
+    def get(self, placeholder):
+        return self._inputs.get(placeholder, None)
+
     def emit(self):
         return self._template.render(self._inputs)
 
@@ -49,6 +52,13 @@ class CProgramTemplateEmiter(AbstractTemplateEmiter):
 
     def set_procedure_declarations(self, value):
         self.set("procedure_declarations", value)
+
+    def set_function_declaration(self, value):
+        current_content = self.get("function_declaration")
+        if not current_content:
+            current_content = []
+        current_content.append(value)
+        self.set("function_declaration", current_content)
 
     def set_procedure_implementations(self, value):
         self.set("procedure_implementations", value)

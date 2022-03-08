@@ -45,6 +45,7 @@ class IntermediateCode:
                          "CLOSED_WHILE_STATEMENT",
                          "PROCEDURE_CALL",
                          "PROCEDURE_DECLARATION",
+                         "FUNCTION_DECLARATION_WITH_DIRECTIVE",
                          "CLOSED_IF_STATEMENT",
                          "CLOSED_IF_STATEMENT_ELSE",
                          "OPEN_IF_STATEMENT",
@@ -747,6 +748,49 @@ class IntermediateCode:
         else:
             self._emiter.emit_procedure_declaration_right()
 
+    def _function_declaration_with_directive(self, input_list):
+        """
+        'FUNCTION_DECLARATION_WITH_DIRECTIVE'
+        input_list -> [ FunctionForwardIdentifier('first_function'|BasicType(RESERVED_TYPE_INTEGER|None)
+                     ]
+        Syntax: Pascal -> C
+        return_type function_name( parameter list ) {
+                                                        body of the function
+                                                    }
+        """
+        token = input_list[0]
+
+        argument_list = []
+        for argument in token.arguments:
+            argument_list.append({"name": argument.name,
+                                  "type": argument.type.type_to_c})
+
+        self._emiter2.set_function_declaration({"block": token.category,
+                                                "type": token.type.type_to_c,
+                                                "name": token.name,
+                                                "parameters": argument_list})
+        print(self._emiter2.write_file())
+
+        #if isinstance(token, ProcedureForwardIdentifier):
+        #    self._emiter.emit_procedure_forward_declaration_left(token.name)
+        #elif isinstance(token, ProcedureExternalIdentifier):
+        #    self._emiter.emit_procedure_external_declaration_left(token.name)
+        #else:
+        #    self._emiter.emit_procedure_declaration_left(token.name)
+
+        #separator_counter = token.argument_counter - 1
+        #for argument in token.arguments:
+        #    self._emiter.emit_procedure_declaration_argument(argument.type.type_to_c, argument.name)
+        #    if separator_counter > 0:
+        #        self._emiter.emit_procedure_declaration_argument_separator()
+        #        separator_counter = separator_counter - 1
+
+        #if isinstance(token, ProcedureForwardIdentifier):
+        #    self._emiter.emit_procedure_forward_declaration_right()
+        #elif isinstance(token, ProcedureExternalIdentifier):
+        #    self._emiter.emit_procedure_external_declaration_right()
+        #else:
+        #    self._emiter.emit_procedure_declaration_right()
 
     def _closed_if_statement(self, input_list):
         """

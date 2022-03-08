@@ -7,28 +7,33 @@ DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original D
 HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 */
 
+{%- import 'c_constant_declarations.txt' as global_constants %}
+{%- import 'c_variable_declarations.txt' as global_variables %}
+{%- import 'c_procedure_declaration_headers.txt' as global_procedure %}
+{%- import 'c_function_declaration_headers.txt' as global_function %}
+
 // include statements
 {%- for header in include_statements %}
 #include <{{header}}.h>
 {%- endfor %}
 
 // constant declarations
-{%- import 'c_constant_declarations.txt' as global_constants -%}
-{{global_constants.generic_constant_declaration(constant_declarations)}}
+{{ global_constants.generic_constant_declaration(constant_declarations) }}
 
 // variable declarations
-{%- import 'c_variable_declarations.txt' as global_variables -%}
-{{global_variables.generic_variable_declaration(variable_declarations)}}
+{{ global_variables.generic_variable_declaration(variable_declarations) }}
 
-// procedure declarations
-{%- import 'c_procedure_declarations.txt' as global_procedures -%}
-{{global_procedures.generic_procedure_declaration(procedure_declarations)}}
+// procedure declaration headers
+{{ global_procedure.generic_procedure_declaration(procedure_declaration) }}
 
+// function declaration headers
+{{ global_function.generic_function_declaration(function_declaration) }}
 
-{% block procedure_declarations %} {% endblock %}
+// procedure declaration
 
-{% block procedure_implementations %} {% endblock %}
+// function declaration
 
+// main program
 int main(){
 
 {% block main_code %} {% endblock %}

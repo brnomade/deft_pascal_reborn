@@ -31,12 +31,12 @@ class PascalExamples:
               c : BOOLEAN;
               d : CHAR;
               e : ^CHAR;                     
-            procedure multiply_and_print(i: integer; r: real); forward;
-            procedure divide_and_print(i: integer; r: real); forward;
-            procedure sum_and_print(i: integer; r: real); forward;
-            procedure subtract_and_print(i: integer; r: real); forward;
+            function multiply_and_print(i: integer; r: real): integer; forward;
+            function divide_and_print(i: integer; r: real): integer; forward;
+            function sum_and_print(i: integer; r: real): integer; forward;
+            function subtract_and_print(i: integer; r: real): integer; forward;
               
-            procedure multiply_and_print(i: integer; r: real);  
+            function multiply_and_print(i: integer; r: real): integer;  
             begin                                 
               writeln(i * r);                         
             end;                                  

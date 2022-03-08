@@ -1134,7 +1134,7 @@ class DeftPascalCompiler:
         self._ic.init(action_name)
 
         # set the context
-        context = input_list.pop(0)
+        context = input_list.pop(0).upper()
         if context != "FUNCTION":
             raise ValueError("Internal Error - Unknown context '{0}' in action '{1}'".format(context, action_name))
 

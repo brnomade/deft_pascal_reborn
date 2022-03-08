@@ -1,0 +1,12 @@
+{%- macro generic_function_declaration(input_list) %}
+    {%- for function in input_list %}
+        {%- if function.block == "FunctionForwardIdentifier" %}
+{{ function.type }} {{ function.name }}(
+            {%- for parameter in function.parameters -%}
+{{ parameter.type }} {{ parameter.name }} {%- if not loop.last -%}, {% endif %}
+            {%- endfor -%}
+) ;
+        {%- endif %}
+    {%- endfor %}
+{%- endmacro %}
+
