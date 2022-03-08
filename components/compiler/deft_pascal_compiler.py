@@ -13,12 +13,14 @@ from components.symbols.operator_symbols import Operator, BinaryOperator, UnaryO
 from components.symbols.identifier_symbols import Identifier, TypeIdentifier, \
     ProcedureIdentifier, InBuiltProcedureWrite, ProcedureExternalIdentifier, ProcedureForwardIdentifier, \
     ConstantIdentifier, \
-    FunctionIdentifier, FunctionExternalIdentifier, FunctionForwardIdentifier
+    FunctionIdentifier, FunctionExternalIdentifier, FunctionForwardIdentifier, AbstractProcedureIdentifier
 from components.symbols.literals_symbols import BooleanLiteral, NilLiteral, NumericLiteral, StringLiteral
 from components.symbols.type_symbols import PointerType, BasicType, StringType
 from components.symbols.expression_symbols import ConstantExpression, IntegerExpression, BooleanExpression
 from components.intermediate_code import IntermediateCode
 from components.parameters import ActualParameter, FormalParameter
+
+from components.compiler.core_function_declaration import FunctionProcessor
 
 import copy
 import logging
@@ -1118,7 +1120,124 @@ class DeftPascalCompiler:
          "[Token('RESERVED_STRUCTURE_BEGIN', 'BEGIN'), Token('RESERVED_STRUCTURE_END', "
          "'END')])])])
         """
-        return self._generic_procedure_or_function_declaration(action_name, input_list, working_stack)
+        # initialise the intermediate code engine
+        self._ic.init(action_name)
+
+        processor = FunctionProcessor(input_list, action_name)
+        context = processor.assert_context_is_valid()
+
+        # retrieve the token identifier for the new function
+        identifier = processor.get_identifier()
+
+        # retrieve the type for the new function
+        type_identifier = processor.get_return_type()
+
+        # retrieve the type from the symbol table
+        type_symbol = self._symbol_table.retrieve(type_identifier, equal_level_only=False)
+        if not type_symbol:
+            msg = "[{0}] unknown type '{1}' used in function declaration."
+            _MODULE_LOGGER_.error(msg.format(action_name, type_identifier))
+
+        else:
+            if processor.function_returns_string():
+                # handle scenario where function returns a string
+                type_symbol = copy.copy(type_symbol)
+                type_symbol.dimension = processor.get_function_string_dimensions()
+
+        # with the identifier and type create a new function object
+        new_function = processor.get_function_instance(identifier, type_symbol)
+
+        # verify if the function identifier has already been declared by checking the symbol table
+        # there could be an External or Forward function already declared.
+        # in such scenario the existing declaration is replaced with the new one
+
+        symbol = self._symbol_table.retrieve(identifier, equal_level_only=False)
+        if symbol and symbol.category in ["FunctionForwardIdentifier", "FunctionExternalIdentifier"]:
+            # replace in the symbol_table a forward declaration with the actual declaration
+            _MODULE_LOGGER_.debug("[{0}] forward {2} '{1}' resolved".format(action_name, identifier, context))
+            self._symbol_table.replace(identifier, new_function)
+
+        elif symbol:
+            # the function has been previosuly declared and cannot be replaced
+            msg = "[{0}] {2} '{1}' already declared"
+            _MODULE_LOGGER_.error(msg.format(action_name, identifier, context))
+
+        else:
+            # add new function to symbol table as we know it is not yet declared
+            self._symbol_table.append(new_function)
+
+        # push the new function into the intermediate_code engine
+        self._ic.push(new_function)
+        self._ic.flush()
+
+        # increase scope in preparation for processing the function parameters
+        self._increase_scope(new_function.name)
+
+        # process the function parameters if those are present
+        if processor.function_has_arguments():
+
+            argument_list = processor.get_arguments_list()
+            self._process_parameter_specification(action_name, argument_list, new_function)
+
+        # log declaration
+        _MODULE_LOGGER_.debug("[{0}] new function declared : {1}".format(action_name, new_function))
+
+        # process the procedure or function body
+        if len(input_list) > 0 and input_list[0].data.upper() in ["PROCEDURE_BLOCK", "FUNCTION_BLOCK"]:
+            for ast in input_list[0].children:
+                if (ast.data.upper() in ["PROCEDURE_DECLARATION", "FUNCTION_DECLARATION]"]) and len(ast.children) > 0:
+                    msg = "nested {1} definition is currently not supported. '{0}' will be ignored."
+                    _MODULE_LOGGER_.error(msg.format(ast.children[1], context))
+                else:
+
+                    self._internal_compile(ast, [])
+            input_list.pop(0)
+
+        self._decrease_scope()
+
+        return working_stack
+
+    def _process_parameter_specification(self, action_name, input_list, new_object):
+
+        if not isinstance(new_object, AbstractProcedureIdentifier):
+            raise KeyError("Internal Error - Unexpected class '{0}' in action '{1}'".format(new_object,
+                                                                                            action_name))
+
+        for ast in input_list:
+
+            if ast.data.upper() == "VALUE_PARAMETER_SPECIFICATION":
+
+                # process the type of the argument list
+                token = ast.children.pop(-1)
+                if token.type == "IDENTIFIER":
+                    # identifier is of a custom type and their definition is case sensitive/relevant
+                    type_identifier = self._symbol_table.retrieve(token.value, equal_level_only=False)
+                else:
+                    # identifier is a basic type and those are stored in the symbol table as uppercase
+                    type_identifier = self._symbol_table.retrieve(token.value.upper(), equal_level_only=False)
+
+                if type_identifier:
+                    # process the arguments
+                    for token in ast.children:
+                        if token.type == "IDENTIFIER":
+                            # create the variables using the parameter_type
+                            new_variable = Identifier(token.value, type_identifier, None)
+
+                            # add the new variable to the symbol_table
+                            self._symbol_table.append(new_variable)
+
+                            # create the formal parameter
+                            argument = FormalParameter(token.value, type_identifier)
+
+                            # add the variable as formal argument to the procedure
+                            new_object.add_argument(argument)
+                else:
+                    msg = "[{0}] unknown type '{1}' reference in {2} declaration."
+                    _MODULE_LOGGER_.error(msg.format(action_name, type_identifier, new_object))
+
+            else:
+                _MODULE_LOGGER_.error("parameter class '{0}' not yet supported".format(ast))
+
 
     def _function_declaration_with_directive(self, action_name, input_list, working_stack):
         """
@@ -1133,139 +1252,61 @@ class DeftPascalCompiler:
         # initialise the intermediate code engine
         self._ic.init(action_name)
 
-        # set the context
-        context = input_list.pop(0).upper()
-        if context != "FUNCTION":
-            raise ValueError("Internal Error - Unknown context '{0}' in action '{1}'".format(context, action_name))
+        processor = FunctionProcessor(input_list, action_name)
+        context = processor.assert_context_is_valid()
 
         # the function declaration in hand can be an external or a forward declaration
         # confirm a directive is present and verify its type
-        if input_list[-1].data.upper() != "DIRECTIVE":
-            raise KeyError("Internal Error - Unexpected keyword '{0}' in action '{1}'".format(input_list[-1].data, action_name))
-        else:
-            directive = input_list[-1].children[0].value.upper()
-            if directive not in ["FORWARD", "EXTERNAL"]:
-                raise KeyError("Internal Error - Unknown directive '{0}' in action '{1}'".format(input_list[-1].data, action_name))
-            input_list.pop(-1)
+        processor.assert_directive_is_valid()
 
         # retrieve the token identifier for the new function
-        identifier = input_list.pop(0).value
+        identifier = processor.get_identifier()
 
         # verify if the function identifier has already been declared by checking the symbol table
         symbol = self._symbol_table.retrieve(identifier, equal_level_only=False)
         if symbol:
-
             msg = "[{0}] {2} '{1}' already declared"
             _MODULE_LOGGER_.error(msg.format(action_name, identifier, context))
 
         else:
-
             # a new function is being declared
-            if input_list[-1].data.upper() != "RETURN_TYPE":
+            type_identifier = processor.get_return_type()
 
-                raise KeyError("Unexpected keyword '{0}' in action '{1}'".format(input_list[-1].data, action_name))
+            # retrieve the type from the symbol table
+            type_symbol = self._symbol_table.retrieve(type_identifier, equal_level_only=False)
+            if not type_symbol:
+                msg = "[{0}] unknown type '{1}' used in function declaration."
+                _MODULE_LOGGER_.error(msg.format(action_name, type_identifier))
 
             else:
+                if processor.function_returns_string():
+                    # handle scenario where function returns a string
+                    type_symbol = copy.copy(type_symbol)
+                    type_symbol.dimension = processor.get_function_string_dimensions()
 
-                # as we are dealing with a function, a type declaration is expected
-                type_identifier = input_list.pop(-1).children
+                # with the identifier and type create a new function object
+                new_function = processor.get_function_instance(identifier, type_symbol)
 
-                string_dimension = None
-                if type_identifier[-1].type == "RIGHT_PARENTHESES":  # handling the string with dimension special case
-                    type_identifier.pop(-1)  # discard the )
-                    string_dimension = type_identifier.pop(-1)
-                    type_identifier.pop(-1)  # discard the (
+                # add new function to symbol table as we know it is not yet declared
+                self._symbol_table.append(new_function)
 
-                type_identifier = type_identifier[0]
-                if type_identifier.type == "IDENTIFIER":
-                    # identifier is of a custom type and their definition is case sensitive/relevant
-                    type_identifier = type_identifier.value
-                else:
-                    # identifier is a basic type and those are stored in the symbol table as uppercase
-                    type_identifier = type_identifier.value.upper()
+                # push the new function into the intermediate_code engine
+                self._ic.push(new_function)
+                self._ic.flush()
 
-                # retrieve the type from the symbol table
-                type_symbol = self._symbol_table.retrieve(type_identifier, equal_level_only=False)
-                if not type_symbol:
+                # increase scope in preparation for processing the function parameters
+                self._increase_scope(new_function.name)
 
-                    msg = "[{0}] unknown type '{1}' used in function declaration."
-                    _MODULE_LOGGER_.error(msg.format(action_name, type_identifier))
+                # process the function parameters if those are present
+                if processor.function_has_arguments():
 
-                else:
+                    argument_list = processor.get_arguments_list()
+                    self._process_parameter_specification(action_name, argument_list, new_function)
 
-                    # handle scenario function returns a string
-                    if string_dimension:
-                        type_symbol = copy.copy(type_symbol)
-                        type_symbol.dimension = string_dimension
+                # log declaration
+                _MODULE_LOGGER_.debug("[{0}] new function declared : {1}".format(action_name, new_function))
 
-                    # with the identifier and type create a new function object
-                    if directive == "FORWARD":
-                        new_function = FunctionForwardIdentifier(identifier, type_symbol, None)
-                    elif directive == "EXTERNAL":
-                        new_function = FunctionExternalIdentifier(identifier, type_symbol, None)
-
-                    # add new function to symbol table as we know it is not yet declared
-                    self._symbol_table.append(new_function)
-
-                    # push the new function into the intermediate_code engine
-                    self._ic.push(new_function)
-                    self._ic.flush()
-
-                    # increase scope in preparation for processing the function parameters
-                    self._increase_scope(new_function.name)
-
-                    # process the function parameters if those are present
-                    if len(input_list) > 0 and input_list[0].data.upper() == "PARAMETER_LIST":
-
-                        argument_list = input_list.pop(0).children
-
-                        # discard open and close parameters characters -> (  )
-                        argument_list.pop(0)
-                        argument_list.pop(-1)
-
-                        # process each argument
-                        for ast in argument_list:
-                            if ast.data.upper() == "VALUE_PARAMETER_SPECIFICATION":
-
-                                # process the type of the argument list
-                                token = ast.children.pop(-1)
-                                if token.type == "IDENTIFIER":
-                                    # identifier is of a custom type and their definition is case sensitive/relevant
-                                    type_identifier = self._symbol_table.retrieve(token.value, equal_level_only=False)
-                                else:
-                                    # identifier is a basic type and those are stored in the symbol table as uppercase
-                                    type_identifier = self._symbol_table.retrieve(token.value.upper(), equal_level_only=False)
-
-                                if type_identifier:
-                                    # process the arguments
-                                    for token in ast.children:
-                                        if token.type == "IDENTIFIER":
-                                            # create the variables using the parameter_type
-                                            new_variable = Identifier(token.value, type_identifier, None)
-
-                                            # add the new variable to the symbol_table
-                                            self._symbol_table.append(new_variable)
-
-                                            # create the formal parameter
-                                            argument = FormalParameter(token.value, type_identifier)
-
-                                            # add the variable as formal argument to the procedure
-                                            new_function.add_argument(argument)
-                                else:
-                                    msg = "[{0}] unknown type '{1}' reference in {2} declaration."
-                                    _MODULE_LOGGER_.error(msg.format(action_name, type_identifier, identifier))
-
-                            else:
-                                _MODULE_LOGGER_.error("parameter class '{0}' not yet supported".format(ast))
-
-                        # log successful declaration
-                        _MODULE_LOGGER_.debug("[{0}] new function declared : {1}".format(action_name, new_function))
-
-                    else:
-                        # log successful declaration
-                        _MODULE_LOGGER_.debug("[{0}] new function declared : {1}".format(action_name, new_function))
-
-                    self._decrease_scope()
+                self._decrease_scope()
 
         return working_stack
 

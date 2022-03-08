@@ -7,6 +7,13 @@
             {%- endfor -%}
 ) ;
         {%- endif %}
+        {%- if function.block == "FunctionIdentifier" %}
+{{ function.type }} {{ function.name }}(
+            {%- for parameter in function.parameters -%}
+{{ parameter.type }} {{ parameter.name }} {%- if not loop.last -%}, {% endif %}
+            {%- endfor -%}
+) ;
+        {%- endif %}
     {%- endfor %}
 {%- endmacro %}
 

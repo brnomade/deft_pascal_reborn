@@ -199,12 +199,8 @@ class InBuiltProcedureWrite(ProcedureIdentifier):
 
 class FunctionForwardIdentifier(FunctionIdentifier):
     @classmethod
-    def in_built_procedure_write(cls):
-        raise TypeError("in built procedure not compatible with forward procedure type")
-
-    @classmethod
-    def in_built_procedure_writeln(cls):
-        raise TypeError("in built procedure not compatible with forward procedure type")
+    def do_nothing(cls):
+        pass
 
 
 class ProcedureForwardIdentifier(ProcedureIdentifier):
@@ -219,12 +215,8 @@ class ProcedureForwardIdentifier(ProcedureIdentifier):
 
 class FunctionExternalIdentifier(FunctionIdentifier):
     @classmethod
-    def in_built_procedure_write(cls):
-        raise TypeError("in built procedure not compatible with forward procedure type")
-
-    @classmethod
-    def in_built_procedure_writeln(cls):
-        raise TypeError("in built procedure not compatible with forward procedure type")
+    def do_nothing(cls):
+        pass
 
 
 class ProcedureExternalIdentifier(ProcedureIdentifier):
