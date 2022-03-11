@@ -222,6 +222,12 @@ class BaseExpression(BaseSymbol):
         compatible = True
         stack = []
         postfix_expression = self._infix_to_postfix()
+
+        # if the postfix_expression is empty it is an indication that the expression is invalid
+        # return None to trigger an incompatible message on upper layers
+        if not postfix_expression:
+            return None
+
         for token in postfix_expression:
 
             if isinstance(token, BaseOperator):
@@ -234,9 +240,12 @@ class BaseExpression(BaseSymbol):
 
                 elif token.category == "BinaryOperator":
                     # elif isinstance(token, BinaryOperator):
-                    symbol_left = stack.pop()
-                    symbol_left = symbol_left if isinstance(symbol_left, BaseType) else symbol_left.type
-                    result = token.evaluate_to_type(symbol_right=symbol_right, symbol_left=symbol_left)
+                    if stack:
+                        symbol_left = stack.pop()
+                        symbol_left = symbol_left if isinstance(symbol_left, BaseType) else symbol_left.type
+                        result = token.evaluate_to_type(symbol_right=symbol_right, symbol_left=symbol_left)
+                    else:
+                        return None
 
                 if result:
                     stack.append(result)
@@ -261,8 +270,11 @@ class BaseExpression(BaseSymbol):
         if result:
             expression.type = result
             return expression
+        elif not result:
+            _MODULE_LOGGER_.error("invalid expression: '{0}'".format(expression_list))
+            return None
         else:
-            _MODULE_LOGGER_.error("incompatible types in expression: {0}".format(expression_list))
+            _MODULE_LOGGER_.error("incompatible types in expression: '{0}'".format(expression_list))
             return None
 
     @property

@@ -5,7 +5,7 @@ DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original D
 HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
-from compiler.deft_pascal_compiler import DeftPascalCompiler
+from components.compiler.deft_pascal_compiler import DeftPascalCompiler
 
 import argparse
 import logging

@@ -598,7 +598,8 @@ class DeftPascalCompiler:
         token_list -> identifier := expression
         """
         # process the identifier
-        working_stack = self._internal_compile(input_list.pop(0), [])
+        identifier = input_list.pop(0)
+        working_stack = self._internal_compile(identifier, [])
 
         if working_stack:
 
@@ -650,6 +651,9 @@ class DeftPascalCompiler:
                     self._ic.flush()
 
                     _MODULE_LOGGER_.debug("[{0}] : {1}".format(action_name, working_stack))
+
+        else:
+            _MODULE_LOGGER_.error("Invalid assignment '{0}' to identifier '{1}'".format(action_name, identifier))
 
         return working_stack
 
@@ -1057,6 +1061,10 @@ class DeftPascalCompiler:
 
                     value_to_print_stack = self._internal_compile(token.children[0], [])
                     expression_value_to_print = BaseExpression.from_list(value_to_print_stack)
+                    if not expression_value_to_print:
+                        msg = "[{0}] :  invalid parameter '{1}' passed to procedure"
+                        _MODULE_LOGGER_.error(msg.format(action_name, token))
+                        return working_stack
 
                     expression_field_width = None
                     expression_decimal_field = None
@@ -1548,6 +1556,10 @@ class DeftPascalCompiler:
         # process boolean expression
         expression_stack = self._internal_compile(input_list.pop(0), [])
         expression = BaseExpression.from_list(expression_stack)
+        if not expression_stack:
+            msg = "[{0}] invalid expression: {1}"
+            _MODULE_LOGGER_.error(msg.format(action_name, expression_stack))
+            return working_stack
 
         if expression is None:
             msg = "[{0}] incompatible types in expression: {1}"

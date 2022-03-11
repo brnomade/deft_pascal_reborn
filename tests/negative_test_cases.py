@@ -326,6 +326,27 @@ class NegativeLanguageTests:
         return code
 
     @staticmethod
+    def scenario_reference_to_undeclared_variable_identifier_in_procedure_call_raises_compiler_error():
+        code = ("Reference to undeclared", "", """
+            PROGRAM {{{0}}};
+            BEGIN
+            writeln(V1);
+            END.                                                   
+        """)
+        return code
+
+    @staticmethod
+    def scenario_reference_to_undeclared_variable_identifier_in_if_statement_raises_compiler_error():
+        code = ("Reference to undeclared", "", """
+            PROGRAM {{{0}}};
+            BEGIN
+            IF v1 > 10 THEN
+                writeln(V1);
+            END.                                                   
+        """)
+        return code
+
+    @staticmethod
     def scenario_not_boolean_repeat_until_condition_raises_compiler_error():
         code = ("expected boolean expression", "", """
             PROGRAM {{{0}}};
