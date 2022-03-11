@@ -1,0 +1,12 @@
+// include statements
+{%- for header in DEFAULT_INPUT %}
+    {%- if header == "standard_library" %}
+#include <stdio.h>
+    {%- elif header == "boolean_library" %}
+#include <stdbool.h>
+    {%- elif header == "string_library" %}
+#include <strings.h>
+    {%- else %}
+#include <{{ header }}.h>
+    {%- endif %}
+{%- endfor %}

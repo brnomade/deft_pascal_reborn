@@ -17,7 +17,7 @@ class PascalExamples:
     @staticmethod
     def example_program_definition_2():
         code = """
-            program test;                          
+            program example_program_definition_2;                          
             const             
               ZZ = 1 + 2 + 3 + 4;  
               INT_1 = 1;
@@ -38,13 +38,17 @@ class PascalExamples:
               
             function multiply_and_print(i, v: integer; r: real): integer;  
             begin                                 
-              writeln(i * v);   
-              multiply_and_print := i * v;                      
+              v := i * i;
+              b := v;
+              b := INT_1 + v;
+              writeln(i * v, i, v);   
+              multiply_and_print := b;                      
             end;                                  
 
             begin                                 
               a := PI;                            
-              b := 10;                                  
+              b := 10;  
+              multiply_and_print(b, b, a);                                
             end.                                 
         """
         return code

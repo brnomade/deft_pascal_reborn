@@ -5,8 +5,7 @@ DESCRIPTION...: Pascal compiler for TRS80 color computer based on the original D
 HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
-from components.emiters.abstract_emiter import CEmitter, CMOCEmitter
-from components.emiters.emiters import CProgramTemplateEmiter
+from components.emiters.c_emiters import CEmitter, CMOCEmitter
 from components.symbols.base_symbols import BaseSymbol, BaseKeyword, BaseExpression
 from components.symbols.operator_symbols import Operator
 from components.symbols.type_symbols import PointerType, BasicType, StringType
@@ -22,7 +21,6 @@ class IntermediateCode:
 
     def __init__(self, cmoc=False, stack_size=1000):
         self._emiter = None
-        self._emiter2 = None
         self._target = None
         if cmoc:
             self._target = "CMOC"
@@ -47,6 +45,7 @@ class IntermediateCode:
                          "PROCEDURE_DECLARATION",
                          "FUNCTION_DECLARATION_WITH_DIRECTIVE",
                          "FUNCTION_DECLARATION",
+                         "FUNCTION_RETURN_STATEMENT",
                          "CLOSED_IF_STATEMENT",
                          "CLOSED_IF_STATEMENT_ELSE",
                          "OPEN_IF_STATEMENT",
@@ -109,58 +108,59 @@ class IntermediateCode:
             #
             if action_name in self._actions:
                 method_to_call = getattr(IntermediateCode, "_" + action_name.lower())
-                method_to_call(self, token_list)
+                method_to_call(self, action_name, token_list)
             else:
                 self._log(ERROR, "action {0} - '{0}' not yet implemented".format(action_name, token_list))
             #
-        return self._emiter.output_code
+        return self._emiter.emit()
 
 
-    def _program_heading(self, token_list):
+    def _program_heading(self, action_name, token_list):
         """
         PROGRAM_HEADING
         """
         if self._target == "CMOC":
             self._emiter = CMOCEmitter(token_list[1].value)
         else:
-            #self._emiter = CEmitter2(token_list[1].value)
-            self._emiter = CEmitter(token_list[1].value)
+            self._emiter = CEmitter(target_template="RESERVED_STRUCTURE_PROGRAM", output_file="my_teste_1")
 
-        self._emiter2 = CProgramTemplateEmiter('my_teste_1')
+        self._emiter.append(CEmitter(target_template=action_name))
+        #print(self._emiter.emit())
 
-    # identify which libraries to import based on the declared variables
+        # # identify which libraries to import based on the declared variables
+        #
+        #     boolean_library = False
+        #     string_library = False
+        #     standard_library = True
+        #
+        #     for i in range(0, self._top):
+        #         node = self._i_stack[i]
+        #         if node["action_name"] in ["CONSTANT_DEFINITION_PART", "VARIABLE_DECLARATION_PART"]:
+        #             for variable in node["token_list"]:
+        #                 if variable.type.type == "RESERVED_TYPE_BOOLEAN":
+        #                     boolean_library = True
+        #                 elif variable.type.type == "RESERVED_TYPE_STRING":
+        #                     string_library = True
+        #
+        #     self._emiter.emit_program_heading(include_standard=standard_library,
+        #                                       include_boolean=boolean_library,
+        #                                       include_string=string_library
+        #                                       )
 
-        boolean_library = False
-        string_library = False
-        standard_library = True
-
+        libraries = {'standard_library'}
         for i in range(0, self._top):
             node = self._i_stack[i]
             if node["action_name"] in ["CONSTANT_DEFINITION_PART", "VARIABLE_DECLARATION_PART"]:
                 for variable in node["token_list"]:
                     if variable.type.type == "RESERVED_TYPE_BOOLEAN":
-                        boolean_library = True
+                        libraries.add('boolean_library')
                     elif variable.type.type == "RESERVED_TYPE_STRING":
-                        string_library = True
+                        libraries.add('string_library')
 
-        self._emiter.emit_program_heading(include_standard=standard_library,
-                                          include_boolean=boolean_library,
-                                          include_string=string_library
-                                          )
+        self._emiter.append(CEmitter(target_template="INCLUDE_STATEMENT").source(libraries))
+        #print(self._emiter.emit())
 
-        libraries = ['stdio']
-        for i in range(0, self._top):
-            node = self._i_stack[i]
-            if node["action_name"] in ["CONSTANT_DEFINITION_PART", "VARIABLE_DECLARATION_PART"]:
-                for variable in node["token_list"]:
-                    if variable.type.type == "RESERVED_TYPE_BOOLEAN":
-                        libraries.append('stdbool')
-                    elif variable.type.type == "RESERVED_TYPE_STRING":
-                        libraries.append('string')
-        self._emiter2.set_include_statements(libraries)
-        print(self._emiter2.write_file())
-
-    def _constant_definition_part(self, token_list):
+    def _constant_definition_part(self, action_name, token_list):
         """
         CONSTANT_DEFINITION_PART
         example:
@@ -205,10 +205,10 @@ class IntermediateCode:
 
                 if inner_type in ["RESERVED_TYPE_STRING"]:
                     inner_literal = token.to_literal()
-                    self._emiter.emit_constant_definition_part_string(token.name,
-                                                                      inner_c_type,
-                                                                      inner_literal.type.dimension,
-                                                                      inner_literal.value_to_c)
+                    #self._emiter.emit_constant_definition_part_string(token.name,
+                    #                                                  inner_c_type,
+                    #                                                  inner_literal.type.dimension,
+                    #                                                  inner_literal.value_to_c)
 
                     constant_definitions.append({"block": "string",
                                                  "type": inner_c_type,
@@ -217,9 +217,9 @@ class IntermediateCode:
                                                  "value": inner_literal.value_to_c})
 
                 elif inner_type in ["RESERVED_TYPE_CHAR"]:
-                    self._emiter.emit_constant_definition_part_char(token.name, inner_c_type)
+                    #self._emiter.emit_constant_definition_part_char(token.name, inner_c_type)
                     # self._expression(token.value)
-                    self._emiter.emit_statement_terminator()
+                    #self._emiter.emit_statement_terminator()
 
                     constant_definitions.append({"block": "char",
                                                  "type": inner_c_type,
@@ -227,9 +227,9 @@ class IntermediateCode:
                                                  "value": self._expression_to_string(token.value)})
 
                 elif inner_type in ["RESERVED_TYPE_POINTER"]:
-                    self._emiter.emit_constant_definition_part_pointer(token.name, inner_c_type)
-                    self._expression(token.value)
-                    self._emiter.emit_statement_terminator()
+                    #self._emiter.emit_constant_definition_part_pointer(token.name, inner_c_type)
+                    #self._expression(token.value)
+                    #self._emiter.emit_statement_terminator()
 
                     constant_definitions.append({"block": "pointer",
                                                  "type": inner_c_type,
@@ -237,20 +237,20 @@ class IntermediateCode:
                                                  "value": token.value})
 
                 else:
-                    self._emiter.emit_constant_definition_part_generic_left_side(token.name)
+                    #self._emiter.emit_constant_definition_part_generic_left_side(token.name)
                     # self._expression(token.value)
-                    self._emiter.emit_constant_definition_part_generic_right_side()
+                    #self._emiter.emit_constant_definition_part_generic_right_side()
 
                     constant_definitions.append({"block": "generic",
                                                  "type": inner_c_type,
                                                  "name": token.name,
                                                  "value": self._expression_to_string(token.value)})
 
-        self._emiter2.set_constant_declarations(constant_definitions)
-        print(self._emiter2.write_file())
+        self._emiter.append(CEmitter(action_name).source(constant_definitions))
+        #print(self._emiter.emit())
 
 
-    def _type_definition_part(self, token_list):
+    def _type_definition_part(self, action_name, token_list):
         """
         TYPE_DEFINITION_PART
         example: 'TYPE_DEFINITION_PART', 'token_list': [ TypeIdentifier(T6|BasicType(RESERVED_TYPE_INTEGER)),
@@ -284,7 +284,7 @@ class IntermediateCode:
                 self._emiter.emit_header_line(line)
 
 
-    def _variable_declaration_part(self, token_list):
+    def _variable_declaration_part(self, action_name, token_list):
         """
         VARIABLE_DECLARATION_PART
         example: 'VARIABLE_DECLARATION_PART', 'token_list': [ Identifier('V1'|BasicType(RESERVED_TYPE_INTEGER)|None),
@@ -301,32 +301,32 @@ class IntermediateCode:
 
             if isinstance(token, Identifier):
                 if isinstance(token.type, StringType):
-                    self._emiter.emit_variable_declaration_part_string(token.type.type_to_c, token.name, token.type.dimension)
+                    #self._emiter.emit_variable_declaration_part_string(token.type.type_to_c, token.name, token.type.dimension)
                     variable_definitions.append({"block": "string",
                                                  "type": token.type.type_to_c,
                                                  "name": token.name,
                                                  "dimension": token.type.dimension})
 
                 elif isinstance(token.type, TypeIdentifier):
-                    self._emiter.emit_variable_declaration_part_generic(token.type.name, token.name)
+                    #self._emiter.emit_variable_declaration_part_generic(token.type.name, token.name)
                     variable_definitions.append({"block": "identifier",
                                                  "type": token.type.name,
                                                  "name": token.name})
 
                 elif isinstance(token.type, PointerType):
-                    self._emiter.emit_variable_declaration_part_pointer(token.type.type_to_c, token.name)
+                    #self._emiter.emit_variable_declaration_part_pointer(token.type.type_to_c, token.name)
                     variable_definitions.append({"block": "pointer",
                                                  "type": token.type.type_to_c,
                                                  "name": token.name})
 
                 else:
-                    self._emiter.emit_variable_declaration_part_generic(token.type.type_to_c, token.name)
+                    #self._emiter.emit_variable_declaration_part_generic(token.type.type_to_c, token.name)
                     variable_definitions.append({"block": "generic",
                                                  "type": token.type.type_to_c,
                                                  "name": token.name})
 
             elif isinstance(token, PointerIdentifier):
-                self._emiter.emit_variable_declaration_part_pointer(token.type.type_to_c, token.name)
+                #self._emiter.emit_variable_declaration_part_pointer(token.type.type_to_c, token.name)
                 variable_definitions.append({"block": "pointer",
                                              "type": token.type.type_to_c,
                                              "name": token.name})
@@ -334,34 +334,47 @@ class IntermediateCode:
             else:
                 raise NotImplementedError
 
-        self._emiter2.set_variable_declarations(variable_definitions)
-        print(self._emiter2.write_file())
+        self._emiter.append(CEmitter(action_name).source(variable_definitions))
+        #print(self._emiter.emit())
 
-    def _reserved_structure_begin_program(self, token_list):
+
+    def _reserved_structure_begin_program(self, action_name, token_list):
         """
         RESERVED_STRUCTURE_BEGIN_PROGRAM
         """
-        self._emiter.emit_reserved_structure_begin_program()
+        ce = CEmitter("LINE_CONSTRUCTOR")
+        ce.emit_reserved_structure_begin_program()
+        self._emiter.append(ce)
+        #print(self._emiter.emit())
 
-    def _reserved_structure_begin_block(self, token_list):
+    def _reserved_structure_begin_block(self, action_name, token_list):
         """
         RESERVED_STRUCTURE_BEGIN_BLOCK
         """
-        self._emiter.emit_reserved_structure_begin_block()
+        ce = CEmitter("LINE_CONSTRUCTOR")
+        ce.emit_reserved_structure_begin_block()
+        self._emiter.append(ce)
+        #print(self._emiter.emit())
 
-    def _reserved_structure_end_program(self, token_list):
+    def _reserved_structure_end_program(self, action_name, token_list):
         """
         RESERVED_STRUCTURE_END_PROGRAM
         """
-        self._emiter.emit_reserved_structure_end_program()
+        ce = CEmitter("LINE_CONSTRUCTOR")
+        ce.emit_reserved_structure_end_program()
+        self._emiter.append(ce)
+        #print(self._emiter.emit())
 
-    def _reserved_structure_end_block(self, token_list):
+    def _reserved_structure_end_block(self, action_name, token_list):
         """
         RESERVED_STRUCTURE_END_BLOCK
         """
-        self._emiter.emit_reserved_structure_end_block()
+        ce = CEmitter("LINE_CONSTRUCTOR")
+        ce.emit_reserved_structure_end_block()
+        self._emiter.append(ce)
+        #print(self._emiter.emit())
 
-    def _assignment_statement(self, input_list):
+    def _assignment_statement(self, action_name, input_list):
         """
         ASSIGNMENT_STATEMENT
          emit assignment expressions
@@ -369,71 +382,91 @@ class IntermediateCode:
                        Operator(':='|OPERATOR_ASSIGNMENT|:=|scenario_fahrenheit_to_celsius_converter|0|[]),
                        GenericExpression('GENERIC_EXPRESSION'|GENERIC_EXPRESSION|[Constant('0'|RESERVED_TYPE_INTEGER|0|scenario_fahrenheit_to_celsius_converter|0|[]), Operator('+'|OPERATOR_PLUS|+|scenario_fahrenheit_to_celsius_converter|0|[]), Constant('1'|RESERVED_TYPE_INTEGER|1|scenario_fahrenheit_to_celsius_converter|0|[]), Operator('+'|OPERATOR_PLUS|+|scenario_fahrenheit_to_celsius_converter|0|[]), Identifier('fahren'|int|None|scenario_fahrenheit_to_celsius_converter|0|[])]|None|None|[])
         """
-        # emit identifier
+
+        ce = CEmitter("LINE_CONSTRUCTOR")
+
         identifier = input_list.pop(0)
 
         if isinstance(identifier.type, StringType):
 
-            # discard operator ':='
-            operator = input_list.pop(0)
+            if action_name == "FUNCTION_RETURN_STATEMENT":
+                self._log(WARNING, "Return of strings in functions is not yet implemented - return statement for '{0}' has been ignored".format(identifier.name))
 
-            """
-            scenarios of string assignment:
-                1) string identifier <- expression of cardinality 1 [string literal]
-                    pattern: char c[50] = "abcd";
-                2) string identifier <- expression of cardinality 1 [string variable]
-                    pattern: strcpy(str2, str1);
-                3) string identifier <- expression of cardinality 2+ [string literals only and operators]
-                    pattern: strcpy(variable, "abcd"); 
-                             strcpy(variable, "defg");
-                4) string identifier <- expression of cardinality 2+ [mixed string literals, operators and variables]
-            """
-            expression = input_list.pop(0)
-            if expression.cardinality == 1 and expression.value[0].category.upper() == "STRINGLITERAL":
-                # scenario 1
-                self._emiter.emit_assignment_scenario_unary_string_literal(identifier.type.type_to_c,
-                                                                           identifier.name,
-                                                                           identifier.type.dimension,
-                                                                           expression.value[0].value)
-            elif expression.cardinality == 1 and expression.value[0].category.upper() == "IDENTIFIER":
-                # scenario 2
-                self._emiter.emit_assignment_scenario_unary_string_identifier(identifier.name,
-                                                                              expression.value[0].name)
             else:
-                # scenarios 3 and 4
-                # the only operator valid for strings is '+' so the translation
-                # to c does not take into account any other scenario.
-                for e in expression.value:
-                    if e.category.upper() == "STRINGLITERAL":
-                        self._emiter.emit_assignment_scenario_multiple_string_literals(identifier.name, e.value)
-                    elif e.category.upper() == "IDENTIFIER":
-                        self._emiter.emit_assignment_scenario_unary_string_identifier(identifier.name, e.name)
-                    elif not isinstance(e, Operator):
-                        self._log(WARNING, "assignment_statement - emiter for '{0}' not yet implemented".format(e))
+
+                # discard operator ':='
+                operator = input_list.pop(0)
+
+                """
+                scenarios of string assignment:
+                    1) string identifier <- expression of cardinality 1 [string literal]
+                        pattern: char c[50] = "abcd";
+                    2) string identifier <- expression of cardinality 1 [string variable]
+                        pattern: strcpy(str2, str1);
+                    3) string identifier <- expression of cardinality 2+ [string literals only and operators]
+                        pattern: strcpy(variable, "abcd"); 
+                                 strcpy(variable, "defg");
+                    4) string identifier <- expression of cardinality 2+ [mixed string literals, operators and variables]
+                """
+                expression = input_list.pop(0)
+                if expression.cardinality == 1 and expression.value[0].category.upper() == "STRINGLITERAL":
+                    # scenario 1
+                    ce.emit_assignment_scenario_unary_string_literal(identifier.type.type_to_c,
+                                                                               identifier.name,
+                                                                               identifier.type.dimension,
+                                                                               expression.value[0].value)
+                elif expression.cardinality == 1 and expression.value[0].category.upper() == "IDENTIFIER":
+                    # scenario 2
+                    ce.emit_assignment_scenario_unary_string_identifier(identifier.name,
+                                                                                  expression.value[0].name)
+                else:
+                    # scenarios 3 and 4
+                    # the only operator valid for strings is '+' so the translation
+                    # to c does not take into account any other scenario.
+                    for e in expression.value:
+                        if e.category.upper() == "STRINGLITERAL":
+                            ce.emit_assignment_scenario_multiple_string_literals(identifier.name, e.value)
+                        elif e.category.upper() == "IDENTIFIER":
+                            ce.emit_assignment_scenario_unary_string_identifier(identifier.name, e.name)
+                        elif not isinstance(e, Operator):
+                            self._log(WARNING, "assignment_statement - emiter for '{0}' not yet implemented".format(e))
 
         else:
 
             if input_list[0].category == "UnaryOperator" and input_list[0].type == "OPERATOR_UPARROW":
 
                 # if isinstance(identifier.type, PointerType):
-                self._emiter.emit_assignment_pointer_left_side(identifier.name)
+                ce.emit_assignment_pointer_left_side(identifier.name)
 
                 # discard uparrow operator
                 input_list.pop(0)
 
-            else:
-                self._emiter.emit_singleton(identifier.name)
+                # emit operator ':='
+                operator = input_list.pop(0)
+                ce.emit_operator(operator.to_c)
 
-            # emit operator ':='
-            operator = input_list.pop(0)
-            self._emiter.emit_singleton(operator.to_c)
+            elif action_name == "FUNCTION_RETURN_STATEMENT":
+                # discard the identifier (which is the function name) and emit a return statement
+                ce.emit_function_return()
+
+                # discard operator ':='
+                operator = input_list.pop(0)
+
+            else:
+                ce.emit_identifier(identifier.name)
+
+                # emit operator ':='
+                operator = input_list.pop(0)
+                ce.emit_operator(operator.to_c)
 
             # emit expression
-            self._expression(input_list.pop(0))
+            ce.emit_operator(self._expression_to_string(input_list.pop(0)))
 
             # emit line terminator
-            self._emiter.emit_statement_terminator()
+            ce.emit_statement_terminator()
 
+        self._emiter.append(ce)
+        #print(self._emiter.emit())
 
     def _expression_to_string(self, a_generic_expression):
         # Process the incoming generic EXPRESSION
@@ -469,37 +502,37 @@ class IntermediateCode:
         return result
 
 
-    def _expression(self, a_generic_expression):
-        # Process the incoming generic EXPRESSION
-        assert isinstance(a_generic_expression, BaseExpression), a_generic_expression
-
-        while a_generic_expression.value:
-            token = a_generic_expression.value.pop(0)
-            if isinstance(token, BaseKeyword):
-
-                self._log(ERROR, "Incorrect keyword '{0}' received.".format(token))
-
-            if isinstance(token, Operator):
-
-                self._emiter.emit_operator_in_definition(token.to_c)
-
-            elif isinstance(token, Literal):
-
-                # token = self._translate_constant_to_c(token)
-                # self._emiter.emit_singleton(token.name)
-                self._emiter.emit_singleton(token.value_to_c)
-
-            elif isinstance(token, Identifier):
-
-                self._emiter.emit_singleton(token.name)
-
-            elif isinstance(token, BaseSymbol):
-
-                self._emiter.emit_singleton(token.name)
-
-            else:
-
-                self._log(WARNING, "expression action for token '{0}' not yet implemented".format(token))
+    # def _expression(self, a_generic_expression):
+    #     # Process the incoming generic EXPRESSION
+    #     assert isinstance(a_generic_expression, BaseExpression), a_generic_expression
+    #
+    #     while a_generic_expression.value:
+    #         token = a_generic_expression.value.pop(0)
+    #         if isinstance(token, BaseKeyword):
+    #
+    #             self._log(ERROR, "Incorrect keyword '{0}' received.".format(token))
+    #
+    #         if isinstance(token, Operator):
+    #
+    #             self._emiter.emit_operator(token.to_c)
+    #
+    #         elif isinstance(token, Literal):
+    #
+    #             # token = self._translate_constant_to_c(token)
+    #             # self._emiter.emit_singleton(token.name)
+    #             self._emiter.emit_literal(token.value_to_c)
+    #
+    #         elif isinstance(token, Identifier):
+    #
+    #             self._emiter.emit_identifier(token.name)
+    #
+    #         elif isinstance(token, BaseSymbol):
+    #
+    #             self._emiter.emit_symbol(token.name)
+    #
+    #         else:
+    #
+    #             self._log(WARNING, "expression action for token '{0}' not yet implemented".format(token))
 
 
     def _repeat_statement(self, input_list):
@@ -610,7 +643,7 @@ class IntermediateCode:
         self._emiter.emit_closed_while_statement_do()
 
 
-    def _procedure_call_write(self, input_list):
+    def _procedure_call_write(self, action_name, input_list):
         """
         CUSTOM PROCEDURE_CALL FOR HANDLING WRITE AND WRITELN
         input_list ->   [ ProcedureIdentifier('writeln'|RESERVED_TYPE_POINTER|None),
@@ -619,67 +652,45 @@ class IntermediateCode:
         C syntax -> "printf"
         Pascal syntax -> write/writeln( A : B : C, ... ) :: A = value to print; B = field_width; C = decimal_field_width
         """
+        ce = CEmitter("LINE_CONSTRUCTOR")
+        ce.emit_procedure_call_write()
+
         identifier = input_list.pop(0)
-
-        # self._emiter.emit("printf(")
-        self._emiter.emit_procedure_call_write()
-
         for actual_parameter in input_list:
-
-            if actual_parameter.cardinality == 3:
-                action = self._emiter.emit_procedure_call_write_with_2_format
-                # particle = "%*.*{0}\\t"
-            elif actual_parameter.cardinality == 2:
-                # particle = "%*{0}\\t"
-                action = self._emiter.emit_procedure_call_write_with_1_format
-            else:
-                # particle = "%{0}\\t"
-                action = self._emiter.emit_procedure_call_write_with_no_format
-
-            if actual_parameter.value.type in ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_BOOLEAN"]:
-                action("d")
-            elif actual_parameter.value.type == "RESERVED_TYPE_REAL":
-                action("f")
-            elif actual_parameter.value.type in ["RESERVED_TYPE_CHAR", "RESERVED_TYPE_TEXT"]:
-                action("c")
-            else:
-                action("s")
-
-        if identifier.name.upper() == "WRITELN":
-            self._emiter.emit_procedure_call_write_format_close_with_new_line()
-        else:
-            self._emiter.emit_procedure_call_write_format_close()
+            ce.emit_procedure_call_write_single_argument(actual_parameter.value.type, actual_parameter.cardinality)
+        ce.emit_procedure_call_write_format_close(identifier.name.upper() == "WRITELN")
 
         while True:
             actual_parameter = input_list.pop(0)
 
             if actual_parameter.cardinality == 3:
                 field_width_expression = actual_parameter.field_width
-                self._expression(field_width_expression)
-                self._emiter.emit_procedure_call_parameter_separator()
+                ce.add_to_line(self._expression_to_string(field_width_expression))
+                ce.emit_procedure_call_parameter_separator()
 
                 decimal_field_width_expression = actual_parameter.decimal_paces.value
-                self._expression(decimal_field_width_expression)
-                self._emiter.emit_procedure_call_parameter_separator()
+                ce.add_to_line(self._expression_to_string(decimal_field_width_expression))
+                ce.emit_procedure_call_parameter_separator()
 
             elif actual_parameter.cardinality == 2:
                 field_width_expression = actual_parameter.field_width
-                self._expression(field_width_expression)
-                self._emiter.emit_procedure_call_parameter_separator()
+                ce.add_to_line(self._expression_to_string(field_width_expression))
+                ce.emit_procedure_call_parameter_separator()
 
             value_to_print_expression = actual_parameter.value
-            self._expression(value_to_print_expression)
+            ce.add_to_line(self._expression_to_string(value_to_print_expression))
 
             if not input_list:
                 break
             else:
-                self._emiter.emit_procedure_call_parameter_separator()
+                ce.emit_procedure_call_parameter_separator()
 
-        self._emiter.emit_procedure_call_closure()
-        self._emiter.emit_statement_terminator()
+        ce.emit_procedure_call_closure()
+        self._emiter.append(ce)
+        #print(self._emiter.emit())
 
 
-    def _procedure_call(self, input_list):
+    def _procedure_call(self, action_name, input_list):
         """
          PROCEDURE_CALL
         input_list ->  [ProcedureIdentifier('writeln'|RESERVED_TYPE_POINTER|writeln|scenario_fahrenheit_to_celsius_converter|0|[]),
@@ -694,28 +705,28 @@ class IntermediateCode:
         token = input_list[0]
         if token.name.upper() in ["WRITE", "WRITELN"]:
 
-            self._procedure_call_write(input_list)
+            self._procedure_call_write(action_name, input_list)
 
         else:
+            ce = CEmitter("LINE_CONSTRUCTOR")
 
             procedure_identifier = input_list.pop(0)
-            self._emiter.emit_procedure_call(procedure_identifier.name)
-            # self._emiter.emit("{0}(".format(procedure_identifier.name))
+            ce.emit_procedure_call(procedure_identifier.name)
 
             while input_list:
 
                 actual_parameter = input_list.pop(0)
                 if actual_parameter.cardinality == 1:
-                    self._expression(actual_parameter.value)
+                    ce.add_to_line(self._expression_to_string(actual_parameter.value))
                 else:
                     raise ValueError
 
                 if input_list:
-                    self._emiter.emit_procedure_call_parameter_separator()
-                    # self._emiter.emit(", ")
+                    ce.emit_procedure_call_parameter_separator()
 
-            self._emiter.emit_procedure_call_closure()
-            # self._emiter.emit_line(")")
+            ce.emit_procedure_call_closure()
+            self._emiter.append(ce)
+
 
     def _procedure_declaration(self, input_list):
         """
@@ -749,7 +760,7 @@ class IntermediateCode:
         else:
             self._emiter.emit_procedure_declaration_right()
 
-    def _function_declaration_with_directive(self, input_list):
+    def _function_declaration_with_directive(self, action_name, input_list):
         """
         'FUNCTION_DECLARATION_WITH_DIRECTIVE'
         input_list -> [ FunctionForwardIdentifier('first_function'|BasicType(RESERVED_TYPE_INTEGER|None)
@@ -766,15 +777,15 @@ class IntermediateCode:
             argument_list.append({"name": argument.name,
                                   "type": argument.type.type_to_c})
 
-        self._emiter2.set_function_declaration({"block": token.category,
-                                                "type": token.type.type_to_c,
-                                                "name": token.name,
-                                                "parameters": argument_list})
-        print(self._emiter2.write_file())
+        self._emiter.append(CEmitter(action_name).source([{"block": token.category,
+                                                           "type": token.type.type_to_c,
+                                                           "name": token.name,
+                                                           "parameters": argument_list}]))
+        #print(self._emiter.emit())
 
-    def _function_declaration(self, input_list):
+    def _function_declaration(self, action_name, input_list):
         """
-        'FUNCTION_DECLARATION_WITH_DIRECTIVE'
+        'FUNCTION_DECLARATION'
         input_list -> [ FunctionForwardIdentifier('first_function'|BasicType(RESERVED_TYPE_INTEGER|None)
                      ]
         Syntax: Pascal -> C
@@ -789,11 +800,20 @@ class IntermediateCode:
             argument_list.append({"name": argument.name,
                                   "type": argument.type.type_to_c})
 
-        self._emiter2.set_function_declaration({"block": token.category,
-                                                "type": token.type.type_to_c,
-                                                "name": token.name,
-                                                "parameters": argument_list})
-        print(self._emiter2.write_file())
+        self._emiter.append(CEmitter(action_name).source([{"block": token.category,
+                                                           "type": token.type.type_to_c,
+                                                           "name": token.name,
+                                                           "parameters": argument_list}
+                                                          ]))
+        #print(self._emiter.emit())
+
+
+    def _function_return_statement(self, action_name, input_list):
+        """
+        The function return statement is exactly the same as an assignment statement.
+        We therefore redirect the processing there.
+        """
+        return self._assignment_statement(action_name, input_list)
 
     def _closed_if_statement(self, input_list):
         """

@@ -6,7 +6,7 @@ HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
 from lark import Tree, Token
-from components.deft_pascal_parser_3 import DeftPascalParser
+from components.parsers.deft_pascal_parser_3 import DeftPascalParser
 from components.symbol_table import SymbolTable
 from components.symbols.base_symbols import BaseKeyword, BaseExpression
 from components.symbols.operator_symbols import Operator, BinaryOperator, UnaryOperator, NeutralOperator
@@ -17,7 +17,7 @@ from components.symbols.identifier_symbols import Identifier, TypeIdentifier, \
 from components.symbols.literals_symbols import BooleanLiteral, NilLiteral, NumericLiteral, StringLiteral
 from components.symbols.type_symbols import PointerType, BasicType, StringType
 from components.symbols.expression_symbols import ConstantExpression, IntegerExpression, BooleanExpression
-from components.intermediate_code import IntermediateCode
+from components.generators.intermediate_code import IntermediateCode
 from components.parameters import ActualParameter, FormalParameter
 
 from components.compiler.core_function_declaration import FunctionProcessor
@@ -610,6 +610,11 @@ class DeftPascalCompiler:
             if isinstance(identifier, ConstantIdentifier):
                 _MODULE_LOGGER_.error("[{0}] : invalid assignment to constant '{1}'".format(action_name, working_stack))
 
+            elif isinstance(identifier, FunctionIdentifier):
+                # In Pascal, the assignment to a function is an indication of a return statement from a function.
+                # We modify the action name to explicity indicate that to the code generator
+                action_name = "FUNCTION_RETURN_STATEMENT"
+
             # consume the operator :=
             token = input_list.pop(0)
             operator = self._operator_table.retrieve(token.type, equal_level_only=False)
@@ -1180,13 +1185,13 @@ class DeftPascalCompiler:
             self._process_parameter_specification(action_name, argument_list, new_function)
 
         # log declaration
-        _MODULE_LOGGER_.debug("[{0}] new function declared : {1}".format(action_name, new_function))
+        _MODULE_LOGGER_.debug("[{0}] new function defined : {1}".format(action_name, new_function))
 
         # process the procedure or function body
-        if len(input_list) > 0 and input_list[0].data.upper() in ["PROCEDURE_BLOCK", "FUNCTION_BLOCK"]:
+        if len(input_list) > 0 and input_list[0].data.upper() in ["FUNCTION_BLOCK"]:
             for ast in input_list[0].children:
                 if (ast.data.upper() in ["PROCEDURE_DECLARATION", "FUNCTION_DECLARATION]"]) and len(ast.children) > 0:
-                    msg = "nested {1} definition is currently not supported. '{0}' will be ignored."
+                    msg = "nested {1} declaration is currently not supported. '{0}' will be ignored."
                     _MODULE_LOGGER_.error(msg.format(ast.children[1], context))
                 else:
 
