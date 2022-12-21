@@ -1306,7 +1306,7 @@ class PositiveLanguageTests:
             VAR
             F1_V1 : ^INTEGER;
             BEGIN
-            F1 := ^F1_V1;
+            F1 := F1_V1;
             END;            
             BEGIN             
             WRITELN('main');
