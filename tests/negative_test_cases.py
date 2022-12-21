@@ -552,3 +552,15 @@ class NegativeLanguageTests:
             END.                                         
         """)
         return code
+
+    @staticmethod
+    def scenario_for_declaration_with_undeclared_control_variable_raises_compiler_error():
+        code = ("unknown type", "", """
+            PROGRAM {{{0}}};                                     
+            BEGIN             
+               FOR V1 := 1 to 10 DO BEGIN
+               WRITELN('.');
+               END;
+            END.                                         
+        """)
+        return code

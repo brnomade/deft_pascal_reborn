@@ -189,7 +189,7 @@ class InBuiltProcedureWrite(ProcedureIdentifier):
     def is_parameter_compatible(self, a_symbol, argument_index):
         assert type(a_symbol).__name__ == "ActualParameter"
         assert isinstance(argument_index, int)
-        return a_symbol.type.type in ["RESERVED_TYPE_INTEGER","RESERVED_TYPE_REAL",
+        return a_symbol.type.type in ["RESERVED_TYPE_INTEGER", "RESERVED_TYPE_REAL",
                                       "RESERVED_TYPE_SET", "RESERVED_TYPE_CHAR",
                                       "RESERVED_TYPE_BOOLEAN", "RESERVED_TYPE_STRING"]
 

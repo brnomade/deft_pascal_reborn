@@ -9,7 +9,7 @@ from components.emiters.c_emiters import CEmitter, CMOCEmitter
 from components.symbols.base_symbols import BaseSymbol, BaseKeyword, BaseExpression
 from components.symbols.operator_symbols import Operator
 from components.symbols.type_symbols import PointerType, BasicType, StringType
-from components.symbols.identifier_symbols import Identifier, PointerIdentifier, TypeIdentifier, ProcedureForwardIdentifier, ProcedureExternalIdentifier
+from components.symbols.identifier_symbols import Identifier, PointerIdentifier, TypeIdentifier, ProcedureForwardIdentifier, ProcedureExternalIdentifier, FunctionIdentifier
 from components.symbols.literals_symbols import Literal
 import logging
 from logging import ERROR, WARNING, INFO
@@ -42,6 +42,7 @@ class IntermediateCode:
                          "CLOSED_FOR_STATEMENT",
                          "CLOSED_WHILE_STATEMENT",
                          "PROCEDURE_CALL",
+                         "FUNCTION_CALL",
                          "PROCEDURE_DECLARATION",
                          "FUNCTION_DECLARATION_WITH_DIRECTIVE",
                          "FUNCTION_DECLARATION",
@@ -491,6 +492,13 @@ class IntermediateCode:
 
                 result += token.name
 
+            elif isinstance(token, FunctionIdentifier):
+
+                result
+                for i in range(token.argument_counter):
+                    argument = a_generic_expression.value.pop(0)
+                    result += self._expression_to_string(argument)
+
             elif isinstance(token, BaseSymbol):
 
                 result += token.name
@@ -555,7 +563,7 @@ class IntermediateCode:
         #
         self._emiter.emit_repeat_statement_until_closure()
 
-    def _closed_for_statement(self, input_list):
+    def _closed_for_statement(self, action_name, input_list):
         """
         CLOSED_FOR_STATEMENT
         input_list -> Keyword(FOR) Identifier Operator(:=) Expression Keyword(TO/DOWNTO) Expression Keyword(DO)
@@ -571,6 +579,8 @@ class IntermediateCode:
         for x := 1 to 10 do -> for ( x = 1 ; x <= 10 ; x = x + 1)
         for x := 10 downto 1 do -> for (x = 10; x >= 1 ; x = x - 1)
         """
+        ce = CEmitter("LINE_CONSTRUCTOR")
+
         # process keyword 'for'
         token = input_list.pop(0)
         if not isinstance(token, BaseKeyword):
@@ -584,38 +594,36 @@ class IntermediateCode:
         if not isinstance(token, Operator):
             self._log(ERROR, "Unknown symbol '{0}' received. Operator expected.".format(token))
 
-        # emit part of the for statement
-        # self._emiter.emit("for ( {0} = ".format(control_variable.name))
-        #token = self._translate_operator_to_c(token)
-        self._emiter.emit_closed_for_statement_control_variable(control_variable.name, token.to_c)
-
-        # extract 'start_value' expression and send it to processing
+        # extract 'start_value' expression
         generic_expression = input_list.pop(0)
-        self._expression(generic_expression)
+        start_value = self._expression_to_string(generic_expression)
+
+        # emit
+        ce.emit_closed_for_statement_control_variable(control_variable.name, token.to_c, start_value)
 
         # process keyword 'to' or 'downto' - first part
         token = input_list.pop(0)
         if not isinstance(token, BaseKeyword):
             self._log(ERROR, "Unknown symbol '{0}' received. Keyword expected.".format(token))
         direction = token.type == "RESERVED_STATEMENT_TO"
-        if direction:
-            self._emiter.emit_closed_for_statement_to(control_variable.name)
-            # self._emiter.emit(" ; {0} <= ".format(control_variable.name))
-        else:
-            self._emiter.emit_closed_for_statement_downto(control_variable.name)
-            # self._emiter.emit(" ; {0} >= ".format(control_variable.name))
 
         # extract 'end_value' expression and send it to processing
         generic_expression = input_list.pop(0)
-        self._expression(generic_expression)
+        end_value = self._expression_to_string(generic_expression)
+
+        if direction:
+            ce.emit_closed_for_statement_to(control_variable.name, end_value)
+        else:
+            ce.emit_closed_for_statement_downto(control_variable.name, end_value)
 
         # process keyword 'to' or 'downto' - final part
         if direction:
-            self._emiter.emit_closed_for_statement_step_upward(control_variable.name)
-            # self._emiter.emit_line("; {0} = {0} + 1 )".format(control_variable.name))
+            ce.emit_closed_for_statement_step_upward(control_variable.name)
         else:
-            self._emiter.emit_closed_for_statement_step_downward(control_variable.name)
-            # self._emiter.emit_line("; {0} = {0} - 1 )".format(control_variable.name))
+            ce.emit_closed_for_statement_step_downward(control_variable.name)
+
+        self._emiter.append(ce)
+
 
     def _closed_while_statement(self, input_list):
         """
@@ -689,6 +697,9 @@ class IntermediateCode:
         self._emiter.append(ce)
         #print(self._emiter.emit())
 
+
+    def _function_call(self, action_name, input_list):
+        return self._procedure_call()
 
     def _procedure_call(self, action_name, input_list):
         """
@@ -825,13 +836,15 @@ class IntermediateCode:
         Syntax: Pascal -> C
         if LOOP > 10 then -> if ( LOOP > 10 )
         """
+        ce = CEmitter("LINE_CONSTRUCTOR")
+
         # process keyword 'if'
         token = input_list.pop(0)
         if not isinstance(token, BaseKeyword):
             self._log(ERROR, "Unknown symbol '{0}' received. Keyword expected.".format(token))
-        self._emiter.emit_closed_if_statement()
+        ce.emit_closed_if_statement()
 
-        # extract 'expression'  and send it to processing
+        # extract 'expression' and send it to processing
         generic_expression = input_list.pop(0)
         self._expression(generic_expression)
 
@@ -856,7 +869,7 @@ class IntermediateCode:
         self._emiter.emit_closed_if_statement_else()
 
 
-    def _open_if_statement(self, input_list):
+    def _open_if_statement(self, action_name, input_list):
         """
         CLOSED_if_STATEMENT
         input_list -> Keyword(IF) Expression Keyword(THEN)
@@ -866,18 +879,18 @@ class IntermediateCode:
         Syntax: Pascal -> C
         if LOOP > 10 then -> if ( LOOP > 10 )
         """
-        # process keyword 'if'
+        ce = CEmitter("LINE_CONSTRUCTOR")
+
+        # extract keyword 'if'
         token = input_list.pop(0)
         if not isinstance(token, BaseKeyword):
             self._log(ERROR, "Unknown symbol '{0}' received. Keyword expected.".format(token))
-        self._emiter.emit_closed_if_statement()
 
-        # extract 'expression'  and send it to processing
+        # extract 'expression'
         generic_expression = input_list.pop(0)
-        self._expression(generic_expression)
+        expression = self._expression_to_string(generic_expression)
 
-        # process keyword 'then'
-        token = input_list.pop(0)
-        if not isinstance(token, BaseKeyword):
-            self._log(ERROR, "Unknown symbol '{0}' received. Keyword expected.".format(token))
-        self._emiter.emit_closed_if_statement_then()
+        # emit
+        ce.emit_closed_if_statement(expression)
+
+        self._emiter.append(ce)

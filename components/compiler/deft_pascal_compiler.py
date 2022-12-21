@@ -89,6 +89,7 @@ class DeftPascalCompiler:
                          "RESERVED_STRUCTURE_END",
                          "ASSIGNMENT_STATEMENT",
                          "PROCEDURE_CALL",
+                         "FUNCTION_CALL",
                          "PROCEDURE_DECLARATION",
                          "FUNCTION_DECLARATION",
                          "PROCEDURE_DECLARATION_WITH_DIRECTIVE",
@@ -262,7 +263,6 @@ class DeftPascalCompiler:
         self._operator_table.append(UnaryOperator.operator_uparrow())
         self._operator_table.append(NeutralOperator.operator_left_parentheses())
         self._operator_table.append(NeutralOperator.operator_right_parentheses())
-
 
         # initialize the control stack for BEGIN and END
         #self._stack_begin.append(self._GLB_MAIN_BEGIN)
@@ -613,7 +613,7 @@ class DeftPascalCompiler:
 
             elif isinstance(identifier, FunctionIdentifier):
                 # In Pascal, the assignment to a function is an indication of a return statement from a function.
-                # We modify the action name to explicity indicate that to the code generator
+                # We modify the action name to explicitly indicate that to the code generator
                 action_name = "FUNCTION_RETURN_STATEMENT"
 
             # consume the operator :=
@@ -628,10 +628,17 @@ class DeftPascalCompiler:
 
             if expression_stack:
 
-                expression = BaseExpression.from_list(working_stack + expression_stack)
+                # adjust the expression removing the actual parameters from it in case they exist
+                # with the adjusted expression test for type compatibility
+                adjusted_expression_stack = []
+                for e in expression_stack:
+                    if e.category != "ActualParameter":
+                        adjusted_expression_stack.append(e)
+
+                expression = BaseExpression.from_list(working_stack + adjusted_expression_stack)
                 if expression is None:
                     msg = "[{0}] incompatible types in expression: {1}"
-                    _MODULE_LOGGER_.error(msg.format(action_name, expression))
+                    _MODULE_LOGGER_.error(msg.format(action_name, working_stack + adjusted_expression_stack))
 
                 else:
                     expression = BaseExpression.from_list(expression_stack)
@@ -660,11 +667,11 @@ class DeftPascalCompiler:
 
     def _expression(self, action_name, token_list, working_stack):
         # process expressions in assignments
-        # this is called from other actions and therefore it does not create its own action on the intermediate code
+        # this is called from other actions therefore it does not create its own action on the intermediate code
         # it also does not need to flush the intermediate code. this will be done in another action.
         for token in token_list:
             if isinstance(token, Tree):
-                working_stack = self._internal_compile(token, working_stack)
+                working_stack = working_stack + self._internal_compile(token, [])
 
             elif isinstance(token, Token):
                 a_symbol = self._symbol_table.retrieve(token.value, equal_level_only=False)
@@ -769,8 +776,11 @@ class DeftPascalCompiler:
         keyword = BaseKeyword.from_token(input_list.pop(0))
         working_stack.append(keyword)
 
-        # process the control variable (or expression)
+        # process the control variable
         control_variable_stack = self._internal_compile(input_list.pop(0), [])
+
+        #TODO: Check if the control variable is compatible with the loop type.
+
         working_stack = working_stack + control_variable_stack
 
         # consume the operator :=
@@ -1019,6 +1029,72 @@ class DeftPascalCompiler:
 
         return working_stack
 
+    def _function_call(self, action_name, input_list, working_stack):
+        """
+        'FUNCTION_CALL'
+        input_list -> [Token('IDENTIFIER', 'multiply_and_print'), Token('LEFT_PARENTHESES', '('), Tree('unary_parameter', [Tree('expression', [Tree('variable_access', [Token('IDENTIFIER', 'b')])])]), Token('COMMA', ','), Tree('unary_parameter', [Tree('expression', [Tree('variable_access', [Token('IDENTIFIER', 'b')])])]), Token('COMMA', ','), Tree('unary_parameter', [Tree('expression', [Tree('variable_access', [Token('IDENTIFIER', 'a')])])]), Token('RIGHT_PARENTHESES', ')')]
+        """
+        working_stack = []
+
+        # retrieve the actual function identifier from the symbol_table
+        token = input_list.pop(0)
+        identifier = self._symbol_table.retrieve(token.value, equal_level_only=False)
+        if identifier:
+            # push the identifier to the working stack
+            working_stack.append(identifier)
+
+            # discard the open and close parentheses operands
+            input_list.pop(0)
+            input_list.pop(-1)
+
+            # calculate the number of parameters in the function call
+            parameters_counter = len(input_list) - input_list.count(",")
+            if not identifier.accepts_parameters_count(parameters_counter):
+                msg = "[{0}] :  '{1}' parameters passed to function {2} but '{3}' expected."
+                _MODULE_LOGGER_.error(msg.format(action_name, parameters_counter, identifier.name, identifier.argument_counter))
+
+            # process each parameter expression, discard the commas used as separators
+            parameter_index = 0
+            for token in input_list:
+                if isinstance(token, Token):
+                    if not token.type == "COMMA":
+                        msg = "[{0}] :  Unknown token '{1}' passed in function parameter."
+                        _MODULE_LOGGER_.error(msg.format(action_name, token))
+
+                elif isinstance(token, Tree):
+                    parameter_index = parameter_index + 1
+
+                    value_to_print_stack = self._internal_compile(token.children[0], [])
+                    expression_value_to_print = BaseExpression.from_list(value_to_print_stack)
+                    if not expression_value_to_print:
+                        msg = "[{0}] :  invalid parameter '{1}' passed to function"
+                        _MODULE_LOGGER_.error(msg.format(action_name, token))
+                        return working_stack
+
+                    # create the actual parameter
+                    parameter = ActualParameter(expression_value_to_print, None, None)
+
+                    if not identifier.is_parameter_compatible(parameter, parameter_index):
+                        msg = "[{0}] :  Incompatible parameter '{1}' passed to function {2}"
+                        _MODULE_LOGGER_.error(msg.format(action_name, parameter, identifier))
+
+                    else:
+                        # push to the working stack
+                        working_stack.append(parameter)
+
+                else:
+                    msg = "[{0}] :  Unknown parameter '{1}' passed to function {2}"
+                    _MODULE_LOGGER_.error(msg.format(action_name, token, identifier))
+
+            _MODULE_LOGGER_.debug("[{0}] {1} {2} {3}".format(action_name, identifier, parameters_counter, working_stack))
+
+        else:
+
+            msg = "[{0}] {1} :  Unknown function '{1}' referenced."
+            _MODULE_LOGGER_.error(msg.format(action_name, token.value))
+
+        return working_stack
+
     def _procedure_call(self, action_name, input_list, working_stack):
         """
         PROCEDURE_CALL
@@ -1107,7 +1183,7 @@ class DeftPascalCompiler:
 
         else:
 
-            msg = "[{0}] {1} :  Unknown procedure '{1}' referenced."
+            msg = "[{0}] {1} :  Unknown procedure or function '{1}' referenced."
             _MODULE_LOGGER_.error(msg.format(action_name, token.value))
 
         return working_stack
@@ -1555,12 +1631,12 @@ class DeftPascalCompiler:
 
         # process boolean expression
         expression_stack = self._internal_compile(input_list.pop(0), [])
-        expression = BaseExpression.from_list(expression_stack)
         if not expression_stack:
             msg = "[{0}] invalid expression: {1}"
             _MODULE_LOGGER_.error(msg.format(action_name, expression_stack))
             return working_stack
 
+        expression = BaseExpression.from_list(expression_stack)
         if expression is None:
             msg = "[{0}] incompatible types in expression: {1}"
             _MODULE_LOGGER_.error(msg.format(action_name, expression))

@@ -32,7 +32,7 @@ class PascalExamples:
               d : CHAR;
               e : ^CHAR;      
               z : integer;
-                             
+
             function multiply_and_print(i, v: integer; r: real): integer; forward;
             function divide_and_print(i: integer; r: real): integer; forward;
             function sum_and_print(i: integer; r: real): integer; forward;
@@ -49,11 +49,13 @@ class PascalExamples:
 
             begin                                 
               a := PI;                            
-              b := 10;  
-              z := multiply_and_print(b, b, a);                                
-              writeln(z);
-              if z > 10 then
-                writeln('maior');
+              b := 20;  
+              FOR z := 1 to b do BEGIN
+                  z := multiply_and_print(b, b, a);                                
+                  writeln(z);
+                  if z > 10 then
+                    writeln('maior');
+              end;
             end.                                 
         """
         return code

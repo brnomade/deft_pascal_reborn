@@ -210,6 +210,12 @@ class BaseExpression(BaseSymbol):
                     postfix_tokens.append(stack.popleft())
                 stack.appendleft(token)
 
+            elif token.category == "FunctionIdentifier":
+                # discard the function parameters from the stack
+                #for i in token.argument_counter:
+                #    infix_tokens.pop()
+                postfix_tokens.append(token)
+
             else:
                 postfix_tokens.append(token)
         return postfix_tokens
@@ -247,6 +253,9 @@ class BaseExpression(BaseSymbol):
                     else:
                         return None
 
+                elif token.category == "FunctionIdentifier":
+                    pass
+
                 if result:
                     stack.append(result)
 
@@ -270,11 +279,8 @@ class BaseExpression(BaseSymbol):
         if result:
             expression.type = result
             return expression
-        elif not result:
-            _MODULE_LOGGER_.error("invalid expression: '{0}'".format(expression_list))
-            return None
         else:
-            _MODULE_LOGGER_.error("incompatible types in expression: '{0}'".format(expression_list))
+            _MODULE_LOGGER_.error("invalid expression or incompatible types in expression: '{0}'".format(expression_list))
             return None
 
     @property

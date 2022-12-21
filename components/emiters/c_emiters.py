@@ -205,25 +205,25 @@ class CEmitter(AbstractTemplateBasedEmiter):
         particle = "*{0} "
         self._emit_singleton(particle.format(in_variable))
 
-    def emit_closed_for_statement_control_variable(self, in_variable, in_operator):
+    def emit_closed_for_statement_control_variable(self, in_variable, in_operator, start_expression):
 
-        particle = "for ({0} {1} "
-        self.emit(particle.format(in_variable, in_operator))
+        particle = "for ({0} {1} {2}"
+        self._emit_singleton(particle.format(in_variable, in_operator, start_expression))
 
-    def emit_closed_for_statement_to(self, in_variable):
+    def emit_closed_for_statement_to(self, in_variable, end_expression):
 
-        particle = " ; {0} <= "
-        self.emit(particle.format(in_variable))
+        particle = " ; {0} <= {1}"
+        self._emit_singleton(particle.format(in_variable, end_expression))
 
-    def emit_closed_for_statement_downto(self, in_variable):
+    def emit_closed_for_statement_downto(self, in_variable, end_expression):
 
-        particle = " ; {0} >= "
-        self.emit(particle.format(in_variable))
+        particle = " ; {0} >= {1}"
+        self._emit_singleton(particle.format(in_variable, end_expression))
 
     def emit_closed_for_statement_step_upward(self, in_variable):
 
         particle = "; {0} = {0} + 1)"
-        self.emit(particle.format(in_variable))
+        self._emit_singleton(particle.format(in_variable))
 
     def emit_closed_for_statement_step_downward(self, in_variable):
 
@@ -367,13 +367,13 @@ class CEmitter(AbstractTemplateBasedEmiter):
         line = "));"
         self.emit_line(line)
 
-    def emit_closed_if_statement(self):
-        particle = "if ("
-        self.emit(particle)
+    def emit_closed_if_statement(self, expression):
+        particle = "if ({0})"
+        self._emit_singleton(particle.format(expression))
 
-    def emit_closed_if_statement_then(self):
-        particle = ")"
-        self.emit_line(particle)
+    #def emit_closed_if_statement_then(self):
+    #    particle = ")"
+    #    self._emit_singleton_line(particle)
 
     def emit_closed_if_statement_else(self):
         particle = "else"

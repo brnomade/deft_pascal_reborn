@@ -18,6 +18,10 @@ class BaseParameter:
     def category(self):
         return type(self).__name__
 
+    @property
+    def name(self):
+        return self.category
+
 
 class ActualParameter(BaseParameter):
 

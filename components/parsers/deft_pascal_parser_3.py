@@ -324,7 +324,7 @@ class DeftPascalParser:
  
         _primary : variable_access
                  | _unsigned_constant
-                 | function_designator
+                 | function_call
                  | LEFT_PARENTHESES expression RIGHT_PARENTHESES
                  | OPERATOR_NOT _primary
                  
@@ -347,7 +347,7 @@ class DeftPascalParser:
        
         // functions with no params are handled by plain identifier
         
-        function_designator : IDENTIFIER _params
+        function_call : IDENTIFIER _params
        
         // structure
         
