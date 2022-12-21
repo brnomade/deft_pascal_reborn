@@ -6,9 +6,10 @@ HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
 from unittest import TestCase
-from compiler.deft_pascal_compiler import DeftPascalCompiler
+from components.compiler.deft_pascal_compiler import DeftPascalCompiler
 from utils.compiler_utils import compile_in_gcc
 from tests.positive_test_cases import PositiveLanguageTests
+from tests.example_test_cases import PascalExamples
 import os
 
 
@@ -16,9 +17,9 @@ class ConfigurationForTestTDD:
 
     @classmethod
     def tdd_tests_to_run(cls):
-        return [(12,
-                 "scenario_function_declaration_with_directive_with_single_static_parameter_returning_string_type_with_dimension",
-                 PositiveLanguageTests.scenario_function_declaration_with_directive_with_single_static_parameter_returning_string_type_with_dimension)
+        return [(123,
+                 "example_program_definition_2",
+                 PascalExamples.example_program_definition_2)
                 ]
 
 
@@ -120,7 +121,8 @@ class TestTDD(TestCase):
         #
         self._display_log(output_log)
 
-def _execute_step_1_2_3(self, source_code):
+
+    def _execute_step_1_2_3(self, source_code):
         print("Run syntax check, semantic check, generating intermediate code, generating c code and compiling in gcc")
         compiler = DeftPascalCompiler()
 
@@ -160,8 +162,8 @@ def _execute_step_1_2_3(self, source_code):
             file.write(output_code)
             file.close()
         #
-        output = compile_in_gcc(filename, False)
-        self.assertNotIn("error", output)
-        self.assertNotIn("warning", output)
+        # output = compile_in_gcc(filename, False)
+        # self.assertNotIn("error", output)
+        # elf.assertNotIn("warning", output)
 
 

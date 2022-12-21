@@ -17,20 +17,43 @@ class PascalExamples:
     @staticmethod
     def example_program_definition_2():
         code = """
-            program test;                          
-            const                                 
-              PI = 3.1415;                        
+            program example_program_definition_2;                          
+            const             
+              ZZ = 1 + 2 + 3 + 4;  
+              INT_1 = 1;
+              BOO_1 = True;
+              CHA_1 = 'C';    
+              STR_1 = 'ABCDEFG';                
+              PI = 3.1415;  
             var                                   
               a : real;
-              b : integer;                         
-            procedure multiply_and_print(i: integer; r: real);  
+              b : integer;    
+              c : BOOLEAN;
+              d : CHAR;
+              e : ^CHAR;      
+              z : integer;
+                             
+            function multiply_and_print(i, v: integer; r: real): integer; forward;
+            function divide_and_print(i: integer; r: real): integer; forward;
+            function sum_and_print(i: integer; r: real): integer; forward;
+            function subtract_and_print(i: integer; r: real): integer; forward;
+              
+            function multiply_and_print(i, v: integer; r: real): integer;  
             begin                                 
-              writeln(i * r);                         
+              v := i * i;
+              b := v;
+              b := INT_1 + v;
+              writeln(i * v, i, v);   
+              multiply_and_print := b;                      
             end;                                  
+
             begin                                 
               a := PI;                            
-              b := 10;                        
-              multiply_and_print(b, a);           
+              b := 10;  
+              z := multiply_and_print(b, b, a);                                
+              writeln(z);
+              if z > 10 then
+                writeln('maior');
             end.                                 
         """
         return code
