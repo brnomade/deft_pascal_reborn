@@ -326,6 +326,27 @@ class NegativeLanguageTests:
         return code
 
     @staticmethod
+    def scenario_reference_to_undeclared_variable_identifier_in_procedure_call_raises_compiler_error():
+        code = ("Reference to undeclared", "", """
+            PROGRAM {{{0}}};
+            BEGIN
+            writeln(V1);
+            END.                                                   
+        """)
+        return code
+
+    @staticmethod
+    def scenario_reference_to_undeclared_variable_identifier_in_if_statement_raises_compiler_error():
+        code = ("Reference to undeclared", "", """
+            PROGRAM {{{0}}};
+            BEGIN
+            IF v1 > 10 THEN
+                writeln(V1);
+            END.                                                   
+        """)
+        return code
+
+    @staticmethod
     def scenario_not_boolean_repeat_until_condition_raises_compiler_error():
         code = ("expected boolean expression", "", """
             PROGRAM {{{0}}};
@@ -487,6 +508,59 @@ class NegativeLanguageTests:
             END;             
             BEGIN             
                F1(1) + F1(2);                             
+            END.                                         
+        """)
+        return code
+
+    @staticmethod
+    def scenario_function_declaration_with_directive_already_existing_function_identifier_raises_compiler_error():
+        code = ("already declared", "", """
+            PROGRAM {{{0}}};                                     
+            FUNCTION F1( SP1 : INTEGER ) : INTEGER; FORWARD;
+            FUNCTION F1( SP1 : INTEGER ) : INTEGER; FORWARD;
+            BEGIN             
+               WRITELN('main');                             
+            END.                                         
+        """)
+        return code
+
+    @staticmethod
+    def scenario_function_declaration_without_directive_already_existing_function_identifier_raises_compiler_error():
+        code = ("already declared", "", """
+            PROGRAM {{{0}}};                                     
+            FUNCTION F1( SP1 : INTEGER ) : INTEGER;
+            BEGIN
+            F1 := 0;
+            END;
+            FUNCTION F1( SP1 : INTEGER ) : INTEGER;
+            BEGIN
+            F1 := 0;
+            END;
+            BEGIN             
+               WRITELN('main');                             
+            END.                                         
+        """)
+        return code
+
+    @staticmethod
+    def scenario_function_declaration_with_unknown_type_raises_compiler_error():
+        code = ("unknown type", "", """
+            PROGRAM {{{0}}};                                     
+            FUNCTION F1( SP1 : INTEGER ) : UNKNOWN_TYPE; FORWARD;
+            BEGIN             
+               F1(1) + F1(2);                             
+            END.                                         
+        """)
+        return code
+
+    @staticmethod
+    def scenario_for_declaration_with_undeclared_control_variable_raises_compiler_error():
+        code = ("unknown type", "", """
+            PROGRAM {{{0}}};                                     
+            BEGIN             
+               FOR V1 := 1 to 10 DO BEGIN
+               WRITELN('.');
+               END;
             END.                                         
         """)
         return code

@@ -6,16 +6,21 @@ HOME PAGE.....: https://github.com/brnomade/deft_pascal_reborn
 """
 
 from lark import Tree, Token
-from components.deft_pascal_parser_3 import DeftPascalParser
+from components.parsers.deft_pascal_parser_3 import DeftPascalParser
 from components.symbol_table import SymbolTable
 from components.symbols.base_symbols import BaseKeyword, BaseExpression
 from components.symbols.operator_symbols import Operator, BinaryOperator, UnaryOperator, NeutralOperator
-from components.symbols.identifier_symbols import Identifier, TypeIdentifier, ProcedureIdentifier, InBuiltProcedureWrite, ProcedureExternalIdentifier, ProcedureForwardIdentifier, ConstantIdentifier
+from components.symbols.identifier_symbols import Identifier, TypeIdentifier, \
+    ProcedureIdentifier, InBuiltProcedureWrite, ProcedureExternalIdentifier, ProcedureForwardIdentifier, \
+    ConstantIdentifier, \
+    FunctionIdentifier, FunctionExternalIdentifier, FunctionForwardIdentifier, AbstractProcedureIdentifier
 from components.symbols.literals_symbols import BooleanLiteral, NilLiteral, NumericLiteral, StringLiteral
 from components.symbols.type_symbols import PointerType, BasicType, StringType
 from components.symbols.expression_symbols import ConstantExpression, IntegerExpression, BooleanExpression
-from components.intermediate_code import IntermediateCode
+from components.generators.intermediate_code import IntermediateCode
 from components.parameters import ActualParameter, FormalParameter
+
+from components.compiler.core_function_declaration import FunctionProcessor
 
 import copy
 import logging
@@ -84,7 +89,11 @@ class DeftPascalCompiler:
                          "RESERVED_STRUCTURE_END",
                          "ASSIGNMENT_STATEMENT",
                          "PROCEDURE_CALL",
+                         "FUNCTION_CALL",
                          "PROCEDURE_DECLARATION",
+                         "FUNCTION_DECLARATION",
+                         "PROCEDURE_DECLARATION_WITH_DIRECTIVE",
+                         "FUNCTION_DECLARATION_WITH_DIRECTIVE",
                          "EXPRESSION",
                          "CLOSED_FOR_STATEMENT",
                          "OPEN_FOR_STATEMENT",
@@ -254,7 +263,6 @@ class DeftPascalCompiler:
         self._operator_table.append(UnaryOperator.operator_uparrow())
         self._operator_table.append(NeutralOperator.operator_left_parentheses())
         self._operator_table.append(NeutralOperator.operator_right_parentheses())
-
 
         # initialize the control stack for BEGIN and END
         #self._stack_begin.append(self._GLB_MAIN_BEGIN)
@@ -590,7 +598,8 @@ class DeftPascalCompiler:
         token_list -> identifier := expression
         """
         # process the identifier
-        working_stack = self._internal_compile(input_list.pop(0), [])
+        identifier = input_list.pop(0)
+        working_stack = self._internal_compile(identifier, [])
 
         if working_stack:
 
@@ -601,6 +610,11 @@ class DeftPascalCompiler:
             # check the identifier receiving the assignment is variable.
             if isinstance(identifier, ConstantIdentifier):
                 _MODULE_LOGGER_.error("[{0}] : invalid assignment to constant '{1}'".format(action_name, working_stack))
+
+            elif isinstance(identifier, FunctionIdentifier):
+                # In Pascal, the assignment to a function is an indication of a return statement from a function.
+                # We modify the action name to explicitly indicate that to the code generator
+                action_name = "FUNCTION_RETURN_STATEMENT"
 
             # consume the operator :=
             token = input_list.pop(0)
@@ -614,10 +628,17 @@ class DeftPascalCompiler:
 
             if expression_stack:
 
-                expression = BaseExpression.from_list(working_stack + expression_stack)
+                # adjust the expression removing the actual parameters from it in case they exist
+                # with the adjusted expression test for type compatibility
+                adjusted_expression_stack = []
+                for e in expression_stack:
+                    if e.category != "ActualParameter":
+                        adjusted_expression_stack.append(e)
+
+                expression = BaseExpression.from_list(working_stack + adjusted_expression_stack)
                 if expression is None:
                     msg = "[{0}] incompatible types in expression: {1}"
-                    _MODULE_LOGGER_.error(msg.format(action_name, expression))
+                    _MODULE_LOGGER_.error(msg.format(action_name, working_stack + adjusted_expression_stack))
 
                 else:
                     expression = BaseExpression.from_list(expression_stack)
@@ -638,16 +659,19 @@ class DeftPascalCompiler:
 
                     _MODULE_LOGGER_.debug("[{0}] : {1}".format(action_name, working_stack))
 
+        else:
+            _MODULE_LOGGER_.error("Invalid assignment '{0}' to identifier '{1}'".format(action_name, identifier))
+
         return working_stack
 
 
     def _expression(self, action_name, token_list, working_stack):
         # process expressions in assignments
-        # this is called from other actions and therefore it does not create its own action on the intermediate code
+        # this is called from other actions therefore it does not create its own action on the intermediate code
         # it also does not need to flush the intermediate code. this will be done in another action.
         for token in token_list:
             if isinstance(token, Tree):
-                working_stack = self._internal_compile(token, working_stack)
+                working_stack = working_stack + self._internal_compile(token, [])
 
             elif isinstance(token, Token):
                 a_symbol = self._symbol_table.retrieve(token.value, equal_level_only=False)
@@ -752,8 +776,11 @@ class DeftPascalCompiler:
         keyword = BaseKeyword.from_token(input_list.pop(0))
         working_stack.append(keyword)
 
-        # process the control variable (or expression)
+        # process the control variable
         control_variable_stack = self._internal_compile(input_list.pop(0), [])
+
+        #TODO: Check if the control variable is compatible with the loop type.
+
         working_stack = working_stack + control_variable_stack
 
         # consume the operator :=
@@ -1002,6 +1029,72 @@ class DeftPascalCompiler:
 
         return working_stack
 
+    def _function_call(self, action_name, input_list, working_stack):
+        """
+        'FUNCTION_CALL'
+        input_list -> [Token('IDENTIFIER', 'multiply_and_print'), Token('LEFT_PARENTHESES', '('), Tree('unary_parameter', [Tree('expression', [Tree('variable_access', [Token('IDENTIFIER', 'b')])])]), Token('COMMA', ','), Tree('unary_parameter', [Tree('expression', [Tree('variable_access', [Token('IDENTIFIER', 'b')])])]), Token('COMMA', ','), Tree('unary_parameter', [Tree('expression', [Tree('variable_access', [Token('IDENTIFIER', 'a')])])]), Token('RIGHT_PARENTHESES', ')')]
+        """
+        working_stack = []
+
+        # retrieve the actual function identifier from the symbol_table
+        token = input_list.pop(0)
+        identifier = self._symbol_table.retrieve(token.value, equal_level_only=False)
+        if identifier:
+            # push the identifier to the working stack
+            working_stack.append(identifier)
+
+            # discard the open and close parentheses operands
+            input_list.pop(0)
+            input_list.pop(-1)
+
+            # calculate the number of parameters in the function call
+            parameters_counter = len(input_list) - input_list.count(",")
+            if not identifier.accepts_parameters_count(parameters_counter):
+                msg = "[{0}] :  '{1}' parameters passed to function {2} but '{3}' expected."
+                _MODULE_LOGGER_.error(msg.format(action_name, parameters_counter, identifier.name, identifier.argument_counter))
+
+            # process each parameter expression, discard the commas used as separators
+            parameter_index = 0
+            for token in input_list:
+                if isinstance(token, Token):
+                    if not token.type == "COMMA":
+                        msg = "[{0}] :  Unknown token '{1}' passed in function parameter."
+                        _MODULE_LOGGER_.error(msg.format(action_name, token))
+
+                elif isinstance(token, Tree):
+                    parameter_index = parameter_index + 1
+
+                    value_to_print_stack = self._internal_compile(token.children[0], [])
+                    expression_value_to_print = BaseExpression.from_list(value_to_print_stack)
+                    if not expression_value_to_print:
+                        msg = "[{0}] :  invalid parameter '{1}' passed to function"
+                        _MODULE_LOGGER_.error(msg.format(action_name, token))
+                        return working_stack
+
+                    # create the actual parameter
+                    parameter = ActualParameter(expression_value_to_print, None, None)
+
+                    if not identifier.is_parameter_compatible(parameter, parameter_index):
+                        msg = "[{0}] :  Incompatible parameter '{1}' passed to function {2}"
+                        _MODULE_LOGGER_.error(msg.format(action_name, parameter, identifier))
+
+                    else:
+                        # push to the working stack
+                        working_stack.append(parameter)
+
+                else:
+                    msg = "[{0}] :  Unknown parameter '{1}' passed to function {2}"
+                    _MODULE_LOGGER_.error(msg.format(action_name, token, identifier))
+
+            _MODULE_LOGGER_.debug("[{0}] {1} {2} {3}".format(action_name, identifier, parameters_counter, working_stack))
+
+        else:
+
+            msg = "[{0}] {1} :  Unknown function '{1}' referenced."
+            _MODULE_LOGGER_.error(msg.format(action_name, token.value))
+
+        return working_stack
+
     def _procedure_call(self, action_name, input_list, working_stack):
         """
         PROCEDURE_CALL
@@ -1044,6 +1137,10 @@ class DeftPascalCompiler:
 
                     value_to_print_stack = self._internal_compile(token.children[0], [])
                     expression_value_to_print = BaseExpression.from_list(value_to_print_stack)
+                    if not expression_value_to_print:
+                        msg = "[{0}] :  invalid parameter '{1}' passed to procedure"
+                        _MODULE_LOGGER_.error(msg.format(action_name, token))
+                        return working_stack
 
                     expression_field_width = None
                     expression_decimal_field = None
@@ -1086,13 +1183,235 @@ class DeftPascalCompiler:
 
         else:
 
-            msg = "[{0}] {1} :  Unknown procedure '{1}' referenced."
+            msg = "[{0}] {1} :  Unknown procedure or function '{1}' referenced."
             _MODULE_LOGGER_.error(msg.format(action_name, token.value))
 
         return working_stack
 
 
     def _procedure_declaration(self, action_name, input_list, working_stack):
+        return self._generic_procedure_or_function_declaration(action_name, input_list, working_stack)
+
+    def _function_declaration(self, action_name, input_list, working_stack):
+        """
+         Tree('function_declaration', [Tree('function_heading', "
+         "[Token('RESERVED_DECLARATION_FUNCTION', 'FUNCTION'), Token('IDENTIFIER', "
+         "'F1'), Tree('formal_parameter_list', [Token('LEFT_PARENTHESES', '('), "
+         "Tree('formal_parameter_section_list', [Tree('formal_parameter_section_list', "
+         "[Tree('formal_parameter_section', [Tree('value_parameter_specification', "
+         "[Token('IDENTIFIER', 'SP1'), Token('IDENTIFIER', 'INTEGER')])])]), "
+         "Tree('formal_parameter_section', [Tree('value_parameter_specification', "
+         "[Token('IDENTIFIER', 'SP2'), Token('IDENTIFIER', 'BOOLEAN')])])]), "
+         "Token('RIGHT_PARENTHESES', ')')]), Tree('result_type', [Token('IDENTIFIER', "
+         "'INTEGER')])]), Tree('function_block', [Tree('label_declaration_part', []), "
+         "Tree('constant_definition_part', []), Tree('type_definition_part', []), "
+         "Tree('variable_declaration_part', []), Tree('compound_statement', "
+         "[Token('RESERVED_STRUCTURE_BEGIN', 'BEGIN'), Token('RESERVED_STRUCTURE_END', "
+         "'END')])])])
+        """
+        # initialise the intermediate code engine
+        self._ic.init(action_name)
+
+        processor = FunctionProcessor(input_list, action_name)
+        context = processor.assert_context_is_valid()
+
+        # retrieve the token identifier for the new function
+        identifier = processor.get_identifier()
+
+        # retrieve the type for the new function
+        type_identifier = processor.get_return_type()
+
+        # retrieve the type from the symbol table
+        type_symbol = self._symbol_table.retrieve(type_identifier, equal_level_only=False)
+        if not type_symbol:
+            msg = "[{0}] unknown type '{1}' used in function declaration."
+            _MODULE_LOGGER_.error(msg.format(action_name, type_identifier))
+
+        else:
+            if processor.function_returns_string():
+                # handle scenario where function returns a string
+                type_symbol = copy.copy(type_symbol)
+                type_symbol.dimension = processor.get_function_string_dimensions()
+
+        # with the identifier and type create a new function object
+        new_function = processor.get_function_instance(identifier, type_symbol)
+
+        # verify if the function identifier has already been declared by checking the symbol table
+        # there could be an External or Forward function already declared.
+        # in such scenario the existing declaration is replaced with the new one
+
+        symbol = self._symbol_table.retrieve(identifier, equal_level_only=False)
+        if symbol and symbol.category in ["FunctionForwardIdentifier", "FunctionExternalIdentifier"]:
+            # replace in the symbol_table a forward declaration with the actual declaration
+            _MODULE_LOGGER_.debug("[{0}] forward {2} '{1}' resolved".format(action_name, identifier, context))
+            self._symbol_table.replace(identifier, new_function)
+
+        elif symbol:
+            # the function has been previosuly declared and cannot be replaced
+            msg = "[{0}] {2} '{1}' already declared"
+            _MODULE_LOGGER_.error(msg.format(action_name, identifier, context))
+
+        else:
+            # add new function to symbol table as we know it is not yet declared
+            self._symbol_table.append(new_function)
+
+        # push the new function into the intermediate_code engine
+        self._ic.push(new_function)
+        self._ic.flush()
+
+        # increase scope in preparation for processing the function parameters
+        self._increase_scope(new_function.name)
+
+        # process the function parameters if those are present
+        if processor.function_has_arguments():
+
+            argument_list = processor.get_arguments_list()
+            self._process_parameter_specification(action_name, argument_list, new_function)
+
+        # log declaration
+        _MODULE_LOGGER_.debug("[{0}] new function defined : {1}".format(action_name, new_function))
+
+        # process the procedure or function body
+        if len(input_list) > 0 and input_list[0].data.upper() in ["FUNCTION_BLOCK"]:
+            for ast in input_list[0].children:
+                if (ast.data.upper() in ["PROCEDURE_DECLARATION", "FUNCTION_DECLARATION]"]) and len(ast.children) > 0:
+                    msg = "nested {1} declaration is currently not supported. '{0}' will be ignored."
+                    _MODULE_LOGGER_.error(msg.format(ast.children[1], context))
+                else:
+
+                    self._internal_compile(ast, [])
+            input_list.pop(0)
+
+        self._decrease_scope()
+
+        return working_stack
+
+    def _process_parameter_specification(self, action_name, input_list, new_object):
+
+        if not isinstance(new_object, AbstractProcedureIdentifier):
+            raise KeyError("Internal Error - Unexpected class '{0}' in action '{1}'".format(new_object,
+                                                                                            action_name))
+
+        for ast in input_list:
+
+            if ast.data.upper() == "VALUE_PARAMETER_SPECIFICATION":
+
+                # process the type of the argument list
+                token = ast.children.pop(-1)
+                if token.type == "IDENTIFIER":
+                    # identifier is of a custom type and their definition is case sensitive/relevant
+                    type_identifier = self._symbol_table.retrieve(token.value, equal_level_only=False)
+                else:
+                    # identifier is a basic type and those are stored in the symbol table as uppercase
+                    type_identifier = self._symbol_table.retrieve(token.value.upper(), equal_level_only=False)
+
+                if type_identifier:
+                    # process the arguments
+                    for token in ast.children:
+                        if token.type == "IDENTIFIER":
+                            # create the variables using the parameter_type
+                            new_variable = Identifier(token.value, type_identifier, None)
+
+                            # add the new variable to the symbol_table
+                            self._symbol_table.append(new_variable)
+
+                            # create the formal parameter
+                            argument = FormalParameter(token.value, type_identifier)
+
+                            # add the variable as formal argument to the procedure
+                            new_object.add_argument(argument)
+                else:
+                    msg = "[{0}] unknown type '{1}' reference in {2} declaration."
+                    _MODULE_LOGGER_.error(msg.format(action_name, type_identifier, new_object))
+
+            else:
+                _MODULE_LOGGER_.error("parameter class '{0}' not yet supported".format(ast))
+
+
+    def _function_declaration_with_directive(self, action_name, input_list, working_stack):
+        """
+        Example:
+        input_list -> [Token('RESERVED_DECLARATION_FUNCTION', 'FUNCTION'),
+                       Token('IDENTIFIER', 'first_function'),
+                       Tree('parameter_list', [ ... ]),
+                       Tree('return_type', [Token('IDENTIFIER', 'TYPE')]),
+                       Tree('directive', [Token('RESERVED_STATEMENT_FORWARD', 'FORWARD')])]
+
+        """
+        # initialise the intermediate code engine
+        self._ic.init(action_name)
+
+        processor = FunctionProcessor(input_list, action_name)
+        context = processor.assert_context_is_valid()
+
+        # the function declaration in hand can be an external or a forward declaration
+        # confirm a directive is present and verify its type
+        processor.assert_directive_is_valid()
+
+        # retrieve the token identifier for the new function
+        identifier = processor.get_identifier()
+
+        # verify if the function identifier has already been declared by checking the symbol table
+        symbol = self._symbol_table.retrieve(identifier, equal_level_only=False)
+        if symbol:
+            msg = "[{0}] {2} '{1}' already declared"
+            _MODULE_LOGGER_.error(msg.format(action_name, identifier, context))
+
+        else:
+            # a new function is being declared
+            type_identifier = processor.get_return_type()
+
+            # retrieve the type from the symbol table
+            type_symbol = self._symbol_table.retrieve(type_identifier, equal_level_only=False)
+            if not type_symbol:
+                msg = "[{0}] unknown type '{1}' used in function declaration."
+                _MODULE_LOGGER_.error(msg.format(action_name, type_identifier))
+
+            else:
+                if processor.function_returns_string():
+                    # handle scenario where function returns a string
+                    type_symbol = copy.copy(type_symbol)
+                    type_symbol.dimension = processor.get_function_string_dimensions()
+
+                # with the identifier and type create a new function object
+                new_function = processor.get_function_instance(identifier, type_symbol)
+
+                # add new function to symbol table as we know it is not yet declared
+                self._symbol_table.append(new_function)
+
+                # push the new function into the intermediate_code engine
+                self._ic.push(new_function)
+                self._ic.flush()
+
+                # increase scope in preparation for processing the function parameters
+                self._increase_scope(new_function.name)
+
+                # process the function parameters if those are present
+                if processor.function_has_arguments():
+
+                    argument_list = processor.get_arguments_list()
+                    self._process_parameter_specification(action_name, argument_list, new_function)
+
+                # log declaration
+                _MODULE_LOGGER_.debug("[{0}] new function declared : {1}".format(action_name, new_function))
+
+                self._decrease_scope()
+
+        return working_stack
+
+    def _procedure_declaration_with_directive(self, action_name, input_list, working_stack):
+        """
+        Example:
+            input_list -> [Token(RESERVED_DECLARATION_PROCEDURE, 'PROCEDURE'),
+                       Token(IDENTIFIER, 'first_procedure'),
+                       Tree(procedure_block, [])
+                       OR proc_or_func_directive	forward
+                       OR proc_or_func_directive	external
+                      ]
+        """
+        raise NotImplementedError
+
+    def _generic_procedure_or_function_declaration(self, action_name, input_list, working_stack):
         """
         input_list -> [Token(RESERVED_DECLARATION_PROCEDURE, 'PROCEDURE'),
                        Token(IDENTIFIER, 'first_procedure'),
@@ -1104,26 +1423,43 @@ class DeftPascalCompiler:
         """
         # initialise the intermediate code engine
         self._ic.init(action_name)
+        context = action_name.lower().replace("_declaration", "")
 
-        # discard the reserved word PROCEDURE
+        # discard the token reserved word PROCEDURE / FUNCTION
         input_list.pop(0)
 
-        # retrieve the identifier for the new procedure
+        # retrieve the token identifier for the new procedure or function
         identifier = input_list.pop(0).value
 
-        # the procedure declaration in hand can be an external, a forward or a standard one
-        # this is identified by the token after the identifier. it can be a proc_or_func_directive or a procedure_block
+        # the procedure or function declaration in hand can be an external, a forward or a standard one
+        # this is identified by the token after the identifier.
+        # it can be a proc_or_func_directive, a procedure_block or a function_block
         if input_list[-1].data.upper() == "PROC_OR_FUNC_DIRECTIVE":
             if input_list[-1].children[0].value.upper() == "FORWARD":
-                pi_class = ProcedureForwardIdentifier
+                if context == "function":
+                    pi_class = FunctionForwardIdentifier
+                elif context == "procedure":
+                    pi_class = ProcedureForwardIdentifier
+                else:
+                    raise ValueError("Internal Error - Unknown context '{0}' in Forward directive".format(action_name))
             elif input_list[-1].children[0].value.upper() == "EXTERNAL":
-                pi_class = ProcedureExternalIdentifier
+                if context == "function":
+                    pi_class = FunctionExternalIdentifier
+                elif context == "procedure":
+                    pi_class = ProcedureExternalIdentifier
+                else:
+                    raise ValueError("Internal Error - Unknown context '{0}' in External directive".format(action_name))
             else:
                 raise KeyError("unexpected keyword '{0}' in proc_or_func_directive".format(input_list[0].value))
             input_list.pop(-1)
 
         else:
-            pi_class = ProcedureIdentifier
+            if context == "function":
+                pi_class = FunctionIdentifier
+            elif context == "procedure":
+                pi_class = ProcedureIdentifier
+            else:
+                raise ValueError("Internal Error - Unknown context '{0}'".format(action_name))
 
         pi = pi_class(identifier, 'RESERVED_TYPE_POINTER', None)
 
@@ -1131,23 +1467,23 @@ class DeftPascalCompiler:
         symbol = self._symbol_table.retrieve(identifier, equal_level_only=False)
         if not symbol:
             self._symbol_table.append(pi)
-            _MODULE_LOGGER_.debug("[{0}] new procedure defined {1}".format(action_name, pi))
+            _MODULE_LOGGER_.debug("[{0}] new {2} defined {1}".format(action_name, pi, context))
 
-        elif isinstance(symbol, ProcedureForwardIdentifier):
+        elif isinstance(symbol, ProcedureForwardIdentifier) or isinstance(symbol, FunctionForwardIdentifier):
             # replace in the symbol_table a forward declaration with the actual declaration
             self._symbol_table.replace(identifier, pi)
-            _MODULE_LOGGER_.debug("[{0}] forward procedure '{1}' resolved".format(action_name, identifier))
+            _MODULE_LOGGER_.debug("[{0}] forward {2} '{1}' resolved".format(action_name, identifier, context))
 
         else:
-            msg = "[{0}] identifier '{1}' already declared"
-            _MODULE_LOGGER_.error(msg.format(action_name, identifier))
+            msg = "[{0}] {2} '{1}' already declared"
+            _MODULE_LOGGER_.error(msg.format(action_name, identifier, context))
 
         self._ic.push(pi)
         self._ic.flush()
 
         self._increase_scope(pi.name)
 
-        # process the procedure parameters if those are present
+        # process the procedure / function parameters if those are present
         if len(input_list) > 0 and input_list[0].data.upper() == "FORMAL_PARAMETER_LIST":
             argument_list = input_list.pop(0).children
 
@@ -1184,19 +1520,20 @@ class DeftPascalCompiler:
                                 # add the variable as formal argument to the procedure
                                 pi.add_argument(argument)
                     else:
-                        msg = "[{0}] unknown type '{1}' reference in procedure declaration."
-                        _MODULE_LOGGER_.error(msg.format(action_name, identifier))
+                        msg = "[{0}] unknown type '{1}' reference in {2} declaration."
+                        _MODULE_LOGGER_.error(msg.format(action_name, type_identifier, identifier))
 
                 else:
-                    _MODULE_LOGGER_.warning("parameter class '{0}' not yet supported".format(ast))
+                    _MODULE_LOGGER_.error("parameter class '{0}' not yet supported".format(ast))
 
-        if len(input_list) > 0 and input_list[0].data.upper() == "PROCEDURE_BLOCK":
-            # process the procedure body -> PROCEDURE_BLOCK
+        # process the procedure or function body
+        if len(input_list) > 0 and input_list[0].data.upper() in ["PROCEDURE_BLOCK", "FUNCTION_BLOCK"]:
             for ast in input_list[0].children:
-                if ast.data.upper() == "PROCEDURE_DECLARATION" and len(ast.children) > 0:
-                    msg = "nested procedure or function definition is currently not supported. '{0}' will be ignored."
-                    _MODULE_LOGGER_.warning(msg.format(ast.children[1]))
+                if (ast.data.upper() in ["PROCEDURE_DECLARATION", "FUNCTION_DECLARATION]"]) and len(ast.children) > 0:
+                    msg = "nested {1} definition is currently not supported. '{0}' will be ignored."
+                    _MODULE_LOGGER_.error(msg.format(ast.children[1], context))
                 else:
+
                     self._internal_compile(ast, [])
             input_list.pop(0)
 
@@ -1294,8 +1631,12 @@ class DeftPascalCompiler:
 
         # process boolean expression
         expression_stack = self._internal_compile(input_list.pop(0), [])
-        expression = BaseExpression.from_list(expression_stack)
+        if not expression_stack:
+            msg = "[{0}] invalid expression: {1}"
+            _MODULE_LOGGER_.error(msg.format(action_name, expression_stack))
+            return working_stack
 
+        expression = BaseExpression.from_list(expression_stack)
         if expression is None:
             msg = "[{0}] incompatible types in expression: {1}"
             _MODULE_LOGGER_.error(msg.format(action_name, expression))

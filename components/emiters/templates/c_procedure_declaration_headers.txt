@@ -1,0 +1,6 @@
+// procedure declarations
+{%- for procedure in DEFAULT_INPUT %}
+    {%- if procedure.block == "generic" %}
+void {{procedure.name}}({{constant.value}})
+    {%- endif %}
+{%- endfor %}

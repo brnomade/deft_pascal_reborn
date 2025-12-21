@@ -43,7 +43,6 @@ class IntegerExpression(BaseExpression):
         if not expression or expression.type not in ["RESERVED_TYPE_INTEGER"]:
             # scenario - expression has incompatible symbols or it is not of the expected class.
             return None
-
         return expression
 
 

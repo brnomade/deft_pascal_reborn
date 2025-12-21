@@ -1,0 +1,3 @@
+{%- for value in DEFAULT_LINE -%}
+    {{ value }}
+{%- endfor -%}

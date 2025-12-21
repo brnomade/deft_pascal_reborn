@@ -1,8 +1,7 @@
 pyinstaller
-ply
-lark-parser
-mc6809
+lark
 parameterized
 coverage
 PyYAML
 coveralls
+jinja2

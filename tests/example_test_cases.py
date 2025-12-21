@@ -17,24 +17,48 @@ class PascalExamples:
     @staticmethod
     def example_program_definition_2():
         code = """
-            program test;                          
-            const                                 
-              PI = 3.1415;                        
+            program example_program_definition_2;                          
+            const             
+              ZZ = 1 + 2 + 3 + 4;  
+              INT_1 = 1;
+              BOO_1 = True;
+              CHA_1 = 'C';    
+              STR_1 = 'ABCDEFG';                
+              PI = 3.1415;  
             var                                   
               a : real;
-              b : integer;                         
-            procedure multiply_and_print(i: integer; r: real);  
+              b : integer;    
+              c : BOOLEAN;
+              d : CHAR;
+              e : ^CHAR;      
+              z : integer;
+
+            function multiply_and_print(i, v: integer; r: real): integer; forward;
+            function divide_and_print(i: integer; r: real): integer; forward;
+            function sum_and_print(i: integer; r: real): integer; forward;
+            function subtract_and_print(i: integer; r: real): integer; forward;
+              
+            function multiply_and_print(i, v: integer; r: real): integer;  
             begin                                 
-              writeln(i * r);                         
+              v := i * i;
+              b := v;
+              b := INT_1 + v;
+              writeln(i * v, i, v);   
+              multiply_and_print := b;                      
             end;                                  
+
             begin                                 
               a := PI;                            
-              b := 10;                        
-              multiply_and_print(b, a);           
+              b := 20;  
+              FOR z := 1 to b do BEGIN
+                  z := multiply_and_print(b, b, a);                                
+                  writeln(z);
+                  if z > 10 then
+                    writeln('maior');
+              end;
             end.                                 
         """
         return code
-
 
     @staticmethod
     def example_fahrenheit_to_celsius_converter():
@@ -84,7 +108,6 @@ class PascalExamples:
         """
         return code
 
-
     @staticmethod
     def example_hello_world():
         code = """
@@ -94,7 +117,6 @@ class PascalExamples:
             END.
         """
         return code
-
 
     @staticmethod
     def example_two_for_with_hello_world():
@@ -135,20 +157,19 @@ class PascalExamples:
         return code
 
     @staticmethod
-    def example_primes():
+    def not_ready_primes():
         code = """
             program primes;
                 CONST 
-                    N=1229;
+                    N = 1229;
                     N1 = 35; (* N1 is SQRT OF N *)
                 VAR
                     I, K, X, INC, LIM, SQUARE, L : INTEGER
                     PRIM : BOOLEAN;
                     P, V : ARRAY[1..N] of INTEGER;
-                    
                 BEGIN
                     WRITE(2:6, 3:6); 
-                    L :-2;            
+                    L := -2;            
                     X := 1;
                     INC := 4;
                     LIM := 1;
